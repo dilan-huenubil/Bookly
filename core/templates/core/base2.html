@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/css/styles2.css' %}">
+</head>
+<body>
+    <div class="header">
+        <div class="logo">{% block titlecontent %}{% endblock %}</div>
+    </div>
+
+    <div class="progress-bar">
+        <div class="progress-wrapper">
+            <div class="progress-item">
+                <div class="progress-circle active">
+                    <span class="icon icon-check" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false">
+                            <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                        </svg>
+                    </span>
+                </div>
+                <span class="progress-text">Mis datos</span>
+            </div>
+            <div class="progress-line-horizontal"></div>
+            <div class="progress-item">
+                {% block numberActive %} {% endblock%}
+            </div>
+            <div class="progress-line-horizontal"></div>
+            <div class="progress-item">
+                {% block numberActive2 %} {% endblock%}
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="main-container">
+    {% block content %}
+    {% endblock %}
+
+        <div class="summary-section">
+            <div class="summary-header">
+                <span class="summary-title">Resumen del pedido</span>
+            </div>
+            <div id="summaryList">
+                <p style="color:#666;">Tu carrito está vacío.</p>
+            </div>
+
+            <div class="coupon-section">
+                <div class="coupon-input">
+                    <input type="text" placeholder="Cupón de descuento">
+                    <button class="btn-apply">APLICAR</button>
+                </div>
+                <div class="coupon-applied">
+                    bookly25
+                    <button class="coupon-remove" type="button" aria-label="Quitar cupón">
+                        <span class="icon icon-close" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <path d="M18 6L6 18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+                                <path d="M6 6l12 12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" />
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="summary-totals" id="summaryTotals" data-shipping="0">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span id="sumSubtotalBase2">$0</span>
+                </div>
+                <div class="summary-row">
+                    <span>IVA (19%):</span>
+                    <span id="sumIvaBase2">$0</span>
+                </div>
+                {% if show_shipping %}
+                <div class="summary-row">
+                    <span>Despacho:</span>
+                    <span id="sumShippingBase2">$0</span>
+                </div>
+                {% endif %}
+                <div class="summary-total">
+                    <span>TOTAL DE LA ORDEN:</span>
+                    <span id="sumTotalBase2">$2.990</span>
+                </div>
+                <div class="installments">Incluye 19% de IVA</div>
+                {% if show_shipping %}
+                <div class="installments" id="installmentsText" style="text-align: right;">hasta en 6 x $0 sin interés*</div>
+                <div class="terms">*Aplican términos y condiciones</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Desarrollado por Dilan Huenubil y Rodrigo Mella - © All Todos los derechos reservados
+    </div>
+
+    <script src="{% static 'core/js/script2.js' %}"></script>
+    <script src="{% static 'core/js/chile_regions.js' %}"></script>
+</body>
+</html>

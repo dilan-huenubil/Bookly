@@ -1,0 +1,58 @@
+{% extends 'core/base.html' %}
+{% load humanize %}
+
+{% block title %}Bookly | Inicio{% endblock %}
+
+{% block content %}
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="content">
+        <div class="content-header">
+            <h1 class="title">Bienvenidos a Bookly</h1>
+            <div class="filters">
+                <label for="priceFilter" class="sr-only">Filtrar por precio</label>
+                <select id="priceFilter" aria-label="Filtrar por precio">
+                    <option value="all">Todos los precios</option>
+                    <option value="0-15000">Hasta $15.000</option>
+                    <option value="15000-30000">$15.000 - $30.000</option>
+                    <option value="30000-60000">$30.000 - $60.000</option>
+                    <option value="60000-plus">Más de $60.000</option>
+                </select>
+            </div>
+        </div>
+        <div class="products">
+            {% for book in books %}
+            <div class="card" data-sku="{{ book.sku }}" data-title="{{ book.title }}" data-price="{{ book.price }}" data-image="{{ book.image_url|default:'https://via.placeholder.com/300x400?text=Sin+imagen' }}">
+                <a href="{% url 'libro_detalles' book.sku %}" class="card-thumb" aria-label="Ver detalles de {{ book.title }}">
+                    <img src="{{ book.image_url|default:'https://via.placeholder.com/300x400?text=Sin+imagen' }}" alt="{{ book.title }}">
+                </a>
+                <h3>{{ book.title }}</h3>
+                <p>
+                    Precio:
+                    <span class="price">${{ book.price|intcomma }}</span>
+                    {% if book.price_old %}
+                        <span class="old-price" style="margin-left:8px; color:#888; text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
+                    {% endif %}
+                </p>
+                {% if book.stock > 0 %}
+                <button class="add-to-cart" type="button">AGREGAR AL CARRITO</button>
+                {% else %}
+                <button type="button" disabled>Sin stock</button>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p>No hay libros disponibles.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination">
+            <a href="#" class="active">1</a>
+            <a href="#">2</a>
+            <a href="#">3</a>
+            <a href="#">→</a>
+        </div>
+    </main>
+
+
+{% endblock %}
+

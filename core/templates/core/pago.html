@@ -1,0 +1,84 @@
+{% extends 'core/base2.html' %}
+
+{% block title %}BOOKLY - Pago{% endblock %}
+
+{% block titlecontent %}BOOKLY Pago{% endblock %}
+
+
+{% block numberActive %}
+<div class="progress-circle active">
+    <span class="icon icon-check" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                stroke-width="2" />
+        </svg>
+    </span>
+</div>
+<span class="progress-text">Entrega</span>
+{% endblock%}
+
+{% block numberActive2 %}
+<div class="progress-circle active">
+    <span class="icon icon-check" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                stroke-width="2" />
+        </svg>
+    </span>
+</div>
+<span class="progress-text">Pago</span>
+{% endblock%}
+
+
+{% block content %}
+<div class="form-section">
+    <h3 style="margin-bottom:20px;">Pago </h3>
+    <div class="delivery-card">
+        <!-- Producto -->
+        <div class="delivery-product" id="deliveryProduct">
+            {% if book %}
+            <img class="delivery-product-img" src="{{ book.image_url }}" alt="{{ book.title }}">
+            <div class="delivery-product-info">
+                {% if book.author %}
+                <p class="delivery-product-brand">{{ book.author }}</p>
+                {% endif %}
+                <p class="delivery-product-name">{{ book.title }}</p>
+                <p class="delivery-product-qty" id="deliveryQty">Cantidad: 1</p>
+                <p class="delivery-product-sku">SKU: {{ book.sku }}</p>
+            </div>
+            {% else %}
+            <img class="delivery-product-img" src="https://www.penguinlibros.com/cl/2738537/el-libro-de-los-libros.jpg" alt="Producto">
+            <div class="delivery-product-info">
+                <p class="delivery-product-brand">&nbsp;</p>
+                <p class="delivery-product-name" id="deliveryName">Producto</p>
+                <p class="delivery-product-qty" id="deliveryQty">Cantidad: 1</p>
+            </div>
+            {% endif %}
+        </div>
+        <!-- Métodos de pago -->
+        <div class="delivery-methods">
+            <div class="shipping-option active">
+                <div class="payment-method-container">
+                    <label class="radio-wrapper">
+                        <input type="radio" name="pago" value="webpay" checked>
+                        <span class="radio-custom"></span>
+                    </label>
+                    <div class="payment-content">
+                        <img class="payment-logo" src="https://cdn.prod.website-files.com/5c51ea7c50968df9eb791d5b/687a5ffaebb8d02c1918f713_flow-verde-2025.png" alt="Logo Webpay">
+                        <span class="payment-text">Pago con Flow</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="flow-actions" style="margin-top:32px;">
+        <a href="{% url 'entrega' %}"><button class="btn-back btn-large">ATRÁS</button></a>
+        <a id="linkPagarFlow" href="{% url 'pago_create' %}"><button id="btnPagarFlow" class="btn-continue btn-large">PAGAR</button></a>
+        {% if flow_token %}
+        <p style="margin-top:12px;">Token: {{ flow_token }}</p>
+        {% endif %}
+    </div>
+</div>
+
+
+{% endblock %}

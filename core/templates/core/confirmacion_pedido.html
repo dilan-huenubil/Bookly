@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Pago Exitoso! - Bookly</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/css/styles2.css' %}">
+</head>
+<body class="confirmation-page">
+
+    <div class="confirmation-card">
+        <div class="success-icon">✓</div>
+
+        <h1>¡Gracias por tu compra!</h1>
+        <p class="subtitle">Tu pedido ha sido procesado exitosamente.</p>
+
+        <div class="order-details">
+            <div class="detail-row">
+                <span>Orden:</span>
+                <strong>#LIB-8891</strong>
+            </div>
+            <div class="detail-row">
+                <span>Fecha:</span>
+                <span id="fecha-actual"></span>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+            
+            <ul class="book-list">
+                <li>
+                    <span>Cien Años de Soledad</span>
+                    <strong>$15.000</strong>
+                </li>
+                <li>
+                    <span>El Principito</span>
+                    <strong>$12.500</strong>
+                </li>
+            </ul>
+
+            <div class="detail-row total">
+                <span>Total Pagado:</span>
+                <span>$27.500</span>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <a href="#" class="btn btn-secondary" onclick="window.print()">Descargar</a>
+            <a href="/" class="btn btn-primary">Inicio</a>
+        </div>
+    </div>
+
+    <script src="{% static 'core/js/script2.js' %}"></script>
+</body>
+</html>

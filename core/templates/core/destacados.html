@@ -1,0 +1,59 @@
+{% extends 'core/base.html' %}
+{% load humanize %}
+
+{% block title %}Bookly | Libros Destacados{% endblock %}
+
+{% block content %}
+<main class="content">
+    <div class="content-header">
+        <h1 class="title">Libros Destacados</h1>
+        <div class="filters">
+            <label for="priceFilter" class="sr-only">Filtrar por precio</label>
+            <select id="priceFilter" aria-label="Filtrar por precio">
+                <option value="all">Todos los precios</option>
+                <option value="0-15000">Hasta $15.000</option>
+                <option value="15000-30000">$15.000 - $30.000</option>
+                <option value="30000-60000">$30.000 - $60.000</option>
+                <option value="60000-plus">Más de $60.000</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="products">
+        {% for book in books %}
+        <div class="card" data-sku="{{ book.sku }}" data-title="{{ book.title }}" data-price="{{ book.price }}" data-image="{{ book.image_url|default:'https://via.placeholder.com/300x400?text=Sin+Imagen' }}">
+            <a href="{% url 'libro_detalles' book.sku %}" class="card-thumb"
+                aria-label="Ver detalles de {{ book.title }}">
+                <img src="{{ book.image_url|default:'https://via.placeholder.com/300x400?text=Sin+Imagen' }}"
+                    alt="{{ book.title }}">
+            </a>
+            <h3>{{ book.title }}</h3>
+            <p>
+                Precio:
+                {% if book.price_old and book.price_old > book.price %}
+                <span class="old-price">${{ book.price_old|intcomma }}</span>
+                {% endif %}
+                <span class="price">${{ book.price|intcomma }}</span>
+                {% if book.discount_percent and book.discount_percent > 0 %}
+                <span class="discount">-{{ book.discount_percent }}%</span>
+                {% endif %}
+            </p>
+            {% if book.stock > 0 %}
+            <button class="add-to-cart" type="button">AGREGAR AL CARRITO</button>
+            {% else %}
+            <button disabled type="button">Sin stock</button>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p>No hay libros destacados disponibles.</p>
+        {% endfor %}
+    </div>
+    <!-- Paginación -->
+    <div class="pagination">
+        <a href="#" class="active">1</a>
+        <a href="#">2</a>
+        <a href="#">3</a>
+        <a href="#">→</a>
+    </div>
+</main>
+{% endblock %}

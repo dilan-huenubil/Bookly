@@ -1,0 +1,53 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Bookly | Carrito{% endblock %}
+
+{% block content %}
+    <main class="cart-page">
+        <div class="cart-container">
+            <div class="cart-header-row">
+                <a href="{% url 'index' %}" class="btn-continue" id="btnContinueShopping"><i class="bi bi-arrow-left-circle"></i> SEGUIR COMPRANDO</a>
+            </div>
+
+            <div class="cart-grid">
+                <!-- Tabla del carrito -->
+                <section class="cart-table" aria-labelledby="cartTableTitle">
+                    <h2 id="cartTableTitle" class="sr-only">Productos en tu carrito</h2>
+                        <p id="cartPageEmptyMsg" style="display:none; color:#666; margin:16px 0;">Tu carrito está vacío.</p>
+                    <div class="table-wrap">
+                    <table class="table" role="table" aria-describedby="summaryTitle">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="th-producto">Producto</th>
+                                <th scope="col" class="th-precio">Precio</th>
+                                <th scope="col" class="th-cantidad">Cantidad</th>
+                                <th scope="col" class="th-subtotal">Subtotal</th>
+                                <th scope="col" class="th-remove" aria-label="Eliminar"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartRows">
+                            <!-- Filas del carrito se renderizan dinámicamente -->
+                        </tbody>
+                        <tfoot>
+                        </tfoot>
+                    </table>
+                    </div>
+                </section>
+
+                <!-- Totales -->
+                <aside class="cart-summary" id="cartSummary" aria-labelledby="summaryTitle">
+                    <h2 id="summaryTitle">Total del carrito</h2>
+                    <div class="summary-rows">
+                        <div class="srow"><span>Subtotal</span><strong id="sumSubtotal">$0</strong></div>
+                        <div class="srow"><span>Envío</span><div class="ship">Por calcular<br><small>El costo se agrega en el paso de pago.</small></div></div>
+                            <div class="srow total" id="cartPageTotals"><span>Total</span><strong id="sumTotal">$0</strong></div>
+                    </div>
+                    <div class="summary-cta">
+                        <a href="{% url 'checkout' %}" class="btn-primary lg" id="btnCheckout">IR A PAGAR</a>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+{% endblock %}
+

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    {% load static %}
+    {% url 'index' as url_index %}
+    {% url 'contacto' as url_contacto %}
+    {% url 'register' as url_register %}
+    {% url 'logout' as url_logout %}
+    {% url 'carrito' as url_carrito %}
+    {% url 'destacados' as url_destacados %}
+    <link rel="stylesheet" href="{% static 'core/css/styles.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <!-- Fila superior -->
+        <div class="top-bar">
+            <div class="top-content">
+                <!-- Logo -->
+                <div class="logo">
+                    <!-- <img src="https://feriachilenadellibro.cl/wp-content/uploads/2022/06/logoferiaonline.png" alt="Feria Chilena del Libro">-->
+                    <H3 style="color:white">BOOKLY LOGO</H3>
+                </div>
+
+                <!-- Barra de búsqueda (desktop) -->
+                <div class="search-container">
+                    <input type="text" placeholder="Buscar Libros...">
+                    <button><i class="bi bi-search"></i></button>
+                </div>
+
+                <!-- Iconos -->
+                <div class="icons desktop-icons">
+                    {% if user.is_authenticated %}
+                    <a href="{{ url_logout }}" class="user-link" aria-label="Cerrar sesión">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span class="user-link__label">Cerrar sesión</span>
+                    </a>
+                    {% else %}
+                    <a href="{{ url_register }}" class="user-link" aria-label="Iniciar sesión o registrarse">
+                        <i class="bi bi-person"></i>
+                        <span class="user-link__label">Iniciar sesión / Registrarse</span>
+                    </a>
+                    {% endif %}
+                    <i class="bi bi-cart" id="cartToggle" data-cart-toggle role="button" aria-label="Abrir carrito" tabindex="0"></i>
+                    {% if user.is_authenticated %}
+                    <div class="user-pill" aria-label="Usuario autenticado">
+                        <i class="bi bi-person-circle"></i>
+                        <span class="user-pill__name">{% firstof user.get_full_name user.username %}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Controles móviles: botón menú y búsqueda compacta -->
+                <div class="mobile-controls">
+                    <button type="button" class="mobile-search" aria-label="Buscar">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button type="button" class="mobile-cart" aria-label="Abrir carrito" data-cart-toggle>
+                        <i class="bi bi-cart"></i>
+                    </button>
+                    <button type="button" class="mobile-menu-toggle" aria-label="Abrir menú">
+                        <i class="bi bi-list"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila inferior: menú -->
+        <nav class="main-menu">
+            <a href="{{ url_index }}" class="{% if request.path == url_index %}active{% endif %}">Inicio</a>
+            <!-- <a href="#">Categorías</a> -->
+            <!-- <a href="#">Giftcard</a> -->
+            <a href="{{ url_destacados }}" class="{% if request.path == url_destacados %}active{% endif %}">Destacados</a>
+            <!-- <a href="#">Ofertas</a> -->
+            <!-- <a href="#">Packs</a> -->
+            <!-- <a href="#">Más vendidos</a> -->
+            <!-- <a href="#">Novedades</a> -->
+            <!-- <a href="#" >Comics & Mangas</a> -->
+            <a href="{{ url_contacto }}" class="{% if request.path == url_contacto %}active{% endif %}">Contacto</a>
+        </nav>
+
+        <!-- Menú móvil overlay -->
+        <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true">
+            <button class="close-btn" id="mobileClose" aria-label="Cerrar menú"><i class="bi bi-x-lg"></i></button>
+            <div class="overlay-top">
+                <div class="overlay-logo">
+                    <img src="https://feriachilenadellibro.cl/wp-content/uploads/2022/06/logoferiaonline.png" alt="Logo">
+                </div>
+                <div class="overlay-actions">
+                    <button class="overlay-search-btn" id="overlaySearchBtn" aria-label="Buscar"><i class="bi bi-search"></i></button>
+                    <button class="overlay-cart-btn" data-cart-toggle aria-label="Abrir carrito"><i class="bi bi-cart"></i></button>
+                </div>
+            </div>
+            <nav class="overlay-nav">
+                {% if user.is_authenticated %}
+                <a href="{{ url_index }}" class="overlay-auth overlay-auth--user" aria-label="Usuario autenticado">
+                    <i class="bi bi-person-circle"></i>
+                    <span>{% firstof user.get_full_name user.username %}</span>
+                </a>
+                <a href="{{ url_logout }}" class="overlay-auth" aria-label="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Cerrar sesión</span>
+                </a>
+                {% else %}
+                <a href="{{ url_register }}" class="overlay-auth" aria-label="Iniciar sesión o registrarse">
+                    <i class="bi bi-person"></i>
+                    <span>Iniciar sesión / Registrarse</span>
+                </a>
+                {% endif %}
+                <a href="{{ url_index }}" class="{% if request.path == url_index %}active{% endif %}">INICIO</a>
+                <a href="{{ url_destacados }}" class="{% if request.path == url_destacados %}active{% endif %}">Destacados</a>
+                <a href="{{ url_contacto }}" class="{% if request.path == url_contacto %}active{% endif %}">CONTACTO</a>
+
+            </nav>
+        </div>
+
+        <!-- Overlay de búsqueda móvil -->
+        <div class="mobile-search-overlay" id="mobileSearch" aria-hidden="true">
+            <div class="search-bar">
+                <button class="back-btn" id="mobileSearchBack" aria-label="Volver"><i class="bi bi-arrow-left"></i></button>
+                <input type="text" id="mobileSearchInput" placeholder="Buscar Título, Autor, Isbn..." />
+            </div>
+        </div>
+    </header>
+
+    {% block content %}
+    {% endblock %}
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-logo">
+                <img src="" alt="Logo Footer">
+                <p>Bookly</p>
+                <div class="socials">
+                    <i class="bi bi-twitter"></i>
+                    <i class="bi bi-facebook"></i>
+                    <i class="bi bi-youtube"></i>
+                    <i class="bi bi-instagram"></i>
+                </div>
+            </div>
+            <div>
+                <!---
+                <h4>Empresa</h4>
+                <a href="#">Quienes Somos</a>
+                <a href="#">Términos y Condiciones</a>--->
+            </div>
+            <div>
+                <!---
+                <h4>Despacho</h4>
+                <a href="#">Cobertura</a>
+                <a href="#">Tiempos de entrega</a>
+                <a href="#">Costos de Envío</a>
+                <a href="#">Retiro en Librerías</a>--->
+            </div>
+            <div>
+                <!---
+                <h4>Seguridad</h4>
+                <a href="#">Política de Seguridad</a>
+                <a href="#">Vigencia de Precios</a>--->
+            </div>
+            <div>
+                <!---
+                <h4>Menu</h4>
+                <a href="#">Mi Cuenta</a>
+                <a href="#">Mi Bolsa</a>
+                <a href="#">Librerías Asociadas</a>
+                <a href="#">Contacto</a>--->
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="footer-bottom-inner">
+                <span class="copy">© All Todos los derechos reservados</span>
+                <span class="dev">Desarrollado por Dilan Huenubil y Rodrigo Mella</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Botón flotante subir al inicio -->
+    <button class="back-to-top" id="backToTop" aria-label="Subir al inicio" title="Subir">
+        <i class="bi bi-chevron-up"></i>
+    </button>
+    
+    <!-- Backdrop y Carrito lateral -->
+    <div class="cart-backdrop" id="cartBackdrop" aria-hidden="true"></div>
+    <aside class="cart-drawer" id="cartDrawer" aria-hidden="true" aria-labelledby="cartTitle">
+        <div class="cart-inner">
+            <div class="cart-header">
+                <div class="cart-title">
+                    <i class="bi bi-bag"></i>
+                    <h3 id="cartTitle">Su Bolsa</h3>
+                </div>
+                <button class="cart-close" id="cartClose" aria-label="Cerrar carrito"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="cart-body" id="cartBody">
+                <p id="cartEmptyMsg" style="display:none; color:#666; text-align:center; margin:16px 0;">Tu carrito está vacío.</p>
+                <div id="cartItems"><!-- Items del carrito se renderizan dinámicamente --></div>
+            </div>
+            <div class="cart-footer">
+                <div class="cart-totals" id="cartTotals">
+                    <div class="row"><span>Subtotal</span><strong id="cartSubtotal">$0</strong></div>
+                    <div class="row"><span>Envío</span><strong id="cartShipping">$0</strong></div>
+                    <div class="row total"><span>Total</span><strong id="cartTotal">$0</strong></div>
+                </div>
+                <div class="cart-actions" id="cartActions">
+                    <div class="cta-row">
+                        <button class="btn-outline" id="cartContinue">Continuar Comprando</button>
+                        <button class="btn-primary" id="cartCheckout" type="button"><a href="{{ url_carrito }}"></a>Ir a Pagar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <script src="{% static 'core/js/script.js' %}"></script>
+
+    </body>
+
+    </html>

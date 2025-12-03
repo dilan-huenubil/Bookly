@@ -1,0 +1,83 @@
+from django.db import models
+from django.contrib.auth.models import User
+
+
+class Book(models.Model):
+	title = models.CharField("Título", max_length=255)
+	author = models.CharField("Autor", max_length=255)
+	editorial = models.CharField("Editorial", max_length=255, blank=True, null=True)
+	binding = models.CharField("Encuadernación", max_length=100, blank=True, null=True)
+	sku = models.CharField("SKU", max_length=64, unique=True)
+	category = models.CharField("Categoría", max_length=255, blank=True, null=True)
+	tags = models.CharField("Etiquetas (separadas por coma)", max_length=255, blank=True, null=True)
+	description = models.TextField("Descripción", blank=True, null=True)
+	price = models.IntegerField("Precio")
+	price_old = models.IntegerField("Precio anterior", blank=True, null=True)
+	discount_percent = models.IntegerField("Descuento (%)", blank=True, null=True)
+	stock = models.IntegerField("Stock", default=0)
+	weight_kg = models.DecimalField("Peso (kg)", max_digits=6, decimal_places=3, blank=True, null=True)
+	dimensions = models.CharField("Dimensiones", max_length=100, blank=True, null=True)
+	year = models.IntegerField("Año de edición", blank=True, null=True)
+	pages = models.IntegerField("Páginas", blank=True, null=True)
+	language = models.CharField("Idioma", max_length=64, blank=True, null=True)
+	image_url = models.URLField("Imagen (URL)", blank=True, null=True)
+	created_at = models.DateTimeField("Creado el", auto_now_add=True)
+	updated_at = models.DateTimeField("Actualizado el", auto_now=True)
+
+	def __str__(self):
+		return f"{self.title} ({self.sku})"
+
+
+class Order(models.Model):
+	STATUS_CHOICES = (
+		('created', 'Creada'),
+		('paid', 'Pagada'),
+		('canceled', 'Cancelada'),
+		('error', 'Error'),
+	)
+
+	user = models.ForeignKey(User, verbose_name="Usuario", on_delete=models.CASCADE, related_name='orders')
+	commerce_order = models.CharField("Orden de comercio", max_length=64, unique=True)
+	flow_token = models.CharField("Token Flow", max_length=128, blank=True, null=True)
+	flow_order = models.CharField("Orden Flow", max_length=64, blank=True, null=True)
+	amount = models.IntegerField("Monto")
+	currency = models.CharField("Moneda", max_length=8, default='CLP')
+	email = models.EmailField("Email comprador")
+	# Snapshot de dirección de despacho usada en la compra
+	shipping_name = models.CharField("Nombre receptor", max_length=128, blank=True, null=True)
+	shipping_phone = models.CharField("Teléfono receptor", max_length=32, blank=True, null=True)
+	shipping_line1 = models.CharField("Dirección (calle y número)", max_length=128, blank=True, null=True)
+	shipping_line2 = models.CharField("Depto / bloque (opcional)", max_length=128, blank=True, null=True)
+	shipping_comuna = models.CharField("Comuna", max_length=64, blank=True, null=True)
+	shipping_ciudad = models.CharField("Ciudad", max_length=64, blank=True, null=True)
+	shipping_region = models.CharField("Región", max_length=64, blank=True, null=True)
+	shipping_postal_code = models.CharField("Código postal", max_length=16, blank=True, null=True)
+	status = models.CharField("Estado", max_length=16, choices=STATUS_CHOICES, default='created')
+	created_at = models.DateTimeField("Creado el", auto_now_add=True)
+	updated_at = models.DateTimeField("Actualizado el", auto_now=True)
+
+	def __str__(self):
+		return f"Order {self.commerce_order} ({self.status})"
+
+class Address(models.Model):
+	ADDRESS_TYPES = (
+		('shipping', 'Despacho'),
+		('billing', 'Cobranza'),
+	)
+
+	user = models.ForeignKey(User, verbose_name="Usuario", on_delete=models.CASCADE, related_name='addresses')
+	address_type = models.CharField("Tipo de dirección", max_length=16, choices=ADDRESS_TYPES, default='shipping')
+	name = models.CharField("Nombre receptor", max_length=128)
+	phone = models.CharField("Teléfono", max_length=32)
+	line1 = models.CharField("Dirección (calle y número)", max_length=128)
+	line2 = models.CharField("Depto / bloque (opcional)", max_length=128, blank=True, null=True)
+	comuna = models.CharField("Comuna", max_length=64)
+	ciudad = models.CharField("Ciudad", max_length=64)
+	region = models.CharField("Región", max_length=64)
+	postal_code = models.CharField("Código postal", max_length=16, blank=True, null=True)
+	is_default = models.BooleanField("Predeterminada", default=False)
+	created_at = models.DateTimeField("Creado el", auto_now_add=True)
+	updated_at = models.DateTimeField("Actualizado el", auto_now=True)
+
+	def __str__(self):
+		return f"{self.user.username} - {self.address_type} ({self.line1}, {self.comuna})"

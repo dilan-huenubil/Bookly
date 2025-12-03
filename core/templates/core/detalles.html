@@ -1,0 +1,116 @@
+{% extends 'core/base.html' %}
+{% load humanize %}
+
+{% block title %}Bookly | {{ book.title }}{% endblock %}
+
+{% block content %}
+    <!-- CONTENIDO PRINCIPAL: Detalle de producto -->
+    <main class="product-page">
+        <!-- Migas de pan -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Inicio</a>
+            <span>/</span>
+            {% if book.category %}<a href="#">{{ book.category }}</a><span>/</span>{% endif %}
+            <span class="current" aria-current="page">{{ book.title }}</span>
+        </nav>
+
+        <!-- Hero producto -->
+        <section class="product-hero">
+            <div class="ph-gallery">
+                {% if book.discount_percent %}<div class="discount-badge">-{{ book.discount_percent }}%</div>{% endif %}
+                <img src="{{ book.image_url|default:'https://via.placeholder.com/500x700?text=Sin+imagen' }}" alt="{{ book.title }}" />
+            </div>
+            <div class="ph-info">
+                <h1 class="ph-title">{{ book.title }}</h1>
+                <ul class="ph-meta">
+                    {% if book.author %}<li><strong>Autor:</strong> {{ book.author }}</li>{% endif %}
+                    {% if book.editorial %}<li><strong>Editorial:</strong> {{ book.editorial }}</li>{% endif %}
+                    {% if book.binding %}<li><strong>Encuadernación:</strong> {{ book.binding }}</li>{% endif %}
+                </ul>
+
+                <div class="ph-price-block">
+                    <div class="label">Precio:</div>
+                    <div class="prices">
+                        {% if book.price_old %}<span class="old-price">${{ book.price_old|intcomma }}</span>{% endif %}
+                        <span class="price">${{ book.price|intcomma }}</span>
+                    </div>
+                </div>
+
+                <div class="ph-stock">Disponibilidad: <strong>{{ book.stock }} disponible{% if book.stock != 1 %}s{% endif %}</strong></div>
+
+                <div class="ph-actions">
+                    <div class="qty">
+                        <button class="qty-btn" data-op="-" aria-label="Disminuir">-</button>
+                        <input type="number" id="qtyInput" min="1" value="1" inputmode="numeric" aria-label="Cantidad" readonly />
+                        <button class="qty-btn" data-op="+" aria-label="Aumentar">+</button>
+                    </div>
+                    <button id="addToCart" class="btn-primary lg" type="button" data-sku="{{ book.sku }}" data-title="{{ book.title }}" data-price="{{ book.price }}" data-image="{{ book.image_url|default:'https://via.placeholder.com/500x700?text=Sin+imagen' }}"><i class="bi bi-bag-plus"></i> AGREGAR AL CARRITO</button>
+                </div>
+
+                <div class="ph-extra">
+                    <span>SKU: <strong>{{ book.sku }}</strong></span>
+                    {% if book.category %}<span>Categoría: <a href="#">{{ book.category }}</a></span>{% endif %}
+                    {% if tags_list %}
+                        <span>Etiquetas:
+                            {% for tag in tags_list %}
+                                <a href="#">{{ tag }}</a>{% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabs descripción / información adicional -->
+        <section class="product-tabs" id="tabs">
+            <div class="tablist" role="tablist" aria-label="Detalles del producto">
+                <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-description" id="btn-description">Descripción</button>
+                <button class="tab" role="tab" aria-selected="false" aria-controls="tab-additional" id="btn-additional">Información adicional</button>
+            </div>
+            <div class="tabpanel show" id="tab-description" role="tabpanel" aria-labelledby="btn-description">
+                <h2>{{ book.title }}</h2>
+                {% if book.description %}
+                    <p>{{ book.description }}</p>
+                {% else %}
+                    <p>No hay descripción disponible para este libro.</p>
+                {% endif %}
+            </div>
+            <div class="tabpanel" id="tab-additional" role="tabpanel" aria-labelledby="btn-additional" hidden>
+                <table class="specs-table">
+                    <tbody>
+                        {% if book.weight_kg %}<tr><th>Peso</th><td>{{ book.weight_kg }} kg</td></tr>{% endif %}
+                        {% if book.dimensions %}<tr><th>Dimensiones</th><td>{{ book.dimensions }}</td></tr>{% endif %}
+                        {% if book.author %}<tr><th>Autor</th><td>{{ book.author }}</td></tr>{% endif %}
+                        {% if book.binding %}<tr><th>Encuadernación</th><td>{{ book.binding }}</td></tr>{% endif %}
+                        {% if book.editorial %}<tr><th>Editorial</th><td>{{ book.editorial }}</td></tr>{% endif %}
+                        {% if book.year %}<tr><th>Año Edición</th><td>{{ book.year }}</td></tr>{% endif %}
+                        {% if book.pages %}<tr><th>Páginas</th><td>{{ book.pages }}</td></tr>{% endif %}
+                        {% if book.language %}<tr><th>Idioma</th><td>{{ book.language }}</td></tr>{% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Productos relacionados (placeholder: mostrar otros libros con mismo category si existe) -->
+        {% if related_books %}
+        <section class="related">
+            <h2>Productos relacionados</h2>
+            <div class="products related-grid">
+                {% for related in related_books %}
+                <div class="card">
+                    <a href="{% url 'libro_detalles' related.sku %}"><img src="{{ related.image_url|default:'https://via.placeholder.com/200x300?text=Sin+imagen' }}" alt="{{ related.title }}"></a>
+                    <h3>{{ related.title }}</h3>
+                    <p>Precio: <span>${{ related.price|intcomma }}</span></p>
+                    <a href="{% url 'libro_detalles' related.sku %}" class="btn-primary" style="display:inline-block; padding:8px 12px; margin-top:6px;">Ver</a>
+                </div>
+                {% empty %}
+                <p>No hay relacionados.</p>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </main>
+{% endblock %}
+
+
+
