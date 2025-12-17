@@ -9,7 +9,6 @@ class UsernameOrEmailBackend(ModelBackend):
 
         UserModel = get_user_model()
 
-        # Try username (case-insensitive), then email (case-insensitive)
         user = None
         try:
             username_field = f"{UserModel.USERNAME_FIELD}__iexact"

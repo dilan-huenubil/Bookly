@@ -17,7 +17,6 @@
 
 {% block content %}
         <div class="form-section">
-            <!-- Sección Mis datos - Vista resumen -->
             <div id="datosResumen">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                     <h2 style="margin-bottom: 0;">Mis datos</h2>
@@ -39,54 +38,58 @@
                 </div>
             </div>
 
-            <!-- Sección Mis datos - Formulario edición -->
+
             <div id="datosFormulario" style="display: none;">
-                <h2>Datos personales</h2>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Nombre</label>
-                        <input type="text" value="{{ user.first_name|default:user.username }}">
+                <form method="post" action="{% url 'checkout' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="save_user" />
+                    <h2>Datos personales</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" name="first_name" value="{{ user.first_name|default:user.username }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido</label>
+                            <input type="text" name="last_name" value="{{ user.last_name }}">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Apellido</label>
-                        <input type="text" value="{{ user.last_name }}">
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Teléfono</label>
-                        <input type="text" value="{{ user_phone|default:'' }}" placeholder="912548922">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="text" name="phone" value="{{ user_phone|default:'' }}" placeholder="912548922">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="email" value="{{ user.email }}">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" value="{{ user.email }}">
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>RUT</label>
-                        <input type="text" value="{{ user_rut|default:'' }}" placeholder="11.111.111-1">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>RUT</label>
+                            <input type="text" name="rut" value="{{ user_rut|default:'' }}" placeholder="11.111.111-1">
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select name="rut_type">
+                                <option value="rut">RUT</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Tipo</label>
-                        <select>
-                            <option>RUT</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="button-group">
-                    <button class="btn-back" onclick="cancelarEdicionDatos()">CANCELAR</button>
-                    <button class="btn-continue" onclick="guardarDatos()">GUARDAR</button>
-                </div>
+                    <div class="button-group">
+                        <button class="btn-back" type="button" onclick="cancelarEdicionDatos()">CANCELAR</button>
+                        <button class="btn-continue" type="submit">GUARDAR</button>
+                    </div>
+                </form>
             </div>
 
-            <!-- Separador -->
+
             <div id="separador1" style="height: 40px;"></div>
 
-            <!-- Sección Mi dirección - Vista resumen -->
+
             <div id="direccionResumen">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin-bottom: 0;">Mi dirección</h2>
@@ -136,7 +139,6 @@
                 {% endif %}
             </div>
 
-            <!-- Sección Mi dirección - Formulario edición -->
             <div id="direccionFormulario" style="display: none;">
                 <form method="post" action="{% url 'checkout' %}">
                     {% csrf_token %}
@@ -157,11 +159,11 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Calle</label>
-                            <input type="text" name="street" value="{% if default_address %}{{ default_address.line1|default:''|cut:' '|slice:':-1' }}{% endif %}">   
+                            <input type="text" name="street" value="{% if default_address %}{{ default_street }}{% endif %}">   
                         </div>
                         <div class="form-group">
                             <label>Número</label>
-                            <input type="text" name="number" value="">
+                            <input type="text" name="number" value="{% if default_address %}{{ default_number }}{% endif %}">
                         </div>
                     </div>
 
@@ -213,8 +215,20 @@
 
             <div class="flow-actions">
                 <a href="{% url 'carrito' %}"><button  class="btn-back btn-large">ATRÁS</button></a>
-                <a href="{% url 'entrega' %}"><button class="btn-continue btn-large" >CONTINUAR</button></a>
+                {% if can_continue %}
+                    <a href="{% url 'entrega' %}"><button class="btn-continue btn-large">CONTINUAR</button></a>
+                {% else %}
+                    <button class="btn-continue btn-large" type="button" disabled
+                            title="Completa tus datos personales y tu dirección para continuar">
+                        CONTINUAR
+                    </button>
+                {% endif %}
             </div>
+            {% if not can_continue %}
+                <p style="margin-top:10px; color:#c00; font-size:0.9rem;">
+                    Debes completar tus datos personales y tu dirección para continuar al siguiente paso.
+                </p>
+            {% endif %}
         </div>
 {% endblock %}
 

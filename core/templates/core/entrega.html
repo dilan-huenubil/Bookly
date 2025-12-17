@@ -26,28 +26,6 @@
 <div class="form-section">
     <h3 style="margin-bottom:20px;">Entrega</h3>
     <div class="delivery-card">
-        <!-- Producto -->
-        <div class="delivery-product" id="deliveryProduct">
-            {% if book %}
-            <img class="delivery-product-img" src="{{ book.image_url }}" alt="{{ book.title }}">
-            <div class="delivery-product-info">
-                {% if book.author %}
-                <p class="delivery-product-brand">{{ book.author }}</p>
-                {% endif %}
-                <p class="delivery-product-name">{{ book.title }}</p>
-                <p class="delivery-product-qty" id="deliveryQty">Cantidad: 1</p>
-                <p class="delivery-product-sku">SKU: {{ book.sku }}</p>
-            </div>
-            {% else %}
-            <img class="delivery-product-img" src="https://www.penguinlibros.com/cl/2738537/el-libro-de-los-libros.jpg" alt="Producto">
-            <div class="delivery-product-info">
-                <p class="delivery-product-brand">&nbsp;</p>
-                <p class="delivery-product-name" id="deliveryName">Producto</p>
-                <p class="delivery-product-qty" id="deliveryQty">Cantidad: 1</p>
-            </div>
-            {% endif %}
-        </div>
-        <!-- Métodos de envío -->
         <div class="delivery-methods">
             <h4 class="delivery-section-title">Envío a domicilio</h4>
             <div class="shipping-option active">
@@ -85,7 +63,7 @@
     </div>
     <div class="flow-actions" style="margin-top:32px;">
         <a href="{% url 'checkout' %}"><button class="btn-back btn-large">ATRÁS</button></a>
-        <a href="{% url 'pago' %}"><button class="btn-continue btn-large">IR A PAGAR</button></a>
+        <a href="{% url 'pago' %}" id="linkIrPagar"><button class="btn-continue btn-large" id="btnIrPagar">IR A PAGAR</button></a>
     </div>
 </div>
 

@@ -4,7 +4,6 @@
 {% block title %}Bookly | Inicio{% endblock %}
 
 {% block content %}
-    <!-- CONTENIDO PRINCIPAL -->
     <main class="content">
         <div class="content-header">
             <h1 class="title">Bienvenidos a Bookly</h1>
@@ -44,7 +43,12 @@
             {% endfor %}
         </div>
 
-        <!-- Paginación -->
+        <section id="filterEmpty" class="filter-empty" style="display:none;">
+            <i class="bi bi-funnel filter-empty-icon" aria-hidden="true"></i>
+            <h2>No se encontraron libros con ese filtro</h2>
+            <p class="hint">Intenta con otro rango de precio</p>
+        </section>
+
         <div class="pagination">
             <a href="#" class="active">1</a>
             <a href="#">2</a>

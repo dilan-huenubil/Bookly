@@ -43,13 +43,13 @@ class Order(models.Model):
 	amount = models.IntegerField("Monto")
 	currency = models.CharField("Moneda", max_length=8, default='CLP')
 	email = models.EmailField("Email comprador")
-	# Snapshot de dirección de despacho usada en la compra
+	coupon_code = models.CharField("Cupón aplicado", max_length=50, blank=True, null=True)
 	shipping_name = models.CharField("Nombre receptor", max_length=128, blank=True, null=True)
 	shipping_phone = models.CharField("Teléfono receptor", max_length=32, blank=True, null=True)
 	shipping_line1 = models.CharField("Dirección (calle y número)", max_length=128, blank=True, null=True)
 	shipping_line2 = models.CharField("Depto / bloque (opcional)", max_length=128, blank=True, null=True)
+	first_item_title = models.CharField(max_length=255, null=True, blank=True)
 	shipping_comuna = models.CharField("Comuna", max_length=64, blank=True, null=True)
-	shipping_ciudad = models.CharField("Ciudad", max_length=64, blank=True, null=True)
 	shipping_region = models.CharField("Región", max_length=64, blank=True, null=True)
 	shipping_postal_code = models.CharField("Código postal", max_length=16, blank=True, null=True)
 	status = models.CharField("Estado", max_length=16, choices=STATUS_CHOICES, default='created')
@@ -58,6 +58,18 @@ class Order(models.Model):
 
 	def __str__(self):
 		return f"Order {self.commerce_order} ({self.status})"
+
+
+class CouponRedemption(models.Model):
+	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='coupon_redemptions')
+	code = models.CharField(max_length=50)
+	used_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		unique_together = ('user', 'code')
+
+	def __str__(self):
+		return f"{self.user.username} - {self.code} ({self.used_at})"
 
 class Address(models.Model):
 	ADDRESS_TYPES = (
@@ -72,7 +84,6 @@ class Address(models.Model):
 	line1 = models.CharField("Dirección (calle y número)", max_length=128)
 	line2 = models.CharField("Depto / bloque (opcional)", max_length=128, blank=True, null=True)
 	comuna = models.CharField("Comuna", max_length=64)
-	ciudad = models.CharField("Ciudad", max_length=64)
 	region = models.CharField("Región", max_length=64)
 	postal_code = models.CharField("Código postal", max_length=16, blank=True, null=True)
 	is_default = models.BooleanField("Predeterminada", default=False)

@@ -1,22 +1,26 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.conf import settings
-import re
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.db import IntegrityError
+from django.utils import timezone
+from django.db.models import Q
+import re
 import hmac
 import hashlib
 import requests
-from urllib.parse import urlencode
 import time
 import uuid
-from .models import Order, Address, Book
+import json
+
+from .models import Order, Address, Book, CouponRedemption
 
 # Create your views here.
+
 def index(request):
     books = Book.objects.order_by('-created_at')
     return render(request, 'core/index.html', { 'books': books })
@@ -47,9 +51,7 @@ def register(request):
 
     form_type = request.POST.get('form_type')
 
-    # -------------------------------
     # REGISTRO
-    # -------------------------------
     if form_type == "register":
         username = request.POST.get('username')
         email = request.POST.get('email')
@@ -99,14 +101,11 @@ def register(request):
             'login_error': ''
         })
 
-    # -------------------------------
-    # LOGIN (seguro + next)
-    # -------------------------------
+    # LOGIN
     elif form_type == "login":
         identifier = request.POST.get('username')
         password = request.POST.get('password')
 
-        # Capturar next desde POST o GET
         next_url = request.POST.get('next') or request.GET.get('next')
 
         user = authenticate(request, username=identifier, password=password)
@@ -119,18 +118,13 @@ def register(request):
 
         login(request, user)
 
-        # =============================
-        # VALIDAR QUE NEXT SEA INTERNO
-        # =============================
         if next_url and url_has_allowed_host_and_scheme(
             url=next_url,
             allowed_hosts={request.get_host()}
         ):
             return redirect(next_url)
 
-        # Si no hay next o es inválido → ir al index
         return redirect('index')
-
 
 
 @login_required
@@ -148,7 +142,6 @@ def logout_view(request):
 
 @login_required
 def checkout(request):
-    # Handle create/update address submissions
     user = request.user
 
     if request.method == 'POST':
@@ -162,7 +155,6 @@ def checkout(request):
             line2 = (request.POST.get('line2') or '').strip()
             region = (request.POST.get('region') or '').strip()
             comuna = (request.POST.get('comuna') or '').strip()
-            ciudad = (request.POST.get('ciudad') or '').strip()
             postal_code = (request.POST.get('postal_code') or '').strip()
             make_default = request.POST.get('is_default') == 'on'
 
@@ -182,7 +174,6 @@ def checkout(request):
             addr.line2 = line2 or ''
             addr.region = region or addr.region or ''
             addr.comuna = comuna or addr.comuna or ''
-            addr.ciudad = ciudad or addr.ciudad or ''
             addr.postal_code = postal_code or addr.postal_code or ''
             addr.save()
 
@@ -192,24 +183,102 @@ def checkout(request):
                 addr.save(update_fields=['is_default'])
 
             return redirect('checkout')
+        elif action == 'save_user':
+            first_name = (request.POST.get('first_name') or '').strip()
+            last_name = (request.POST.get('last_name') or '').strip()
+            phone = (request.POST.get('phone') or '').strip()
+            email = (request.POST.get('email') or '').strip()
+            rut = (request.POST.get('rut') or '').strip()
 
-    # Load user info and shipping addresses from DB (GET or after POST redirect)
+
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            if email:
+                user.email = email
+            user.save()
+
+
+            if rut:
+                request.session['checkout_rut'] = rut
+
+
+            if phone:
+                default_addr = Address.objects.filter(user=user, address_type='shipping', is_default=True).first()
+                if default_addr:
+                    default_addr.phone = phone
+                    default_addr.save(update_fields=['phone'])
+
+            return redirect('checkout')
+
+
+    coupon_already_used = (
+        CouponRedemption.objects.filter(user=user, code__iexact='Bookly10').exists() or
+        Order.objects.filter(user=user, coupon_code__iexact='Bookly10').exists()
+    )
+
+
     addresses = Address.objects.filter(user=user, address_type='shipping').order_by('-is_default', '-updated_at')
     default_address = addresses.filter(is_default=True).first() or addresses.first()
+
+
+    default_street = ''
+    default_number = ''
+    if default_address and default_address.line1:
+        parts = default_address.line1.rsplit(' ', 1)
+        if len(parts) == 2 and parts[1].isdigit():
+            default_street, default_number = parts[0], parts[1]
+        else:
+            default_street = default_address.line1
+
+    has_addresses = addresses.exists()
+    user_phone = (default_address.phone if default_address else '')
+
+
+    has_user_data = bool(
+        (user.first_name or '').strip() and
+        (user.last_name or '').strip() and
+        (user.email or '').strip() and
+        (user_phone or '').strip()
+    )
 
     context = {
         'user': user,
         'addresses': addresses,
         'default_address': default_address,
-        'has_addresses': addresses.exists(),
-        'user_phone': (default_address.phone if default_address else ''),
+        'has_addresses': has_addresses,
+        'user_phone': user_phone,
+        'user_rut': request.session.get('checkout_rut', ''),
+        'default_street': default_street,
+        'default_number': default_number,
         'show_shipping': False,
+        'has_user_data': has_user_data,
+        'can_continue': has_user_data and has_addresses,
+        'coupon_already_used': coupon_already_used,
     }
     return render(request, 'core/checkout.html', context)
 
 @login_required
 def entrega(request):
-    # Intentar cargar un libro desde la BD si se proporciona SKU
+    addresses = Address.objects.filter(user=request.user, address_type='shipping')
+    default_address = addresses.filter(is_default=True).first() or addresses.first()
+    has_addresses = addresses.exists()
+    user_phone = (default_address.phone if default_address else '')
+    has_user_data = bool(
+        (request.user.first_name or '').strip() and
+        (request.user.last_name or '').strip() and
+        (request.user.email or '').strip() and
+        (user_phone or '').strip()
+    )
+    if not (has_addresses and has_user_data):
+        return redirect('checkout')
+
+    coupon_already_used = (
+        CouponRedemption.objects.filter(user=request.user, code__iexact='Bookly10').exists() or
+        Order.objects.filter(user=request.user, coupon_code__iexact='Bookly10').exists()
+    )
+
     sku = request.GET.get('sku')
     book = None
     if sku:
@@ -220,13 +289,13 @@ def entrega(request):
     context = {
         'book': book,
         'show_shipping': True,
+        'coupon_already_used': coupon_already_used,
     }
     return render(request, 'core/entrega.html', context)
 
 
 @login_required
 def pago(request):
-    # Cargar libro desde BD opcional por SKU
     sku = request.GET.get('sku')
     book = None
     if sku:
@@ -234,14 +303,21 @@ def pago(request):
             book = Book.objects.get(sku=sku)
         except Book.DoesNotExist:
             book = None
-    return render(request, 'core/pago.html', { 'book': book, 'show_shipping': True })
 
-# =============================
-# Flow payment integration (sandbox)
-# =============================
+    coupon_already_used = (
+        CouponRedemption.objects.filter(user=request.user, code__iexact='Bookly10').exists() or
+        Order.objects.filter(user=request.user, coupon_code__iexact='Bookly10').exists()
+    )
+
+    return render(request, 'core/pago.html', {
+        'book': book,
+        'show_shipping': True,
+        'coupon_already_used': coupon_already_used,
+    })
+
+
 
 def _flow_string_to_sign(params: dict) -> str:
-    # Flow expects a canonical string: key=value joined by '&', sorted by key, no URL encoding
     items = sorted((k, str(v)) for k, v in params.items() if k != 's')
     return '&'.join(f"{k}={v}" for k, v in items)
 
@@ -252,15 +328,30 @@ def _flow_sign(params: dict, secret: str) -> str:
 
 @login_required
 def pago_create(request):
-    # Amount comes from client-side computed total (subtotal+IVA+envío)
+
     raw_amount = request.GET.get('amount') or request.POST.get('amount')
     try:
         amount = int(str(raw_amount)) if raw_amount is not None else 1000
     except (TypeError, ValueError):
         amount = 1000
-    # Safety floor
     if amount <= 0:
         amount = 1000
+
+    raw_coupon = (request.GET.get('coupon') or request.POST.get('coupon') or '').strip()
+    applied_coupon_code = None
+    if raw_coupon and raw_coupon.lower() == 'bookly10':
+        already_used = (
+            CouponRedemption.objects.filter(user=request.user, code__iexact='Bookly10').exists()
+            or Order.objects.filter(user=request.user, coupon_code__iexact='Bookly10').exists()
+        )
+        if already_used:
+            return render(request, 'core/pago.html', {
+                'book': None,
+                'show_shipping': True,
+                'flow_error': 'El cupón Bookly10 ya fue utilizado en esta cuenta. Elimínalo para continuar sin descuento.',
+            }, status=400)
+        applied_coupon_code = 'Bookly10'
+
     api_key = settings.FLOW_API_KEY
     secret = settings.FLOW_SECRET
     base_url = settings.FLOW_BASE_URL
@@ -268,45 +359,62 @@ def pago_create(request):
     if not (api_key and secret):
         return JsonResponse({'error': 'Flow API key/secret not configured'}, status=500)
 
-    return_url = f"{settings.SITE_BASE_URL}/flow/return/"
-    callback_url = f"{settings.SITE_BASE_URL}/flow/callback/"
-    # Generate a unique commerce order id (Flow requires unique value)
-    def _new_commerce_order():
-        return f"ORD-{request.user.id}-{uuid.uuid4().hex[:12]}"
-    commerce_order = _new_commerce_order()
 
-    # Validate buyer email: Flow requires a valid email
+    current_origin = request.build_absolute_uri('/')[:-1]
+    return_url = f"{current_origin}/flow/return/"
+    callback_url = f"{current_origin}/flow/callback/"
+
+
     buyer_email = request.user.email
     if not buyer_email or not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", buyer_email):
         return JsonResponse({'error': 'Email de usuario inválido o faltante. Actualiza tu correo en el perfil.'}, status=400)
 
-    # Try to use user's default shipping address snapshot
+
     shipping = Address.objects.filter(user=request.user, address_type='shipping', is_default=True).first()
 
-    # Create local order with snapshot if available (retry on rare UUID collision)
-    for _ in range(3):
-        try:
-            order = Order.objects.create(
-                user=request.user,
-                commerce_order=commerce_order,
-                amount=amount,
-                currency='CLP',
-                email=buyer_email,
-                status='created',
-                shipping_name=(shipping.name if shipping else None),
-                shipping_phone=(shipping.phone if shipping else None),
-                shipping_line1=(shipping.line1 if shipping else None),
-                shipping_line2=(shipping.line2 if shipping else None),
-                shipping_comuna=(shipping.comuna if shipping else None),
-                shipping_ciudad=(shipping.ciudad if shipping else None),
-                shipping_region=(shipping.region if shipping else None),
-                shipping_postal_code=(shipping.postal_code if shipping else None),
-            )
+
+    while True:
+        commerce_order = f"ORD-{request.user.id}-{uuid.uuid4().hex[:12]}"
+        if not Order.objects.filter(commerce_order=commerce_order).exists():
             break
-        except IntegrityError:
-            commerce_order = _new_commerce_order()
-    else:
-        return JsonResponse({'error': 'No se pudo generar una orden única. Intenta nuevamente.'}, status=500)
+
+
+    first_title = None
+    try:
+        titles_param = request.GET.get('titles') or request.POST.get('titles')
+        if titles_param:
+            import json
+            titles_list = json.loads(titles_param)
+            if isinstance(titles_list, list) and titles_list:
+                t = str(titles_list[0]).strip()
+                if t and t.lower() != 'producto':
+                    first_title = t if len(titles_list) == 1 else f"{t} y {len(titles_list)-1} más"
+        
+        if not first_title:
+            t_single = request.GET.get('title') or request.POST.get('title')
+            if t_single and str(t_single).strip().lower() != 'producto':
+                first_title = str(t_single).strip()
+    except Exception:
+        pass
+
+    order = Order.objects.create(
+        user=request.user,
+        commerce_order=commerce_order,
+        amount=amount,
+        currency='CLP',
+        email=buyer_email,
+        status='pending',
+        coupon_code=applied_coupon_code,
+        first_item_title=first_title,
+        shipping_name=(shipping.name if shipping else None),
+        shipping_phone=(shipping.phone if shipping else None),
+        shipping_line1=(shipping.line1 if shipping else None),
+        shipping_line2=(shipping.line2 if shipping else None),
+        shipping_comuna=(shipping.comuna if shipping else None),
+        shipping_region=(shipping.region if shipping else None),
+        shipping_postal_code=(shipping.postal_code if shipping else None),
+    )
+
 
     params = {
         'apiKey': api_key,
@@ -314,7 +422,7 @@ def pago_create(request):
         'currency': 'CLP',
         'amount': amount,
         'email': buyer_email,
-        'paymentMethod': 9,  # Webpay Plus
+        'paymentMethod': 9,
         'urlReturn': return_url,
         'urlConfirmation': callback_url,
         'commerceOrder': commerce_order,
@@ -333,35 +441,44 @@ def pago_create(request):
         return JsonResponse({'error': 'Flow request failed', 'detail': str(e)}, status=502)
 
     if resp.status_code != 200 or 'token' not in data:
-        return JsonResponse({'error': 'Flow error', 'response': data}, status=500)
+        order.delete()
+        flow_message = data.get('message') if isinstance(data, dict) else None
+        friendly_message = flow_message or 'No se pudo crear el pago en Flow. Intenta nuevamente más tarde.'
+        return render(request, 'core/pago.html', {
+            'book': None,
+            'show_shipping': True,
+            'flow_error': f"Error al crear pago en Flow: {friendly_message}",
+        }, status=400)
 
-    # Persist Flow response
+
     token = data['token']
     order.flow_token = token
     order.flow_order = str(data.get('flowOrder', ''))
     order.save(update_fields=['flow_token', 'flow_order'])
-    # Prefer Flow-provided URL for redirection
-    provided_url = data.get('url', 'https://sandbox.flow.cl/flow/redirect')
+
+    request.session['last_flow_token'] = token
+
+    provided_url = data.get('url')
+    if not provided_url:
+        provided_url = 'https://sandbox.flow.cl/app/web/pay.php'
+        
     checkout_url = f"{provided_url}?token={token}"
-    print('[Flow] Redirecting to:', checkout_url)
+    print('[Flow] Redirecting to NEW order:', checkout_url)
     return redirect(checkout_url)
 
 
-@login_required
+@csrf_exempt
 def flow_return(request):
-    # User returns from Flow; token present in query
-    token = request.GET.get('token')
+    token = request.GET.get('token') or request.POST.get('token')
     if not token:
         return redirect('pago')
-    # Log incoming return for diagnostics
     print('[Flow] RETURN hit:', request.build_absolute_uri())
-    print('[Flow] RETURN params:', dict(request.GET))
-    # Optionally fetch payment status here
-    return render(request, 'core/pago.html', {'flow_token': token, 'message': 'Retorno desde Flow'})
+    print('[Flow] RETURN method:', request.method)
+    print('[Flow] RETURN params GET:', dict(request.GET))
+    return redirect(f"/confirmacion_pedido/?token={token}")
 
 
 def flow_callback(request):
-    # Server-to-server confirmation
     api_key = settings.FLOW_API_KEY
     secret = settings.FLOW_SECRET
     base_url = settings.FLOW_BASE_URL
@@ -369,7 +486,7 @@ def flow_callback(request):
     token = request.GET.get('token') or request.POST.get('token')
     if not token:
         return HttpResponse('missing token', status=400)
-    # Log incoming callback for diagnostics
+
     print('[Flow] CALLBACK hit:', request.build_absolute_uri())
     print('[Flow] CALLBACK method:', request.method)
     print('[Flow] CALLBACK GET params:', dict(request.GET))
@@ -385,18 +502,27 @@ def flow_callback(request):
     except Exception:
         return HttpResponse('error', status=502)
 
-    # Update local order status based on Flow status
-    # Status mapping: 1=created, 2=paid, 3=canceled
+
     status_map = {1: 'created', 2: 'paid', 3: 'canceled'}
     flow_status = data.get('status')
     mapped = status_map.get(flow_status, 'error')
 
-    # Find order by token
+
     try:
         order = Order.objects.get(flow_token=token)
         order.status = mapped
         order.flow_order = str(data.get('flowOrder', order.flow_order))
         order.save(update_fields=['status', 'flow_order'])
+
+
+        if mapped == 'paid' and getattr(order, 'coupon_code', None):
+            try:
+                CouponRedemption.objects.get_or_create(
+                    user=order.user,
+                    code=order.coupon_code
+                )
+            except Exception:
+                pass
     except Order.DoesNotExist:
         pass
 
@@ -404,7 +530,6 @@ def flow_callback(request):
 
 
 def flow_debug(request):
-    # Diagnostics endpoint to verify loaded settings and signature behavior
     api_key = settings.FLOW_API_KEY
     secret = settings.FLOW_SECRET
     base_url = settings.FLOW_BASE_URL
@@ -436,7 +561,6 @@ def flow_debug(request):
     })
 
 def destacados(request):
-    # Libros destacados: priorizar con descuento, luego recientes
     books_qs = Book.objects.all()
     discounted = books_qs.filter(discount_percent__gt=0).order_by('-discount_percent', '-created_at')
     if discounted.exists():
@@ -458,13 +582,85 @@ def set_default_address(request, address_id: int):
 
 @login_required
 def delete_address(request, address_id: int):
-    # Allow only POST for deletion to avoid accidental deletes via link clicks
     if request.method != 'POST':
         return redirect('checkout')
     addr = get_object_or_404(Address, id=address_id, user=request.user, address_type='shipping')
     addr.delete()
     return redirect('checkout')
 
-@login_required
 def confirmacion_pedido(request):
-    return render(request, 'core/confirmacion_pedido.html')
+    token = request.GET.get('token')
+    order = None
+
+
+    if token:
+        try:
+            order = Order.objects.get(flow_token=token)
+
+            if not request.user.is_authenticated:
+                if order.user:
+                    login(request, order.user, backend='django.contrib.auth.backends.ModelBackend')
+                    print(f"[Auto-Login] Sesión recuperada exitosamente para: {order.user.username}")
+        except Order.DoesNotExist:
+            order = None
+
+    if not request.user.is_authenticated and not order:
+        return redirect('index')
+
+    if order and getattr(order, 'coupon_code', None) and order.user:
+        try:
+            CouponRedemption.objects.get_or_create(
+                user=order.user,
+                code=order.coupon_code
+            )
+        except Exception:
+            pass
+
+    buyer_name = None
+    if order:
+        try:
+            full_name = (order.user.get_full_name() or '').strip()
+        except Exception:
+            full_name = ''
+        buyer_name = getattr(order, 'shipping_name', None) or full_name or getattr(order.user, 'username', None)
+
+    context = {
+        'order': order,
+        'buyer_name': buyer_name,
+        'status': getattr(order, 'status', None),
+        'amount': getattr(order, 'amount', None),
+        'currency': getattr(order, 'currency', None),
+        'commerce_order': getattr(order, 'commerce_order', None),
+        'flow_order': getattr(order, 'flow_order', None),
+        'shipping_name': getattr(order, 'shipping_name', None),
+        'shipping_phone': getattr(order, 'shipping_phone', None),
+        'shipping_line1': getattr(order, 'shipping_line1', None),
+        'shipping_line2': getattr(order, 'shipping_line2', None),
+        'shipping_comuna': getattr(order, 'shipping_comuna', None),
+        'shipping_region': getattr(order, 'shipping_region', None),
+        'shipping_postal_code': getattr(order, 'shipping_postal_code', None),
+    }
+    return render(request, 'core/confirmacion_pedido.html', context)
+
+def search(request):
+    query = request.GET.get('q', '').strip()
+    results = []
+    
+    if query:
+        results = Book.objects.filter(
+            Q(title__icontains=query) |
+            Q(author__icontains=query) |
+            Q(category__icontains=query)
+        ).order_by('-created_at')
+    
+    context = {
+        'query': query,
+        'results': results,
+        'count': results.count() if results else 0,
+    }
+    return render(request, 'core/search.html', context)
+
+
+
+
+

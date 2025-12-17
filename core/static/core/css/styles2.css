@@ -210,7 +210,7 @@ body {
     }
 }
 
-/* Nueva regla para forzar el apilamiento en pantallas medianas */
+
 @media (max-width: 992px) {
     .form-row {
         flex-direction: column;
@@ -253,7 +253,7 @@ body {
     }
 }
 
-/* Card styling for checkout sections to separate backgrounds */
+
 #datosResumen,
 #datosFormulario,
 #direccionResumen,
@@ -313,7 +313,6 @@ h2 {
 .form-row {
     display: flex;
     flex-wrap: wrap;
-    /* Permite que los elementos se envuelvan en lugar de desbordarse */
     gap: 20px;
     margin-bottom: 20px;
 }
@@ -426,22 +425,15 @@ button:hover {
 .btn-back:link,
 .btn-back:visited {
     text-decoration: none;
-    /* quita subrayado */
     display: inline-flex;
-    /* se comporta como botón */
     align-items: center;
-    /* centra verticalmente */
     justify-content: center;
-    /* centra horizontalmente */
     line-height: normal;
-    /* evita desajustes verticales */
     box-sizing: border-box;
-    /* incluye padding en el tamaño */
 }
 
 .btn-back:hover {
     text-decoration: none;
-    /* mantiene sin subrayado al pasar el mouse */
 }
 
 
@@ -617,12 +609,13 @@ button:hover {
 .coupon-applied {
     background-color: #C7CCD9;
     color: #333;
-    padding: 8px 12px;
+    padding: 4px 0 4px 6px;
     border-radius: 4px;
     font-size: 13px;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
+    width: fit-content;
 }
 
 .coupon-remove {
@@ -771,7 +764,7 @@ button:hover {
     background-color: #495867;
 }
 
-/* Media queries para botones responsivos */
+
 @media (max-width: 1200px) {
     .btn-large {
         width: 180px;
@@ -919,7 +912,7 @@ button:hover {
     padding-top: 20px;
 }
 
-/* Nueva maqueta Entrega 1 */
+
 .delivery-card {
     display: flex;
     gap: 24px;
@@ -1306,22 +1299,16 @@ button:hover {
     }
 }
 
-/* Pago page overrides */
+
 .payment-title {
-    /* Responsive size: min 13px, fluid up to 15px */
     font-size: clamp(13px, 0.9vw + 11px, 15px);
     font-weight: 700;
     color: #512d81;
-    /* tono acorde a branding de Webpay */
     letter-spacing: .3px;
     margin-left: 8px;
-    /* reducido para evitar desbordes */
     flex: 1 1 0;
-    /* permite que crezca y se encoja desde base 0 */
     min-width: 0;
-    /* permite que el flex funcione correctamente */
     max-width: 100%;
-    /* evita desborde del contenedor */
     line-height: 1.25;
 }
 
@@ -1331,15 +1318,13 @@ button:hover {
     }
 }
 
-/* Imagen del método de pago (solo en pago.html) */
+
 .payment-image {
     display: block;
     max-width: 70px;
-    /* reducido para evitar wrap del título */
     width: 100%;
     height: auto;
     max-height: 34px;
-    /* limita altura */
     object-fit: contain;
 }
 
@@ -1351,16 +1336,12 @@ button:hover {
     .shipping-left {
         gap: 5px;
         flex-wrap: wrap;
-        /* permite que el título baje cuando no hay espacio */
     }
 
     .payment-title {
         flex-basis: 100%;
-        /* fuerza a ocupar toda la línea cuando hace wrap */
         margin-left: 0;
-        /* elimina margen cuando está en su propia línea */
         margin-top: 8px;
-        /* espacio superior cuando hace wrap */
     }
 }
 
@@ -1382,7 +1363,7 @@ button:hover {
     }
 }
 
-/* Pago page - New Payment method styles */
+/* Css Pago*/
 .payment-method-container {
     display: flex;
     align-items: center;
@@ -1461,7 +1442,7 @@ button:hover {
 }
 
 
-/* CSS confirmation pedido */
+/* CSS confirmación pedido */
 body.confirmation-page {
     background-color: #f4f7f6;
     display: flex;
@@ -1564,7 +1545,7 @@ p.subtitle {
     color: #2c3e50;
 }
 
-/* Botones */
+
 .btn-group {
     display: flex;
     gap: 15px;
@@ -1603,23 +1584,20 @@ p.subtitle {
     background-color: #556677;
 }
 
-/* Print styles: generate a clean receipt without action buttons */
+
 @media print {
-    /* Hide action buttons */
     .btn-group,
     .btn,
     a.btn {
         display: none !important;
     }
 
-    /* Neutral background for printing */
     body.confirmation-page {
         background: #ffffff !important;
         padding: 0 !important;
         margin: 0 !important;
     }
 
-    /* Remove shadows and extra spacing for clean print */
     .confirmation-card {
         box-shadow: none !important;
         border: 1px solid #e5e5e5;
@@ -1628,7 +1606,6 @@ p.subtitle {
         padding: 24px !important;
     }
 
-    /* Improve text contrast */
     .order-details,
     .detail-row,
     .detail-row strong,
@@ -1642,7 +1619,6 @@ p.subtitle {
     }
 }
 
-/* --- RESPONSIVE (Móvil) --- */
 @media (max-width: 480px) {
     .confirmation-card {
         padding: 25px 20px;

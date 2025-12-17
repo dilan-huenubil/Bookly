@@ -18,24 +18,20 @@
 
 <body>
 
-    <!-- HEADER -->
     <header>
-        <!-- Fila superior -->
         <div class="top-bar">
             <div class="top-content">
-                <!-- Logo -->
                 <div class="logo">
-                    <!-- <img src="https://feriachilenadellibro.cl/wp-content/uploads/2022/06/logoferiaonline.png" alt="Feria Chilena del Libro">-->
-                    <H3 style="color:white">BOOKLY LOGO</H3>
+                    <h3 style="color:white">BOOKLY LOGO</h3>
                 </div>
 
-                <!-- Barra de búsqueda (desktop) -->
                 <div class="search-container">
-                    <input type="text" placeholder="Buscar Libros...">
-                    <button><i class="bi bi-search"></i></button>
+                    <form action="{% url 'search' %}" method="get" role="search">
+                        <input type="text" name="q" placeholder="Buscar Libros..." aria-label="Buscar libros" />
+                        <button type="submit" aria-label="Buscar"><i class="bi bi-search"></i></button>
+                    </form>
                 </div>
 
-                <!-- Iconos -->
                 <div class="icons desktop-icons">
                     {% if user.is_authenticated %}
                     <a href="{{ url_logout }}" class="user-link" aria-label="Cerrar sesión">
@@ -57,7 +53,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Controles móviles: botón menú y búsqueda compacta -->
                 <div class="mobile-controls">
                     <button type="button" class="mobile-search" aria-label="Buscar">
                         <i class="bi bi-search"></i>
@@ -72,17 +67,10 @@
             </div>
         </div>
 
-        <!-- Fila inferior: menú -->
+
         <nav class="main-menu">
             <a href="{{ url_index }}" class="{% if request.path == url_index %}active{% endif %}">Inicio</a>
-            <!-- <a href="#">Categorías</a> -->
-            <!-- <a href="#">Giftcard</a> -->
             <a href="{{ url_destacados }}" class="{% if request.path == url_destacados %}active{% endif %}">Destacados</a>
-            <!-- <a href="#">Ofertas</a> -->
-            <!-- <a href="#">Packs</a> -->
-            <!-- <a href="#">Más vendidos</a> -->
-            <!-- <a href="#">Novedades</a> -->
-            <!-- <a href="#" >Comics & Mangas</a> -->
             <a href="{{ url_contacto }}" class="{% if request.path == url_contacto %}active{% endif %}">Contacto</a>
         </nav>
 
@@ -91,7 +79,7 @@
             <button class="close-btn" id="mobileClose" aria-label="Cerrar menú"><i class="bi bi-x-lg"></i></button>
             <div class="overlay-top">
                 <div class="overlay-logo">
-                    <img src="https://feriachilenadellibro.cl/wp-content/uploads/2022/06/logoferiaonline.png" alt="Logo">
+                    <h3 style="color:white">BOOKLY LOGO</h3>
                 </div>
                 <div class="overlay-actions">
                     <button class="overlay-search-btn" id="overlaySearchBtn" aria-label="Buscar"><i class="bi bi-search"></i></button>
@@ -121,11 +109,13 @@
             </nav>
         </div>
 
-        <!-- Overlay de búsqueda móvil -->
+
         <div class="mobile-search-overlay" id="mobileSearch" aria-hidden="true">
             <div class="search-bar">
                 <button class="back-btn" id="mobileSearchBack" aria-label="Volver"><i class="bi bi-arrow-left"></i></button>
-                <input type="text" id="mobileSearchInput" placeholder="Buscar Título, Autor, Isbn..." />
+                <form action="{% url 'search' %}" method="get" role="search" class="mobile-search-form">
+                    <input type="text" id="mobileSearchInput" name="q" placeholder="Buscar Título, Autor, Isbn..." aria-label="Buscar" />
+                </form>
             </div>
         </div>
     </header>
@@ -133,12 +123,12 @@
     {% block content %}
     {% endblock %}
 
-    <!-- FOOTER -->
+
     <footer>
         <div class="footer-container">
             <div class="footer-logo">
-                <img src="" alt="Logo Footer">
-                <p>Bookly</p>
+                <h4 style="color:white">BOOKLY LOGO</h4>
+                <p>En Bookly encuentra tus libros favoritos</p>
                 <div class="socials">
                     <i class="bi bi-twitter"></i>
                     <i class="bi bi-facebook"></i>
@@ -147,10 +137,9 @@
                 </div>
             </div>
             <div>
-                <!---
-                <h4>Empresa</h4>
+                <!--<h4>Empresa</h4>
                 <a href="#">Quienes Somos</a>
-                <a href="#">Términos y Condiciones</a>--->
+                <a href="#">Términos y Condiciones</a>!-->
             </div>
             <div>
                 <!---
@@ -158,13 +147,13 @@
                 <a href="#">Cobertura</a>
                 <a href="#">Tiempos de entrega</a>
                 <a href="#">Costos de Envío</a>
-                <a href="#">Retiro en Librerías</a>--->
+                <a href="#">Retiro en Librerías</a>!-->
             </div>
             <div>
                 <!---
                 <h4>Seguridad</h4>
                 <a href="#">Política de Seguridad</a>
-                <a href="#">Vigencia de Precios</a>--->
+                <a href="#">Vigencia de Precios</a>!-->
             </div>
             <div>
                 <!---
@@ -172,7 +161,7 @@
                 <a href="#">Mi Cuenta</a>
                 <a href="#">Mi Bolsa</a>
                 <a href="#">Librerías Asociadas</a>
-                <a href="#">Contacto</a>--->
+                <a href="#">Contacto</a>!-->
             </div>
         </div>
         <div class="footer-bottom">
@@ -183,12 +172,10 @@
         </div>
     </footer>
 
-    <!-- Botón flotante subir al inicio -->
     <button class="back-to-top" id="backToTop" aria-label="Subir al inicio" title="Subir">
         <i class="bi bi-chevron-up"></i>
     </button>
-    
-    <!-- Backdrop y Carrito lateral -->
+
     <div class="cart-backdrop" id="cartBackdrop" aria-hidden="true"></div>
     <aside class="cart-drawer" id="cartDrawer" aria-hidden="true" aria-labelledby="cartTitle">
         <div class="cart-inner">
@@ -201,7 +188,7 @@
             </div>
             <div class="cart-body" id="cartBody">
                 <p id="cartEmptyMsg" style="display:none; color:#666; text-align:center; margin:16px 0;">Tu carrito está vacío.</p>
-                <div id="cartItems"><!-- Items del carrito se renderizan dinámicamente --></div>
+                <div id="cartItems"></div>
             </div>
             <div class="cart-footer">
                 <div class="cart-totals" id="cartTotals">

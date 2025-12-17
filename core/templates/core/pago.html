@@ -33,29 +33,12 @@
 {% block content %}
 <div class="form-section">
     <h3 style="margin-bottom:20px;">Pago </h3>
+    {% if flow_error %}
+    <div style="margin-bottom:16px; padding:12px; border-radius:4px; background:#ffeaea; color:#b00020; font-size:14px;">
+        {{ flow_error }}
+    </div>
+    {% endif %}
     <div class="delivery-card">
-        <!-- Producto -->
-        <div class="delivery-product" id="deliveryProduct">
-            {% if book %}
-            <img class="delivery-product-img" src="{{ book.image_url }}" alt="{{ book.title }}">
-            <div class="delivery-product-info">
-                {% if book.author %}
-                <p class="delivery-product-brand">{{ book.author }}</p>
-                {% endif %}
-                <p class="delivery-product-name">{{ book.title }}</p>
-                <p class="delivery-product-qty" id="deliveryQty">Cantidad: 1</p>
-                <p class="delivery-product-sku">SKU: {{ book.sku }}</p>
-            </div>
-            {% else %}
-            <img class="delivery-product-img" src="https://www.penguinlibros.com/cl/2738537/el-libro-de-los-libros.jpg" alt="Producto">
-            <div class="delivery-product-info">
-                <p class="delivery-product-brand">&nbsp;</p>
-                <p class="delivery-product-name" id="deliveryName">Producto</p>
-                <p class="delivery-product-qty" id="deliveryQty">Cantidad: 1</p>
-            </div>
-            {% endif %}
-        </div>
-        <!-- Métodos de pago -->
         <div class="delivery-methods">
             <div class="shipping-option active">
                 <div class="payment-method-container">

@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 (function () {
-    // Dataset completo de regiones y comunas de Chile (abreviado para casos comunes; puedes ampliar si falta alguna).
     const DATA = {
         "REGIÓN DE ARICA Y PARINACOTA": ["Arica","Camarones","Putre","General Lagos"],
         "REGIÓN DE TARAPACÁ": ["Iquique","Alto Hospicio","Pica","Pozo Almonte","Huara","Camiña","Colchane"],
@@ -51,11 +50,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const region = regionSelect.value;
             const comunas = DATA[region] || [];
             populateSelect(comunaSelect, comunas);
-            // Scroll to top after repopulate
             comunaSelect.scrollTop = 0;
         });
 
-        // Preselección si vienen valores desde el servidor
+
         const initialRegion = regionSelect.dataset.initialRegion;
         const initialComuna = comunaSelect.dataset.initialComuna;
         if (initialRegion && DATA[initialRegion]) {
@@ -73,9 +71,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Mejorar accesibilidad: permitir buscar escribiendo rápidamente
+
         comunaSelect.addEventListener('keyup', function(e){
-            // Navegación nativa del select ya cubre esto; placeholder para extender.
+
         });
     }
 

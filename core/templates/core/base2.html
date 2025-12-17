@@ -76,6 +76,10 @@
                     <span>IVA (19%):</span>
                     <span id="sumIvaBase2">$0</span>
                 </div>
+                <div class="summary-row">
+                    <span>Descuento:</span>
+                    <span id="sumDiscountBase2">$0</span>
+                </div>
                 {% if show_shipping %}
                 <div class="summary-row">
                     <span>Despacho:</span>
@@ -99,7 +103,10 @@
         Desarrollado por Dilan Huenubil y Rodrigo Mella - © All Todos los derechos reservados
     </div>
 
+    <script>
+        window.couponAlreadyUsed = "{{ coupon_already_used|yesno:'true,false' }}";
+    </script>
     <script src="{% static 'core/js/script2.js' %}"></script>
-    <script src="{% static 'core/js/chile_regions.js' %}"></script>
+    <script src="{% static 'core/js/regiones.js' %}"></script>
 </body>
 </html>

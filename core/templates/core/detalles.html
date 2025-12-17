@@ -4,9 +4,7 @@
 {% block title %}Bookly | {{ book.title }}{% endblock %}
 
 {% block content %}
-    <!-- CONTENIDO PRINCIPAL: Detalle de producto -->
     <main class="product-page">
-        <!-- Migas de pan -->
         <nav class="breadcrumb" aria-label="Breadcrumb">
             <a href="/">Inicio</a>
             <span>/</span>
@@ -14,7 +12,7 @@
             <span class="current" aria-current="page">{{ book.title }}</span>
         </nav>
 
-        <!-- Hero producto -->
+
         <section class="product-hero">
             <div class="ph-gallery">
                 {% if book.discount_percent %}<div class="discount-badge">-{{ book.discount_percent }}%</div>{% endif %}
@@ -61,7 +59,7 @@
             </div>
         </section>
 
-        <!-- Tabs descripción / información adicional -->
+
         <section class="product-tabs" id="tabs">
             <div class="tablist" role="tablist" aria-label="Detalles del producto">
                 <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-description" id="btn-description">Descripción</button>
@@ -91,7 +89,6 @@
             </div>
         </section>
 
-        <!-- Productos relacionados (placeholder: mostrar otros libros con mismo category si existe) -->
         {% if related_books %}
         <section class="related">
             <h2>Productos relacionados</h2>

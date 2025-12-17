@@ -1,0 +1,49 @@
+{% extends 'core/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<main class="content search-page">
+    <div class="content-header">
+        {% if query %}
+            <h1 class="title">Resultados para "{{ query }}"</h1>
+            <p style="margin-left:auto; color:#65798C; font-weight:700;">{{ count }} resultado{{ count|pluralize }} encontrados</p>
+        {% else %}
+            <h1 class="title">Buscar libros</h1>
+            <p style="margin-left:auto; color:#65798C; font-weight:700;">Ingresa un término para buscar</p>
+        {% endif %}
+    </div>
+
+    {% if results %}
+    <div class="products">
+        {% for book in results %}
+        <div class="card" data-sku="{{ book.sku }}" data-title="{{ book.title }}" data-price="{{ book.price }}" data-image="{{ book.image_url|default:'https://via.placeholder.com/300x400?text=Sin+imagen' }}">
+            <a href="{% url 'libro_detalles' book.sku %}" class="card-thumb" aria-label="Ver detalles de {{ book.title }}">
+                <img src="{{ book.image_url|default:'https://via.placeholder.com/300x400?text=Sin+imagen' }}" alt="{{ book.title }}">
+            </a>
+            <h3>{{ book.title }}</h3>
+            <p>
+                Precio:
+                <span class="price">${{ book.price|intcomma }}</span>
+                {% if book.price_old %}
+                    <span class="old-price" style="margin-left:8px; color:#888; text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
+                {% endif %}
+            </p>
+            {% if book.stock > 0 %}
+            <button class="add-to-cart" type="button">AGREGAR AL CARRITO</button>
+            {% else %}
+            <button type="button" disabled>Sin stock</button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        {% if query %}
+        <section class="search-empty">
+            <div class="empty-icon" aria-hidden="true"></div>
+            <h2>No se encontraron resultados</h2>
+            <p class="hint">Intenta con otros términos de búsqueda</p>
+        </section>
+        {% endif %}
+    {% endif %}
+</main>
+{% endblock %}

@@ -83,10 +83,10 @@ function guardarDireccion() {
 
 initDireccionesPanel();
 
-// Toggle ver menos/ver más (protegido si no existe el botón)
-(function(){
+// Mostrar / ocultar ítem de producto en resumen
+(function () {
     var vmBtn = document.querySelector('.ver-menos');
-    if(!vmBtn) return;
+    if (!vmBtn) return;
     vmBtn.addEventListener('click', function () {
         const productItem = document.querySelector('.product-item');
         if (!productItem) return;
@@ -100,26 +100,89 @@ initDireccionesPanel();
     });
 })();
 
-// Eliminar cupón (protegido si no existe)
-(function(){
-    var couponClose = document.querySelector('.coupon-applied .coupon-remove');
-    if(!couponClose) return;
-    couponClose.addEventListener('click', function () {
-        var parent = this.parentElement;
-        if (parent) parent.style.display = 'none';
-    });
-})();
-
-// Aplicar cupón (protegido si no existe)
-(function(){
+// Eliminar y aplicar cupón en checkout y pago
+(function () {
+    var couponBox = document.querySelector('.coupon-applied');
+    var couponTextSpan = couponBox ? couponBox.firstChild : null;
+    var couponClose = couponBox ? couponBox.querySelector('.coupon-remove') : null;
     var applyBtn = document.querySelector('.btn-apply');
-    if(!applyBtn) return;
-    applyBtn.addEventListener('click', function () {
-        const input = document.querySelector('.coupon-input input');
-        if (input && input.value) {
-            alert('Cupón aplicado: ' + input.value);
+    var input = document.querySelector('.coupon-input input');
+
+    function getActiveCoupon() {
+        try {
+            return JSON.parse(localStorage.getItem('booklyCoupon') || 'null');
+        } catch (e) {
+            return null;
         }
-    });
+    }
+
+    function setActiveCoupon(c) {
+        if (!c) {
+            localStorage.removeItem('booklyCoupon');
+        } else {
+            localStorage.setItem('booklyCoupon', JSON.stringify(c));
+        }
+    }
+
+    function refreshCouponUI() {
+        var c = getActiveCoupon();
+        if (!couponBox) return;
+        if (c) {
+            couponBox.style.display = 'flex';
+            if (couponTextSpan && couponTextSpan.nodeType === Node.TEXT_NODE) {
+                couponTextSpan.textContent = c.code;
+            } else {
+                couponBox.childNodes[0].nodeValue = c.code + ' ';
+            }
+        } else {
+            couponBox.style.display = 'none';
+        }
+    }
+
+    function applyCoupon() {
+        if (!input) return;
+        var code = (input.value || '').trim();
+        if (!code) {
+            alert('Ingresa un código de cupón.');
+            return;
+        }
+        if (code.toLowerCase() !== 'bookly10') {
+            alert('Cupón inválido. Usa "Bookly10".');
+            return;
+        }
+        if (typeof window !== 'undefined' && window.couponAlreadyUsed === 'true') {
+            alert('El cupón Bookly10 ya fue utilizado en una compra anterior de esta cuenta. No puedes volver a usarlo.');
+            try {
+                setActiveCoupon(null);
+                refreshCouponUI();
+                input.value = '';
+                if (typeof renderSummary === 'function') renderSummary();
+            } catch (e) {}
+            return;
+        }
+        setActiveCoupon({ code: 'Bookly10', type: 'percent_one_per_item', value: 10 });
+        refreshCouponUI();
+        input.value = '';
+        try { if (typeof renderSummary === 'function') renderSummary(); } catch (e) {}
+        alert('Cupón Bookly10 aplicado: 10% en 1 unidad de cada producto.');
+    }
+
+
+    if (couponBox) refreshCouponUI();
+
+    if (couponClose) {
+        couponClose.addEventListener('click', function () {
+            setActiveCoupon(null);
+            refreshCouponUI();
+            try { if (typeof renderSummary === 'function') renderSummary(); } catch (e) {}
+        });
+    }
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function () {
+            applyCoupon();
+        });
+    }
 })();
 
 
@@ -133,7 +196,6 @@ function toggleDatePicker(event) {
         datePicker.style.display = 'block';
         link.textContent = 'Ocultar calendario';
 
-        // Establecer fecha mínima (mañana)
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setHours(10, 0, 0, 0);
@@ -141,7 +203,6 @@ function toggleDatePicker(event) {
         const minDate = tomorrow.toISOString().slice(0, 16);
         datePicker.min = minDate;
 
-        // Seleccionar automáticamente el radio de envío planificado
         document.querySelector('input[value="planificado"]').checked = true;
     } else {
         datePicker.style.display = 'none';
@@ -156,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateActiveState() {
         const selectedRadio = document.querySelector('input[name="envio"]:checked');
-        if (!selectedRadio) return; // No hay opciones de envío en esta página
+        if (!selectedRadio) return;
 
         const selectedValue = selectedRadio.value;
 
@@ -169,7 +230,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Actualizar resumen (envío) según selección
         updateShippingFromSelection();
     }
 
@@ -177,24 +237,39 @@ document.addEventListener('DOMContentLoaded', function () {
         radio.addEventListener('change', updateActiveState);
     });
 
-    // Guardar el envío inicial seleccionado al cargar la página
     if (shippingOptions.length > 0 && radios.length > 0) {
         updateShippingFromSelection();
     }
 
-    // Also handle the click on the link for "Envío Planificado"
     const planificadoLink = document.querySelector('.shipping-link');
     if (planificadoLink) {
         planificadoLink.addEventListener('click', function () {
-            // The toggleDatePicker function already checks the radio.
-            // We just need to call updateActiveState.
             setTimeout(updateActiveState, 0);
         });
     }
 
-    // Initial state - solo si hay radios
     if (radios.length > 0) {
         updateActiveState();
+    }
+
+    const goPayLink = document.getElementById('linkIrPagar');
+    if (goPayLink) {
+        goPayLink.addEventListener('click', function (ev) {
+            const selected = document.querySelector('input[name="envio"]:checked');
+            if (!selected) {
+                ev.preventDefault();
+                alert('Selecciona un método de envío para continuar.');
+                return;
+            }
+            if (selected.value === 'planificado') {
+                const dp = document.getElementById('deliveryDateTime');
+                if (!dp || !dp.value) {
+                    ev.preventDefault();
+                    alert('Elige día y hora para el envío planificado antes de continuar.');
+                    return;
+                }
+            }
+        });
     }
 });
 
@@ -204,13 +279,10 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
     var container = document.getElementById('deliveryProduct');
     if (!container) return;
-    // Si el servidor ya pasó 'book', no hacemos nada (contenido ya renderizado)
     var hasServerBook = !!document.querySelector('.delivery-product-sku');
     if (hasServerBook) return;
 
     try {
-        // Usar la misma clave que el resumen (base2): 'booklyCart'.
-        // Fallback a la clave antigua 'bookly_cart' si está vacía.
         var raw = localStorage.getItem('booklyCart');
         if (!raw || raw === '[]') {
             raw = localStorage.getItem('bookly_cart') || '[]';
@@ -225,7 +297,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (imgEl && item.title) imgEl.alt = item.title;
             if (nameEl && item.title) nameEl.textContent = item.title;
             if (qtyEl) qtyEl.textContent = 'Cantidad: ' + (item.qty || 1);
-            // Añadir autor y SKU si existen
             var info = container.querySelector('.delivery-product-info');
             if (info) {
                 if (item.author) {
@@ -243,14 +314,17 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     } catch (e) {
-        // Silencio: si falla, se mantiene el placeholder
     }
 });
 
 
 (function () {
     function fmt(n) { try { return new Intl.NumberFormat('es-CL').format(n || 0); } catch (e) { return (n || 0).toString(); } }
-    
+
+    function getActiveCoupon() {
+        try { return JSON.parse(localStorage.getItem('booklyCoupon') || 'null'); } catch (e) { return null; }
+    }
+
     function renderSummary() {
         var list = document.getElementById('summaryList');
         var subEl = document.getElementById('sumSubtotalBase2');
@@ -258,7 +332,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!list || !subEl || !totEl) return;
         var items = [];
         try {
-            // Intentar con la clave nueva y hacer fallback a la antigua si está vacío
             var raw = localStorage.getItem('booklyCart');
             if (!raw || raw === '[]') {
                 raw = localStorage.getItem('bookly_cart') || '[]';
@@ -268,7 +341,16 @@ document.addEventListener('DOMContentLoaded', function () {
             items = [];
         }
         list.innerHTML = '';
-        if (!items.length) { list.innerHTML = '<p style="color:#666;">Tu carrito está vacío.</p>'; subEl.textContent = '$0'; totEl.textContent = '$2.990'; return; }
+        if (!items.length) {
+            list.innerHTML = '<p style="color:#666;">Tu carrito está vacío.</p>';
+            subEl.textContent = '$0';
+            var ivaElEmpty = document.getElementById('sumIvaBase2');
+            if (ivaElEmpty) ivaElEmpty.textContent = '$0';
+            var discElEmpty = document.getElementById('sumDiscountBase2');
+            if (discElEmpty) discElEmpty.textContent = '$0';
+            totEl.textContent = '$2.990';
+            return;
+        }
         var gross = 0;
         items.forEach(function (it) {
             var qty = parseInt(it.qty || 1, 10) || 1; var price = parseInt(it.price || 0, 10) || 0; var line = qty * price; gross += line; var row = document.createElement('div'); row.className = 'product-item'; row.innerHTML = '<div class="product-image">\n'
@@ -296,24 +378,37 @@ document.addEventListener('DOMContentLoaded', function () {
                 + '</div>';
             list.appendChild(row);
         });
+
+
+        var coupon = getActiveCoupon();
+        var discount = 0;
+        if (coupon && coupon.code === 'Bookly10') {
+            items.forEach(function (it) {
+                var price = parseInt(it.price || 0, 10) || 0;
+                discount += Math.round(price * 0.10);
+            });
+        }
+        var grossAfter = Math.max(0, gross - discount);
+
         var ivaRate = 0.19;
         var netSubtotal = Math.max(0, Math.round(gross * (1 - ivaRate)));
         var ivaAmount = Math.max(0, Math.round(gross * ivaRate));
         subEl.textContent = '$' + fmt(netSubtotal);
         var ivaEl = document.getElementById('sumIvaBase2');
         if (ivaEl) ivaEl.textContent = '$' + fmt(ivaAmount);
-        
-        // Restaurar envío desde localStorage ANTES de calcular el total
+        var discEl = document.getElementById('sumDiscountBase2');
+        if (discEl) {
+            discEl.textContent = (discount > 0 ? '-$' + fmt(discount) : '$0');
+        }
+
         var totalsBox = document.getElementById('summaryTotals');
         var envio = 0;
         if (totalsBox) {
             var shipEl = document.getElementById('sumShippingBase2');
-            // Verificar si hay opciones de envío REALES (con radio name="envio")
             var hasShippingOptions = !!document.querySelector('input[name="envio"]');
-            
+
             console.log('DEBUG - hasShippingOptions:', hasShippingOptions, 'shipEl:', shipEl);
-            
-            // Si no hay opciones de envío Y existe el elemento de envío, restaurar de localStorage
+
             if (!hasShippingOptions && shipEl) {
                 var saved = parseInt(localStorage.getItem('booklyShipping') || '0', 10) || 0;
                 console.log('Restaurando envío desde localStorage:', saved);
@@ -326,24 +421,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             } else {
                 console.log('Usando data-shipping del HTML');
-                // Leer del atributo data-shipping
                 var ds = parseInt(totalsBox.getAttribute('data-shipping') || '0', 10);
                 envio = isNaN(ds) ? 0 : ds;
             }
         }
-        var total = gross + envio;
+        var total = grossAfter + envio;
         totEl.textContent = '$' + fmt(total);
         console.log('Total calculado:', total, '(gross:', gross, '+ envío:', envio, ')');
-        
-        // Actualizar cuotas en base al total (6 cuotas sin interés)
+
         var installmentsEl = document.getElementById('installmentsText');
         if (installmentsEl && total > 0) {
             var installmentAmount = Math.round(total / 6);
             installmentsEl.textContent = 'hasta en 6 x $' + fmt(installmentAmount) + ' sin interés*';
         }
     }
-    
-    // Ejecutar cuando el DOM esté listo
+
+    window.renderSummary = renderSummary;
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', renderSummary);
     } else {
@@ -351,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 })();
 
-// Lee el precio de la opción de envío seleccionada y actualiza el resumen
+// actualiza el resumen
 function updateShippingFromSelection() {
     try {
         var totalsBox = document.getElementById('summaryTotals');
@@ -363,7 +457,6 @@ function updateShippingFromSelection() {
             amount = parseInt(raw || '0', 10) || 0;
         }
         console.log('Guardando envío seleccionado:', amount);
-        // Guardar en localStorage para heredar en Pago
         try {
             localStorage.setItem('booklyShipping', String(amount));
         } catch (e) {
@@ -374,45 +467,30 @@ function updateShippingFromSelection() {
         if (shipEl) {
             shipEl.textContent = '$' + new Intl.NumberFormat('es-CL').format(amount);
         }
-        // Recalcular total inmediato
-        var totEl = document.getElementById('sumTotalBase2');
-        var subEl = document.getElementById('sumSubtotalBase2');
-        var ivaEl = document.getElementById('sumIvaBase2');
-        if (!totEl || !subEl || !ivaEl) return;
-        // Obtener gross a partir de neto + iva
-        var net = parseInt(String(subEl.textContent).replace(/[^0-9]/g, ''), 10) || 0;
-        var iva = parseInt(String(ivaEl.textContent).replace(/[^0-9]/g, ''), 10) || 0;
-        var gross = net + iva;
-        var total = gross + amount;
-        totEl.textContent = '$' + new Intl.NumberFormat('es-CL').format(total);
-        
-        // Actualizar cuotas también cuando cambia el envío
-        var installmentsEl = document.getElementById('installmentsText');
-        if (installmentsEl && total > 0) {
-            var installmentAmount = Math.round(total / 6);
-            installmentsEl.textContent = 'hasta en 6 x $' + new Intl.NumberFormat('es-CL').format(installmentAmount) + ' sin interés*';
-        }
+        try {
+            if (typeof renderSummary === 'function') {
+                renderSummary();
+            }
+        } catch (e) { /* no-op */ }
     } catch (e) {
         console.error('Error en updateShippingFromSelection:', e);
     }
 }
 
-// Al cargar Pago (u otras páginas sin opciones de envío), restaurar del localStorage
-document.addEventListener('DOMContentLoaded', function(){
+
+document.addEventListener('DOMContentLoaded', function () {
     try {
         var totalsBox = document.getElementById('summaryTotals');
         if (!totalsBox) return;
         var hasShippingOptions = !!document.querySelector('.shipping-option');
-        if (hasShippingOptions) return; // Ya se maneja con updateShippingFromSelection
-        // Solo restaurar si la página muestra envío (tiene elemento #sumShippingBase2)
+        if (hasShippingOptions) return;
         var shipEl = document.getElementById('sumShippingBase2');
-        if (!shipEl) return; // Checkout no debe mostrar envío
+        if (!shipEl) return;
         var saved = parseInt(localStorage.getItem('booklyShipping') || '0', 10) || 0;
         console.log('Restaurando envío desde localStorage:', saved);
         if (saved > 0) {
             totalsBox.setAttribute('data-shipping', String(saved));
             shipEl.textContent = '$' + new Intl.NumberFormat('es-CL').format(saved);
-            // Recalcular total
             var totEl = document.getElementById('sumTotalBase2');
             var subEl = document.getElementById('sumSubtotalBase2');
             var ivaEl = document.getElementById('sumIvaBase2');
@@ -428,36 +506,34 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 });
 
-// Enviar el total (incluye envío) a Flow al presionar Pagar
-document.addEventListener('DOMContentLoaded', function(){
+// Enviar el total a Flow al presionar Pagar
+document.addEventListener('DOMContentLoaded', function () {
     try {
         var pagarLink = document.getElementById('linkPagarFlow') || document.querySelector('.flow-actions a[href*="pago_create"]');
         var pagarBtn = document.getElementById('btnPagarFlow');
         if (!pagarLink) return;
-        function handlePay(ev){
+        function handlePay(ev) {
             ev.preventDefault();
-            // Prevent double submissions
             try {
                 if (pagarBtn) { pagarBtn.disabled = true; pagarBtn.style.pointerEvents = 'none'; }
                 if (pagarLink) { pagarLink.style.pointerEvents = 'none'; }
-            } catch(e) {}
-            // Intentar leer el total mostrado en el resumen
+            } catch (e) { }
             var totalEl = document.getElementById('sumTotalBase2');
             var total = 0;
             if (totalEl && totalEl.textContent) {
                 total = parseInt(String(totalEl.textContent).replace(/[^0-9]/g, ''), 10) || 0;
             }
-            // Fallback: calcular desde localStorage si fuese necesario
+
             if (total <= 0) {
                 try {
                     var raw = localStorage.getItem('booklyCart');
                     if (!raw || raw === '[]') raw = localStorage.getItem('bookly_cart') || '[]';
                     var items = JSON.parse(raw || '[]');
                     var gross = 0;
-                    items.forEach(function(it){ var q = parseInt(it.qty||1,10)||1; var p = parseInt(it.price||0,10)||0; gross += q*p; });
+                    items.forEach(function (it) { var q = parseInt(it.qty || 1, 10) || 1; var p = parseInt(it.price || 0, 10) || 0; gross += q * p; });
                     var ship = parseInt(localStorage.getItem('booklyShipping') || '0', 10) || 0;
                     total = gross + ship;
-                } catch (e) {}
+                } catch (e) { }
             }
             if (!total || total <= 0) {
                 alert('No se pudo determinar el total a cobrar.');
@@ -465,9 +541,42 @@ document.addEventListener('DOMContentLoaded', function(){
             }
             var url = new URL(pagarLink.href, window.location.origin);
             url.searchParams.set('amount', String(total));
+            try {
+                var activeCoupon = null;
+                try { activeCoupon = JSON.parse(localStorage.getItem('booklyCoupon') || 'null'); } catch (_) { activeCoupon = null; }
+                if (activeCoupon && activeCoupon.code && activeCoupon.code.toLowerCase() === 'bookly10') {
+                    url.searchParams.set('coupon', activeCoupon.code);
+                }
+            } catch (e) { }
+
+            try {
+                var rawCart = localStorage.getItem('booklyCart') || localStorage.getItem('bookly_cart') || '[]';
+                var arr = [];
+                try { arr = JSON.parse(rawCart || '[]'); } catch (_) { arr = []; }
+                var titles = [];
+                if (Array.isArray(arr)) {
+                    arr.forEach(function (it) {
+                        var t = (it && (it.title || it.nombre || it.name)) ? String(it.title || it.nombre || it.name).trim() : '';
+                        if (t && t.toLowerCase() !== 'producto') { titles.push(t); }
+                    });
+                }
+                if (titles.length > 0) {
+                    url.searchParams.set('titles', JSON.stringify(titles));
+                } else {
+                    var firstTitle = '';
+                    var nameEl = document.querySelector('.delivery-product-name');
+                    if (nameEl && nameEl.textContent) { firstTitle = nameEl.textContent.trim(); }
+                    if (firstTitle && firstTitle.toLowerCase() !== 'producto') {
+                        url.searchParams.set('title', firstTitle);
+                    }
+                }
+            } catch (e) { }
             window.location.href = url.toString();
         }
-        pagarLink.addEventListener('click', handlePay);
-        if (pagarBtn) pagarBtn.addEventListener('click', handlePay);
+        if (pagarBtn) {
+            pagarBtn.addEventListener('click', handlePay);
+        } else {
+            pagarLink.addEventListener('click', handlePay);
+        }
     } catch (e) { /* no-op */ }
 });
