@@ -60,6 +60,16 @@ class Order(models.Model):
 		return f"Order {self.commerce_order} ({self.status})"
 
 
+class OrderItem(models.Model):
+	order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name="Orden")
+	book = models.ForeignKey(Book, on_delete=models.PROTECT, verbose_name="Libro")
+	quantity = models.PositiveIntegerField("Cantidad", default=1)
+	price_at_purchase = models.IntegerField("Precio al momento de compra")
+
+	def __str__(self):
+		return f"{self.quantity} x {self.book.title} (Orden: {self.order.commerce_order})"
+
+
 class CouponRedemption(models.Model):
 	user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='coupon_redemptions')
 	code = models.CharField(max_length=50)

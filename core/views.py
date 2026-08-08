@@ -17,7 +17,7 @@ import time
 import uuid
 import json
 
-from .models import Order, Address, Book, CouponRedemption
+from .models import Order, OrderItem, Address, Book, CouponRedemption
 
 # Create your views here.
 
@@ -326,6 +326,37 @@ def _flow_sign(params: dict, secret: str) -> str:
     return hmac.new(secret.encode('utf-8'), data.encode('utf-8'), hashlib.sha256).hexdigest()
 
 
+def _parse_cart_payload(request):
+    raw_cart = request.GET.get('cart') or request.POST.get('cart')
+
+    if not raw_cart and request.content_type and 'application/json' in request.content_type:
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}')
+        except Exception:
+            body = {}
+        if isinstance(body, dict):
+            raw_cart = body.get('cart') or body.get('carrito')
+
+    if not raw_cart:
+        return []
+
+    if isinstance(raw_cart, list):
+        return raw_cart
+
+    if isinstance(raw_cart, dict):
+        return raw_cart.get('cart') or raw_cart.get('carrito') or []
+
+    try:
+        parsed = json.loads(raw_cart)
+    except Exception:
+        return []
+
+    if isinstance(parsed, dict):
+        return parsed.get('cart') or parsed.get('carrito') or []
+
+    return parsed if isinstance(parsed, list) else []
+
+
 @login_required
 def pago_create(request):
 
@@ -379,23 +410,64 @@ def pago_create(request):
             break
 
 
-    first_title = None
+    cart_items = _parse_cart_payload(request)
+    order_items = []
     try:
-        titles_param = request.GET.get('titles') or request.POST.get('titles')
-        if titles_param:
-            import json
-            titles_list = json.loads(titles_param)
-            if isinstance(titles_list, list) and titles_list:
-                t = str(titles_list[0]).strip()
-                if t and t.lower() != 'producto':
-                    first_title = t if len(titles_list) == 1 else f"{t} y {len(titles_list)-1} más"
-        
-        if not first_title:
-            t_single = request.GET.get('title') or request.POST.get('title')
-            if t_single and str(t_single).strip().lower() != 'producto':
-                first_title = str(t_single).strip()
+        for raw_item in cart_items:
+            if not isinstance(raw_item, dict):
+                continue
+
+            raw_sku = str(raw_item.get('sku') or raw_item.get('id') or '').strip()
+            raw_title = str(raw_item.get('title') or raw_item.get('nombre') or raw_item.get('name') or '').strip()
+
+            try:
+                quantity = int(raw_item.get('qty') or raw_item.get('quantity') or 1)
+            except (TypeError, ValueError):
+                quantity = 1
+            if quantity < 1:
+                quantity = 1
+
+            book = None
+            if raw_sku:
+                book = Book.objects.filter(sku__iexact=raw_sku).first()
+            if book is None and raw_title:
+                book = Book.objects.filter(title__iexact=raw_title).first()
+
+            if not book:
+                continue
+
+            order_items.append({
+                'book': book,
+                'quantity': quantity,
+            })
     except Exception:
         pass
+
+    if cart_items and not order_items:
+        return JsonResponse({'error': 'No se pudieron identificar los libros del carrito.'}, status=400)
+
+    first_title = None
+    if order_items:
+        first_title = order_items[0]['book'].title
+        if len(order_items) > 1:
+            first_title = f"{first_title} y {len(order_items) - 1} más"
+
+    if not first_title:
+        try:
+            titles_param = request.GET.get('titles') or request.POST.get('titles')
+            if titles_param:
+                titles_list = json.loads(titles_param)
+                if isinstance(titles_list, list) and titles_list:
+                    t = str(titles_list[0]).strip()
+                    if t and t.lower() != 'producto':
+                        first_title = t if len(titles_list) == 1 else f"{t} y {len(titles_list)-1} más"
+
+            if not first_title:
+                t_single = request.GET.get('title') or request.POST.get('title')
+                if t_single and str(t_single).strip().lower() != 'producto':
+                    first_title = str(t_single).strip()
+        except Exception:
+            pass
 
     order = Order.objects.create(
         user=request.user,
@@ -403,7 +475,7 @@ def pago_create(request):
         amount=amount,
         currency='CLP',
         email=buyer_email,
-        status='pending',
+        status='created',
         coupon_code=applied_coupon_code,
         first_item_title=first_title,
         shipping_name=(shipping.name if shipping else None),
@@ -415,10 +487,18 @@ def pago_create(request):
         shipping_postal_code=(shipping.postal_code if shipping else None),
     )
 
+    for item_data in order_items:
+        OrderItem.objects.create(
+            order=order,
+            book=item_data['book'],
+            quantity=item_data['quantity'],
+            price_at_purchase=item_data['book'].price,
+        )
+
 
     params = {
         'apiKey': api_key,
-        'subject': 'Compra Bookly',
+        'subject': f"Compra: {first_title}" if first_title else 'Compra Bookly',
         'currency': 'CLP',
         'amount': amount,
         'email': buyer_email,
@@ -617,16 +697,27 @@ def confirmacion_pedido(request):
             pass
 
     buyer_name = None
+    order_items_summary = []
     if order:
         try:
             full_name = (order.user.get_full_name() or '').strip()
         except Exception:
             full_name = ''
         buyer_name = getattr(order, 'shipping_name', None) or full_name or getattr(order.user, 'username', None)
+        order_items_summary = [
+            {
+                'title': item.book.title,
+                'quantity': item.quantity,
+                'unit_price': item.price_at_purchase,
+                'line_total': item.quantity * item.price_at_purchase,
+            }
+            for item in order.items.select_related('book').all()
+        ]
 
     context = {
         'order': order,
         'buyer_name': buyer_name,
+        'order_items_summary': order_items_summary,
         'status': getattr(order, 'status', None),
         'amount': getattr(order, 'amount', None),
         'currency': getattr(order, 'currency', None),
