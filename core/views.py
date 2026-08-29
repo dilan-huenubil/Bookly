@@ -16,8 +16,13 @@ import requests
 import time
 import uuid
 import json
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib import messages
 
-from .models import Order, OrderItem, Address, Book, CouponRedemption
+from .models import Order, OrderItem, Address, Book, CouponRedemption, Profile
+from django.core.paginator import Paginator
 
 # Create your views here.
 
@@ -146,6 +151,7 @@ def checkout(request):
 
     if request.method == 'POST':
         action = request.POST.get('action', 'save_address')
+
         if action == 'save_address':
             addr_id = request.POST.get('address_id')
             name = (request.POST.get('name') or '').strip()
@@ -183,14 +189,16 @@ def checkout(request):
                 addr.save(update_fields=['is_default'])
 
             return redirect('checkout')
+
         elif action == 'save_user':
             first_name = (request.POST.get('first_name') or '').strip()
             last_name = (request.POST.get('last_name') or '').strip()
             phone = (request.POST.get('phone') or '').strip()
             email = (request.POST.get('email') or '').strip()
             rut = (request.POST.get('rut') or '').strip()
+            doc_type = (request.POST.get('doc_type') or 'RUT').strip() 
 
-
+            # 1. Guardar datos nativos del User
             if first_name:
                 user.first_name = first_name
             if last_name:
@@ -199,11 +207,21 @@ def checkout(request):
                 user.email = email
             user.save()
 
+            # 2. Guardar datos extendidos en Profile (Creándolo si no existe)
+            try:
+                perfil = user.profile
+            except ObjectDoesNotExist:
+                perfil = Profile.objects.create(user=user)
 
             if rut:
-                request.session['checkout_rut'] = rut
+                perfil.rut = rut
+            if phone:
+                perfil.phone = phone
+            if doc_type:
+                perfil.doc_type = doc_type
+            perfil.save()
 
-
+            # 3. Mantener sincronizado el teléfono en la dirección de envío por defecto
             if phone:
                 default_addr = Address.objects.filter(user=user, address_type='shipping', is_default=True).first()
                 if default_addr:
@@ -212,16 +230,13 @@ def checkout(request):
 
             return redirect('checkout')
 
-
     coupon_already_used = (
         CouponRedemption.objects.filter(user=user, code__iexact='Bookly10').exists() or
         Order.objects.filter(user=user, coupon_code__iexact='Bookly10').exists()
     )
 
-
     addresses = Address.objects.filter(user=user, address_type='shipping').order_by('-is_default', '-updated_at')
     default_address = addresses.filter(is_default=True).first() or addresses.first()
-
 
     default_street = ''
     default_number = ''
@@ -233,8 +248,19 @@ def checkout(request):
             default_street = default_address.line1
 
     has_addresses = addresses.exists()
-    user_phone = (default_address.phone if default_address else '')
 
+    # Extraer teléfono y RUT directamente desde el perfil (Consultándolo de forma segura)
+    user_phone = ''
+    user_rut = ''
+    try:
+        user_phone = user.profile.phone or ''
+        user_rut = user.profile.rut or ''
+    except ObjectDoesNotExist:
+        pass
+
+    # Respaldo: si el perfil no tiene teléfono, buscar en la dirección por defecto
+    if not user_phone and default_address:
+        user_phone = default_address.phone or ''
 
     has_user_data = bool(
         (user.first_name or '').strip() and
@@ -249,7 +275,7 @@ def checkout(request):
         'default_address': default_address,
         'has_addresses': has_addresses,
         'user_phone': user_phone,
-        'user_rut': request.session.get('checkout_rut', ''),
+        'user_rut': user_rut, 
         'default_street': default_street,
         'default_number': default_number,
         'show_shipping': False,
@@ -752,6 +778,87 @@ def search(request):
     return render(request, 'core/search.html', context)
 
 
+def mis_pedidos(request):
+    # 1. Obtener la lista completa
+    order_list = Order.objects.filter(user=request.user).order_by('-created_at')
+    
+    # 2. Configurar el paginador (10 items por página)
+    paginator = Paginator(order_list, 10)
+    
+    # 3. Capturar el número de página actual desde la URL (ej: ?page=2)
+    page_number = request.GET.get('page')
+    orders = paginator.get_page(page_number)
+    
+    # 4. Enviar el objeto paginado a la plantilla
+    return render(request, 'core/mis_pedidos.html', { 'orders': orders })
 
+
+@login_required
+def mi_perfil(request):
+    user = request.user
+
+    if request.method == 'POST':
+        # 1. Obtener los datos del formulario
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        email = request.POST.get('email', '').strip()
+        rut = request.POST.get('rut', '').strip()
+        doc_type = request.POST.get('doc_type', 'RUT').strip()
+
+        # 2. Guardar los datos en el modelo User nativo
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+        if email:
+            user.email = email
+        user.save()
+
+        # 3. Guardar los datos extendidos en Profile (creándolo si hace falta)
+        try:
+            perfil = user.profile
+        except ObjectDoesNotExist:
+            perfil = Profile.objects.create(user=user)
+
+        perfil.rut = rut
+        perfil.phone = phone
+        perfil.doc_type = doc_type
+        perfil.save()
+
+        # Redirige a la misma página para recargar los datos actualizados
+        return redirect('mi_perfil')
+
+    return render(request, 'core/mi_perfil.html')
+
+
+
+
+@login_required
+def mi_contrasena(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        
+        # Capturamos la nueva contraseña del formulario para validarla
+        new_password = request.POST.get('new_password1', '')
+
+        # Validaciones personalizadas idénticas al registro
+        if (
+            len(new_password) < 8 or
+            not re.search(r"[A-Z]", new_password) or
+            not re.search(r"[\W\_]", new_password)
+        ):
+            messages.error(request, 'La nueva contraseña debe tener mínimo 8 caracteres, una mayúscula y un símbolo.')
+        elif form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Tu contraseña ha sido actualizada correctamente.')
+            return redirect('mi_contrasena')
+        else:
+            messages.error(request, 'Por favor, corrige los errores indicados abajo.')
+    else:
+        form = PasswordChangeForm(request.user)
+
+    return render(request, 'core/mi_contrasena.html', {'form': form})
 
 

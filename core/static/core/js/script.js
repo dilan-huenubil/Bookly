@@ -340,177 +340,196 @@ function validateStrongPassword(pass) {
 }
 
 
-
 // VALIDACIÓN EN TIEMPO REAL - LOGIN
-document.getElementById("loginUser").addEventListener("input", function() {
-    if (this.value.trim() === "") {
-        setFieldError(this, "Debes ingresar tu usuario o correo");
-    } else {
-        removeFieldError(this);
-    }
-});
+const loginUser = document.getElementById("loginUser");
+const loginPass = document.getElementById("loginPass");
+const loginForm = document.getElementById("loginForm");
 
-document.getElementById("loginPass").addEventListener("input", function() {
-    if (this.value.trim() === "") {
-        setFieldError(this, "Debes ingresar tu contraseña");
-    } else {
-        removeFieldError(this);
-    }
-});
+if (loginUser) {
+    loginUser.addEventListener("input", function() {
+        if (this.value.trim() === "") setFieldError(this, "Debes ingresar tu usuario o correo");
+        else removeFieldError(this);
+    });
+}
 
+if (loginPass) {
+    loginPass.addEventListener("input", function() {
+        if (this.value.trim() === "") setFieldError(this, "Debes ingresar tu contraseña");
+        else removeFieldError(this);
+    });
+}
+
+if (loginForm) {
+    loginForm.addEventListener("submit", function(e) {
+        let valid = true;
+        if (loginUser.value.trim() === "") {
+            setFieldError(loginUser, "Debes ingresar tu usuario o correo");
+            valid = false;
+        }
+        if (loginPass.value.trim() === "") {
+            setFieldError(loginPass, "Debes ingresar tu contraseña");
+            valid = false;
+        }
+        if (!valid) e.preventDefault();
+    });
+}
 
 // VALIDACIÓN EN TIEMPO REAL - REGISTRO
-document.getElementById("regUser").addEventListener("input", function() {
-    if (this.value.trim().length < 3) {
-        setFieldError(this, "El nombre de usuario debe tener al menos 3 caracteres");
-    } else {
-        removeFieldError(this);
-    }
-});
+const regUser = document.getElementById("regUser");
+const regEmail = document.getElementById("regEmail");
+const regPass1 = document.getElementById("regPass1");
+const regPass2 = document.getElementById("regPass2");
+const registerForm = document.getElementById("registerForm");
 
-document.getElementById("regEmail").addEventListener("input", function() {
-    const email = this.value.trim();
+if (regUser) {
+    regUser.addEventListener("input", function() {
+        if (this.value.trim().length < 3) setFieldError(this, "El nombre de usuario debe tener al menos 3 caracteres");
+        else removeFieldError(this);
+    });
+}
 
-    if (email === "") {
-        setFieldError(this, "El correo es obligatorio");
-        return;
-    }
+if (regEmail) {
+    regEmail.addEventListener("input", function() {
+        const email = this.value.trim();
+        if (email === "") setFieldError(this, "El correo es obligatorio");
+        else if (!validateEmail(email)) setFieldError(this, "El correo no es válido");
+        else removeFieldError(this);
+    });
+}
 
-    if (!validateEmail(email)) {
-        setFieldError(this, "El correo no es válido");
-        return;
-    }
+if (regPass1) {
+    regPass1.addEventListener("input", function() {
+        const pass = this.value.trim();
+        const strong = validateStrongPassword(pass);
+        
+        if (pass === "") setFieldError(this, "La contraseña es obligatoria");
+        else if (pass.length < 8) setFieldError(this, "Debe tener al menos 8 caracteres");
+        else if (!strong.upper) setFieldError(this, "Debe incluir al menos UNA mayúscula");
+        else if (!strong.special) setFieldError(this, "Debe incluir al menos UN carácter especial (! @ # $ % ...)");
+        else removeFieldError(this);
+    });
+}
 
-    removeFieldError(this);
-});
-
-
-document.getElementById("regPass1").addEventListener("input", function() {
-    const pass = this.value.trim();
-    const strong = validateStrongPassword(pass);
-
-
-    if (pass === "") {
-        setFieldError(this, "La contraseña es obligatoria");
-        return;
-    }
-
-    if (pass.length < 8) {
-        setFieldError(this, "Debe tener al menos 8 caracteres");
-        return;
-    }
-
-
-    if (!strong.upper) {
-        setFieldError(this, "Debe incluir al menos UNA mayúscula");
-        return;
-    }
-
-    if (!strong.special) {
-        setFieldError(this, "Debe incluir al menos UN carácter especial (! @ # $ % ...)");
-        return;
-    }
-
-    removeFieldError(this);
-});
-
-
-document.getElementById("regPass2").addEventListener("input", function() {
-    const pass1 = document.getElementById("regPass1").value.trim();
-    const pass2 = this.value.trim();
-
-    if (pass2 === "") {
-        setFieldError(this, "Debes confirmar la contraseña");
-        return;
-    }
-
-    if (pass2 !== pass1) {
-        setFieldError(this, "Las contraseñas no coinciden");
-        return;
-    }
-
-    removeFieldError(this);
-});
-
-
-
-
-document.getElementById("loginForm").addEventListener("submit", function(e) {
-    let valid = true;
-
-    const user = document.getElementById("loginUser");
-    const pass = document.getElementById("loginPass");
-
-    if (user.value.trim() === "") {
-        setFieldError(user, "Debes ingresar tu usuario o correo");
-        valid = false;
-    }
-    if (pass.value.trim() === "") {
-        setFieldError(pass, "Debes ingresar tu contraseña");
-        valid = false;
-    }
-
-    if (!valid) e.preventDefault();
-});
-
-
+if (regPass2) {
+    regPass2.addEventListener("input", function() {
+        const pass1 = regPass1.value.trim();
+        const pass2 = this.value.trim();
+        
+        if (pass2 === "") setFieldError(this, "Debes confirmar la contraseña");
+        else if (pass2 !== pass1) setFieldError(this, "Las contraseñas no coinciden");
+        else removeFieldError(this);
+    });
+}
 
 // VALIDACIÓN FINAL AL ENVIAR (REGISTRO)
-document.getElementById("registerForm").addEventListener("submit", function(e) {
-    let valid = true;
+if (registerForm) {
+    registerForm.addEventListener("submit", function(e) {
+        let valid = true;
+        const pass = regPass1.value.trim();
+        const strong = validateStrongPassword(pass);
 
-    const user = document.getElementById("regUser");
-    const email = document.getElementById("regEmail");
-    const pass1 = document.getElementById("regPass1");
-    const pass2 = document.getElementById("regPass2");
+        if (regUser.value.trim().length < 3) {
+            setFieldError(regUser, "El nombre de usuario debe tener al menos 3 caracteres");
+            valid = false;
+        }
 
-    const pass = pass1.value.trim();
-    const strong = validateStrongPassword(pass);
+        if (regEmail.value.trim() === "") {
+            setFieldError(regEmail, "El correo es obligatorio");
+            valid = false;
+        } else if (!validateEmail(regEmail.value.trim())) {
+            setFieldError(regEmail, "El correo no es válido");
+            valid = false;
+        }
 
-    if (user.value.trim().length < 3) {
-        setFieldError(user, "El nombre de usuario debe tener al menos 3 caracteres");
-        valid = false;
-    }
+        if (pass === "") {
+            setFieldError(regPass1, "La contraseña es obligatoria");
+            valid = false;
+        } else if (pass.length < 8) {
+            setFieldError(regPass1, "Debe tener al menos 8 caracteres");
+            valid = false;
+        } else if (!strong.upper) {
+            setFieldError(regPass1, "Debe incluir al menos UNA mayúscula");
+            valid = false;
+        } else if (!strong.special) {
+            setFieldError(regPass1, "Debe incluir al menos UN carácter especial (! @ # $ % ...)");
+            valid = false;
+        }
 
-    if (email.value.trim() === "") {
-        setFieldError(email, "El correo es obligatorio");
-        valid = false;
+        if (regPass2.value.trim() === "") {
+            setFieldError(regPass2, "Debes confirmar la contraseña");
+            valid = false;
+        } else if (regPass2.value !== regPass1.value) {
+            setFieldError(regPass2, "Las contraseñas no coinciden");
+            valid = false;
+        }
 
-    } else if (!validateEmail(email.value.trim())) {
-        setFieldError(email, "El correo no es válido");
-        valid = false;
-    }
+        if (!valid) e.preventDefault();
+    });
+}
 
+// =========================
+// MENÚ DEL USUARIO (Soporta múltiples menús y botón X)
+// =========================
+document.addEventListener('DOMContentLoaded', () => {
+    // Buscamos TODOS los menús de usuario (por si hay uno en desktop y otro en móvil)
+    const userMenus = document.querySelectorAll('.js-user-menu');
 
-    if (pass === "") {
-        setFieldError(pass1, "La contraseña es obligatoria");
-        valid = false;
+    userMenus.forEach(menu => {
+        const toggleBtn = menu.querySelector('.js-user-toggle');
+        const closeBtn = menu.querySelector('.js-user-close');
 
+        if (!toggleBtn) return;
 
-    } else if (pass.length < 8) {
-        setFieldError(pass1, "Debe tener al menos 8 caracteres");
-        valid = false;
+        // 1. Abrir / cerrar menú al presionar el botón principal
+        toggleBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            
+            // Opcional: Cerrar otros menús si hubiera varios abiertos
+            userMenus.forEach(m => {
+                if (m !== menu) {
+                    m.classList.remove('is-open');
+                    const otherToggle = m.querySelector('.js-user-toggle');
+                    if (otherToggle) otherToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
 
-    } else if (!strong.upper) {
-        setFieldError(pass1, "Debe incluir al menos UNA mayúscula");
-        valid = false;
+            const isOpen = menu.classList.toggle('is-open');
+            toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
 
-    } else if (!strong.special) {
-        setFieldError(pass1, "Debe incluir al menos UN carácter especial (! @ # $ % ...)");
-        valid = false;
-    }
+        // 2. Cerrar el menú al presionar la "X"
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                menu.classList.remove('is-open');
+                toggleBtn.setAttribute('aria-expanded', 'false');
+            });
+        }
+    });
 
-    if (pass2.value.trim() === "") {
-        setFieldError(pass2, "Debes confirmar la contraseña");
-        valid = false;
-
-    } else if (pass2.value !== pass1.value) {
-        setFieldError(pass2, "Las contraseñas no coinciden");
-        valid = false;
-    }
-
-    if (!valid) e.preventDefault();
+    // 3. Cerrar al hacer clic fuera de cualquier menú
+    document.addEventListener('click', (event) => {
+        userMenus.forEach(menu => {
+            if (!menu.contains(event.target)) {
+                menu.classList.remove('is-open');
+                const toggleBtn = menu.querySelector('.js-user-toggle');
+                if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    });
 });
 
 
 
+    // =========================
+    // ACORDEÓN DEL USUARIO EN MENÚ MÓVIL
+    // =========================
+    const mobileUserToggle = document.querySelector('.js-mobile-user-toggle');
+    if (mobileUserToggle) {
+        mobileUserToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const accordion = this.closest('.js-mobile-user-accordion');
+            const isOpen = accordion.classList.toggle('is-open');
+            this.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    }

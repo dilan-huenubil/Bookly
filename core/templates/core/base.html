@@ -44,11 +44,35 @@
                         <span class="user-link__label">Iniciar sesión / Registrarse</span>
                     </a>
                     {% endif %}
-                    <i class="bi bi-cart" id="cartToggle" data-cart-toggle role="button" aria-label="Abrir carrito" tabindex="0"></i>
+                    <i class="bi bi-cart" id="cartToggle" data-cart-toggle role="button" aria-label="Abrir carrito"
+                        tabindex="0"></i>
                     {% if user.is_authenticated %}
-                    <div class="user-pill" aria-label="Usuario autenticado">
-                        <i class="bi bi-person-circle"></i>
-                        <span class="user-pill__name">{% firstof user.get_full_name user.username %}</span>
+                    <div class="user-menu js-user-menu">
+                        <button type="button" class="user-pill js-user-toggle" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i>
+                            <span class="user-pill__name">
+                                {% firstof user.get_full_name user.username %}
+                            </span>
+                            <i class="bi bi-chevron-down user-pill__arrow"></i>
+                        </button>
+
+                        <div class="user-dropdown">
+
+                            <div class="user-dropdown__header">
+                                <span>Mi Cuenta</span>
+                                <button type="button" class="user-dropdown__close js-user-close" aria-label="Cerrar">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <a href="{% url 'mis_pedidos' %}" class="user-dropdown__item">
+                                <i class="bi bi-bag-check"></i>
+                                <span>Mis compras</span>
+                            </a>
+                            <a href="{% url 'mi_perfil' %}" class="user-dropdown__item">
+                                <i class="bi bi-person"></i>
+                                <span>Mi perfil</span>
+                            </a>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -70,7 +94,8 @@
 
         <nav class="main-menu">
             <a href="{{ url_index }}" class="{% if request.path == url_index %}active{% endif %}">Inicio</a>
-            <a href="{{ url_destacados }}" class="{% if request.path == url_destacados %}active{% endif %}">Destacados</a>
+            <a href="{{ url_destacados }}"
+                class="{% if request.path == url_destacados %}active{% endif %}">Destacados</a>
             <a href="{{ url_contacto }}" class="{% if request.path == url_contacto %}active{% endif %}">Contacto</a>
         </nav>
 
@@ -82,20 +107,29 @@
                     <h3 style="color:white">BOOKLY LOGO</h3>
                 </div>
                 <div class="overlay-actions">
-                    <button class="overlay-search-btn" id="overlaySearchBtn" aria-label="Buscar"><i class="bi bi-search"></i></button>
-                    <button class="overlay-cart-btn" data-cart-toggle aria-label="Abrir carrito"><i class="bi bi-cart"></i></button>
+                    <button class="overlay-search-btn" id="overlaySearchBtn" aria-label="Buscar"><i
+                            class="bi bi-search"></i></button>
+                    <button class="overlay-cart-btn" data-cart-toggle aria-label="Abrir carrito"><i
+                            class="bi bi-cart"></i></button>
                 </div>
             </div>
             <nav class="overlay-nav">
                 {% if user.is_authenticated %}
-                <a href="{{ url_index }}" class="overlay-auth overlay-auth--user" aria-label="Usuario autenticado">
-                    <i class="bi bi-person-circle"></i>
-                    <span>{% firstof user.get_full_name user.username %}</span>
-                </a>
-                <a href="{{ url_logout }}" class="overlay-auth" aria-label="Cerrar sesión">
-                    <i class="bi bi-box-arrow-right"></i>
-                    <span>Cerrar sesión</span>
-                </a>
+                <!-- Acordeón de usuario en menú móvil -->
+                <div class="mobile-user-accordion js-mobile-user-accordion">
+                    <button class="overlay-auth overlay-auth--user js-mobile-user-toggle" aria-expanded="false">
+                        <span class="auth-left">
+                            <i class="bi bi-person-circle"></i>
+                            <span>{% firstof user.get_full_name user.username %}</span>
+                        </span>
+                        <i class="bi bi-chevron-down toggle-icon"></i>
+                    </button>
+                    <div class="mobile-user-submenu">
+                        <a href="{% url 'mis_pedidos' %}"><i class="bi bi-bag-check"></i> Mis compras</a>
+                        <a href="{% url 'mi_perfil' %}"><i class="bi bi-person"></i> Mi perfil</a>
+                        <a href="{{ url_logout }}"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
+                    </div>
+                </div>
                 {% else %}
                 <a href="{{ url_register }}" class="overlay-auth" aria-label="Iniciar sesión o registrarse">
                     <i class="bi bi-person"></i>
@@ -103,18 +137,20 @@
                 </a>
                 {% endif %}
                 <a href="{{ url_index }}" class="{% if request.path == url_index %}active{% endif %}">INICIO</a>
-                <a href="{{ url_destacados }}" class="{% if request.path == url_destacados %}active{% endif %}">Destacados</a>
+                <a href="{{ url_destacados }}"
+                    class="{% if request.path == url_destacados %}active{% endif %}">Destacados</a>
                 <a href="{{ url_contacto }}" class="{% if request.path == url_contacto %}active{% endif %}">CONTACTO</a>
-
             </nav>
         </div>
 
 
         <div class="mobile-search-overlay" id="mobileSearch" aria-hidden="true">
             <div class="search-bar">
-                <button class="back-btn" id="mobileSearchBack" aria-label="Volver"><i class="bi bi-arrow-left"></i></button>
+                <button class="back-btn" id="mobileSearchBack" aria-label="Volver"><i
+                        class="bi bi-arrow-left"></i></button>
                 <form action="{% url 'search' %}" method="get" role="search" class="mobile-search-form">
-                    <input type="text" id="mobileSearchInput" name="q" placeholder="Buscar Título, Autor, Isbn..." aria-label="Buscar" />
+                    <input type="text" id="mobileSearchInput" name="q" placeholder="Buscar Título, Autor, Isbn..."
+                        aria-label="Buscar" />
                 </form>
             </div>
         </div>
@@ -184,10 +220,12 @@
                     <i class="bi bi-bag"></i>
                     <h3 id="cartTitle">Su Bolsa</h3>
                 </div>
-                <button class="cart-close" id="cartClose" aria-label="Cerrar carrito"><i class="bi bi-x-lg"></i></button>
+                <button class="cart-close" id="cartClose" aria-label="Cerrar carrito"><i
+                        class="bi bi-x-lg"></i></button>
             </div>
             <div class="cart-body" id="cartBody">
-                <p id="cartEmptyMsg" style="display:none; color:#666; text-align:center; margin:16px 0;">Tu carrito está vacío.</p>
+                <p id="cartEmptyMsg" style="display:none; color:#666; text-align:center; margin:16px 0;">Tu carrito está
+                    vacío.</p>
                 <div id="cartItems"></div>
             </div>
             <div class="cart-footer">
@@ -199,7 +237,8 @@
                 <div class="cart-actions" id="cartActions">
                     <div class="cta-row">
                         <button class="btn-outline" id="cartContinue">Continuar Comprando</button>
-                        <button class="btn-primary" id="cartCheckout" type="button"><a href="{{ url_carrito }}"></a>Ir a Pagar</button>
+                        <button class="btn-primary" id="cartCheckout" type="button"><a href="{{ url_carrito }}"></a>Ir a
+                            Pagar</button>
                     </div>
                 </div>
             </div>
@@ -208,6 +247,6 @@
 
     <script src="{% static 'core/js/script.js' %}"></script>
 
-    </body>
+</body>
 
-    </html>
+</html>
