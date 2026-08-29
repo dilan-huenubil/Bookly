@@ -1,0 +1,915 @@
+/* =========================
+   RESET Y BASE
+   ========================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Lato", sans-serif;
+}
+
+body.bg-light {
+    background-color: #f5f8f6;
+}
+
+/* =========================
+   HEADER SUPERIOR
+   ========================= */
+.cuenta-header {
+    background-color: #495867;
+    color: #ffffff;
+    padding: 0 20px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    border-bottom: 2px solid #333d47;
+}
+
+.cuenta-header-inner {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cuenta-logo-area {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.cuenta-logo-link {
+    color: #ffffff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding-right: 20px;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.cuenta-logo-link h3 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.cuenta-title-top {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.cuenta-logout-area a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.3s;
+}
+
+.cuenta-logout-area a:hover {
+    color: #B0C0D1;
+}
+
+/* =========================
+   LAYOUT PRINCIPAL
+   ========================= */
+.cuenta-layout {
+    max-width: 1200px;
+    margin: 40px auto 80px;
+    padding: 0 20px;
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* =========================
+   SIDEBAR IZQUIERDO
+   ========================= */
+.cuenta-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    background: #ffffff;
+    border: 1px solid #e6e6e6;
+    border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .03);
+}
+
+.cuenta-greeting {
+    text-align: center;
+    padding: 30px 20px;
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.cuenta-greeting h4 {
+    color: #495867;
+    font-size: 18px;
+    margin-bottom: 16px;
+    font-weight: 800;
+}
+
+.cuenta-avatar {
+    width: 90px;
+    height: 90px;
+    background: #65798C;
+    color: #ffffff;
+    font-size: 36px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin: 0 auto;
+    border: 4px solid #ffffff;
+    outline: 2px solid #e1e5e8;
+}
+
+/* Navegación Sidebar */
+.cuenta-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.cuenta-nav a {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 24px;
+    color: #495867;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 15px;
+    border-bottom: 1px solid #e6e6e6;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.cuenta-nav a:last-child {
+    border-bottom: none;
+}
+
+.cuenta-nav a i {
+    font-size: 20px;
+    color: #65798C;
+}
+
+.cuenta-nav a.active {
+    background: #65798C;
+    color: #ffffff;
+}
+
+.cuenta-nav a.active i {
+    color: #ffffff;
+}
+
+.cuenta-nav a:not(.active):hover {
+    background: #f4f6f5;
+}
+
+/* =========================
+   CONTENIDO DERECHO (MAIN)
+   ========================= */
+.cuenta-main {
+    flex: 1;
+    min-width: 0;
+    background: #ffffff;
+    padding: 30px;
+    border: 1px solid #e6e6e6;
+    border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .03);
+}
+
+.content-header-account {
+    margin-bottom: 30px;
+}
+
+.content-header-account h2 {
+    font-size: 24px;
+    color: #495867;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.content-header-account p {
+    color: #666;
+    font-size: 14px;
+}
+
+/* =========================
+   TARJETAS DE COMPRA
+   ========================= */
+.purchase-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.purchase-card {
+    border: 1px solid #cfcfcf;
+    border-radius: 6px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.purchase-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.purchase-header:hover {
+    background: #fcfcfc;
+}
+
+.purchase-icon {
+    width: 44px;
+    height: 44px;
+    background: #f5f8f6;
+    color: #495867;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.purchase-icon h2 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.purchase-title {
+    font-weight: 800;
+    color: #495867;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.purchase-date,
+.purchase-price {
+    font-size: 14px;
+    color: #555;
+}
+
+.purchase-date strong,
+.purchase-price strong {
+    color: #495867;
+}
+
+.purchase-price span {
+    color: #d95316;
+    /* Tu color anaranjado para precios */
+    font-weight: 800;
+}
+
+.purchase-chevron {
+    color: #65798C;
+    font-size: 20px;
+    transition: transform 0.3s ease;
+}
+
+.purchase-card.is-open .purchase-chevron {
+    transform: rotate(180deg);
+}
+
+.purchase-body {
+    display: none;
+    padding: 20px 20px 20px 80px;
+    border-top: 1px solid #cfcfcf;
+    background: #fafafa;
+    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.purchase-card.is-open .purchase-body {
+    display: flex;
+}
+
+/* Estilo para el botón de "Ver detalle completo" */
+.btn-primary {
+    background: #65798C;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.4s ease;
+    text-align: center;
+}
+
+.btn-primary:hover {
+    background: #495867;
+}
+
+/* =========================
+   PAGINACIÓN
+   ========================= */
+.account-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    margin-top: 30px;
+}
+
+.account-pagination a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    text-decoration: none;
+    color: #495867;
+    background-color: #ffffff;
+    border: 1px solid #cfcfcf;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.account-pagination a:hover {
+    border-color: #65798C;
+    color: #65798C;
+    background-color: #f4f6f5;
+}
+
+.account-pagination a.active {
+    background-color: #495867;
+    border-color: #495867;
+    color: #ffffff;
+}
+
+.account-pagination a i {
+    font-size: 12px;
+}
+
+
+/* Estado deshabilitado para la paginación */
+.account-pagination a.disabled {
+    color: #cccccc;
+    border-color: #e6e6e6;
+    background-color: #fafafa;
+    cursor: not-allowed;
+    pointer-events: none;
+    /* Evita que el botón sea clickeable */
+}
+
+
+
+
+/* =========================
+   DISEÑO RESPONSIVO
+   ========================= */
+@media (max-width: 992px) {
+    .cuenta-layout {
+        flex-direction: column;
+    }
+
+    .cuenta-sidebar {
+        width: 100%;
+    }
+
+    .cuenta-main {
+        padding: 20px;
+    }
+
+    .purchase-header {
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+            "icon title chevron"
+            "icon date chevron"
+            "icon price chevron";
+        gap: 6px 16px;
+    }
+
+    .purchase-icon {
+        grid-area: icon;
+        align-self: center;
+    }
+
+    .purchase-title {
+        grid-area: title;
+        white-space: normal;
+    }
+
+    .purchase-date {
+        grid-area: date;
+    }
+
+    .purchase-price {
+        grid-area: price;
+    }
+
+    .purchase-chevron {
+        grid-area: chevron;
+        align-self: center;
+    }
+
+    .purchase-body {
+        padding-left: 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    .cuenta-header-inner {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .cuenta-header {
+        height: auto;
+        padding: 16px 20px;
+    }
+
+    .cuenta-logo-link {
+        border-right: none;
+        padding-right: 0;
+    }
+}
+
+
+
+/* =========================
+   INTERIOR DE TARJETA DE COMPRA
+   ========================= */
+.purchase-body {
+    display: none;
+    padding: 24px;
+    border-top: 1px solid #cfcfcf;
+    background: #ffffff;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.purchase-card.is-open .purchase-body {
+    display: flex;
+}
+
+/* Detalle del ítem */
+.order-item-detail {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.oi-image img {
+    width: 120px;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid #e1e5e8;
+}
+
+.oi-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #333;
+    font-size: 14px;
+}
+
+.oi-info strong {
+    color: #495867;
+}
+
+.btn-track {
+    margin-top: 12px;
+    background: #495867;
+    color: #ffffff;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-weight: 700;
+    cursor: pointer;
+    align-self: flex-start;
+    transition: background 0.3s;
+}
+
+.btn-track:hover {
+    background: #65798C;
+}
+
+/* Enlaces derechos */
+.oi-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: right;
+}
+
+
+
+/* Caja de Envío */
+.shipping-info-box {
+    background: #f4f6f5;
+    border-radius: 6px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.si-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    color: #555;
+}
+
+.si-label {
+    font-weight: 800;
+    color: #495867;
+}
+
+.si-label i {
+    cursor: pointer;
+    color: #65798C;
+    margin-left: 4px;
+}
+
+
+/* Línea de Tiempo de Seguimiento */
+.tracking-container {
+    border-top: 1px solid #e1e5e8;
+    padding-top: 20px;
+    margin-top: 10px;
+    width: 100%;
+    /* Obliga a la línea de tiempo a usar todo el espacio */
+}
+
+.track-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.track-header h4 {
+    color: #495867;
+    font-size: 18px;
+}
+
+.track-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #333;
+    cursor: pointer;
+}
+
+.track-timeline {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.track-line {
+    position: absolute;
+    top: 20px;
+    left: 10%;
+    right: 10%;
+    height: 4px;
+    background: #e6e6e6;
+    z-index: 1;
+}
+
+.track-step {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+}
+
+.track-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #e6e6e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #ccc;
+    margin-bottom: 12px;
+}
+
+.track-step.completed .track-icon {
+    border-color: #65798C;
+    color: #65798C;
+}
+
+.track-step.completed:last-child .track-icon,
+.track-step.completed.current .track-icon {
+    background: #65798C;
+    color: #ffffff;
+    border-color: #65798C;
+}
+
+.track-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: #666;
+}
+
+.track-text strong {
+    color: #333;
+    font-size: 14px;
+}
+
+.track-footer {
+    background: #fcfcfc;
+    padding: 16px;
+    border: 1px solid #e1e5e8;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #495867;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .order-item-detail {
+        flex-direction: column;
+    }
+
+    .shipping-info-box {
+        flex-direction: column;
+    }
+
+    .track-text {
+        font-size: 11px;
+    }
+}
+
+
+
+
+
+/* =========================
+   PÁGINA MI PERFIL
+   ========================= */
+.profile-form {
+    margin-top: 10px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px 30px;
+    margin-bottom: 30px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    color: #666;
+}
+
+.form-group input,
+.form-group select {
+    padding: 12px 14px;
+    border: 1px solid #e1e5e8;
+    border-radius: 4px;
+    font-size: 15px;
+    color: #333;
+    outline: none;
+    background-color: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #65798C;
+    box-shadow: 0 0 0 3px rgba(101, 121, 140, 0.1);
+}
+
+/* Selector personalizado con flecha SVG */
+.form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 6l4 4 4-4'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+/* Contenedor de botones */
+.form-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 40px;
+}
+
+/* Botones de acción */
+.form-actions .btn-secondary,
+.form-actions .btn-primary {
+    width: 160px;
+    padding: 14px 20px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 4px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-actions .btn-secondary {
+    background: #65798C;
+    color: white;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.form-actions .btn-secondary:hover {
+    background: #495867;
+}
+
+
+/* Estilo para botón de guardar deshabilitado */
+.form-actions .btn-primary:disabled {
+    background-color: #cccccc;
+    color: #888888;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+
+
+
+/* Responsivo para el formulario */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .form-actions .btn-secondary,
+    .form-actions .btn-primary {
+        width: 100%;
+    }
+}
+
+/* =========================
+   DISEÑO RESPONSIVO
+   ========================= */
+@media (max-width: 992px) {
+    .cuenta-layout {
+        flex-direction: column;
+    }
+
+    .cuenta-sidebar {
+        width: 100%;
+    }
+
+    .cuenta-main {
+        padding: 20px;
+        width: 100%;
+        /* <-- Añade esta línea */
+    }
+
+    .purchase-header {
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+            "icon title chevron"
+            "icon date chevron"
+            "icon price chevron";
+        gap: 6px 16px;
+    }
+
+    .purchase-icon {
+        grid-area: icon;
+        align-self: center;
+    }
+
+    .purchase-title {
+        grid-area: title;
+        white-space: normal;
+    }
+
+    .purchase-date {
+        grid-area: date;
+    }
+
+    .purchase-price {
+        grid-area: price;
+    }
+
+    .purchase-chevron {
+        grid-area: chevron;
+        align-self: center;
+    }
+
+    .purchase-body {
+        padding-left: 20px;
+    }
+}
+
+
+
+
+/*Estilos de mi contraseña */
+.msg-box {
+    padding: 14px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.msg-success {
+    background-color: #e6f4ea;
+    color: #1e8e3e;
+    border: 1px solid #ceead6;
+}
+
+.msg-error {
+    background-color: #fce8e6;
+    color: #d93025;
+    border: 1px solid #fad2cf;
+}
+
+.form-pwd-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-pwd-wrapper input {
+    padding: 12px 14px;
+    border: 1px solid #e1e5e8;
+    border-radius: 4px;
+    font-size: 15px;
+    color: #333;
+    outline: none;
+    background-color: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+.form-pwd-wrapper input:focus {
+    border-color: #65798C;
+    box-shadow: 0 0 0 3px rgba(101, 121, 140, 0.1);
+}
+
+/* Estilos para la lista de requisitos personalizados */
+.password-requirements {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0 0 0;
+    font-size: 12px;
+}
+
+.password-requirements li {
+    margin-bottom: 3px;
+    color: #d93025;
+    /* Rojo por defecto (no cumplido) */
+    transition: color 0.2s ease;
+}
+
+.password-requirements li.valid {
+    color: #1e8e3e;
+    /* Verde cuando se cumple */
+}
+
+.btn-primary:disabled {
+    background-color: #cccccc;
+    color: #888888;
+    cursor: not-allowed;
+    pointer-events: none;
+}

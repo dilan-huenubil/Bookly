@@ -31,8 +31,17 @@
             
             <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
             
-            <ul class="book-list" id="confirmCartList">
+            <ul class="book-list" id="confirmCartList" data-server-items="{% if order_items_summary %}1{% else %}0{% endif %}">
+                {% if order_items_summary %}
+                    {% for item in order_items_summary %}
+                    <li>
+                        <span>{{ item.title }}{% if item.quantity > 1 %} (x{{ item.quantity }}){% endif %}</span>
+                        <strong>${{ item.line_total }}</strong>
+                    </li>
+                    {% endfor %}
+                {% else %}
                 <li>Cargando productos de tu pedido...</li>
+                {% endif %}
             </ul>
 
             <div class="detail-row" id="discount-row" style="display:none;">
@@ -97,56 +106,59 @@
         }
         var hasBookly10 = activeCoupon && activeCoupon.code && activeCoupon.code.toLowerCase() === 'bookly10';
 
-        var raw = localStorage.getItem('booklyCart') || localStorage.getItem('bookly_cart') || '[]';
-        var items;
-        try { items = JSON.parse(raw || '[]'); } catch (e) { items = []; }
+        var hasServerItems = listEl.getAttribute('data-server-items') === '1';
+        if (!hasServerItems) {
+            var raw = localStorage.getItem('booklyCart') || localStorage.getItem('bookly_cart') || '[]';
+            var items;
+            try { items = JSON.parse(raw || '[]'); } catch (e) { items = []; }
 
-        listEl.innerHTML = '';
-        if (!Array.isArray(items) || !items.length) {
-            var li = document.createElement('li');
-            li.textContent = 'No se encontraron productos en tu carrito.';
-            listEl.appendChild(li);
-            return;
-        }
-
-        var discountTotal = 0;
-
-        items.forEach(function (it) {
-            var qty = parseInt(it.qty || 1, 10) || 1;
-            var price = parseInt(it.price || 0, 10) || 0;
-            var line = qty * price;
-            var li = document.createElement('li');
-            var name = (it.title || it.nombre || it.name || 'Producto');
-            var nameSpan = document.createElement('span');
-            nameSpan.textContent = name + (qty > 1 ? ' (x' + qty + ')' : '');
-            var priceStrong = document.createElement('strong');
-            priceStrong.textContent = '$' + fmtCL(line);
-            li.appendChild(nameSpan);
-            li.appendChild(priceStrong);
-            listEl.appendChild(li);
-
-
-            if (hasBookly10 && price > 0) {
-                discountTotal += Math.round(price * 0.10);
+            listEl.innerHTML = '';
+            if (!Array.isArray(items) || !items.length) {
+                var li = document.createElement('li');
+                li.textContent = 'No se encontraron productos en tu carrito.';
+                listEl.appendChild(li);
+                return;
             }
-        });
+
+            var discountTotal = 0;
+
+            items.forEach(function (it) {
+                var qty = parseInt(it.qty || 1, 10) || 1;
+                var price = parseInt(it.price || 0, 10) || 0;
+                var line = qty * price;
+                var li = document.createElement('li');
+                var name = (it.title || it.nombre || it.name || 'Producto');
+                var nameSpan = document.createElement('span');
+                nameSpan.textContent = name + (qty > 1 ? ' (x' + qty + ')' : '');
+                var priceStrong = document.createElement('strong');
+                priceStrong.textContent = '$' + fmtCL(line);
+                li.appendChild(nameSpan);
+                li.appendChild(priceStrong);
+                listEl.appendChild(li);
 
 
-        var discountRow = document.getElementById('discount-row');
-        var discountAmountEl = document.getElementById('discount-amount');
-        if (discountRow && discountAmountEl && discountTotal > 0) {
-            discountAmountEl.textContent = '-$' + fmtCL(discountTotal);
-            discountRow.style.display = 'flex';
-        }
+                if (hasBookly10 && price > 0) {
+                    discountTotal += Math.round(price * 0.10);
+                }
+            });
 
 
-        var shipRow = document.getElementById('shipping-row');
-        var shipAmountEl = document.getElementById('shipping-amount');
-        if (shipRow && shipAmountEl) {
-            var ship = parseInt(localStorage.getItem('booklyShipping') || '0', 10) || 0;
-            if (ship > 0) {
-                shipAmountEl.textContent = '$' + fmtCL(ship);
-                shipRow.style.display = 'flex';
+            var discountRow = document.getElementById('discount-row');
+            var discountAmountEl = document.getElementById('discount-amount');
+            if (discountRow && discountAmountEl && discountTotal > 0) {
+                discountAmountEl.textContent = '-$' + fmtCL(discountTotal);
+                discountRow.style.display = 'flex';
+            }
+
+
+            var shipRow = document.getElementById('shipping-row');
+            var shipAmountEl = document.getElementById('shipping-amount');
+            if (shipRow && shipAmountEl) {
+                var ship = parseInt(localStorage.getItem('booklyShipping') || '0', 10) || 0;
+                if (ship > 0) {
+                    shipAmountEl.textContent = '$' + fmtCL(ship);
+                    shipRow.style.display = 'flex';
+                }
             }
         }
 

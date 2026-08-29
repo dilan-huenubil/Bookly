@@ -5,236 +5,231 @@
 {% block titlecontent %}BOOKLY Checkout{% endblock %}
 
 {% block numberActive %}
-    <div class="progress-circle active-current">2</div>
-    <span class="progress-text">Entrega</span>
+<div class="progress-circle active-current">2</div>
+<span class="progress-text">Entrega</span>
 {% endblock%}
 
 {% block numberActive2 %}
-    <div class="progress-circle">3</div>
-    <span class="progress-text">Pago</span> 
+<div class="progress-circle">3</div>
+<span class="progress-text">Pago</span>
 {% endblock%}
 
 
 {% block content %}
-        <div class="form-section">
-            <div id="datosResumen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                    <h2 style="margin-bottom: 0;">Mis datos</h2>
-                    <button class="btn-edit" type="button" onclick="editarDatos()">
-                        <span class="icon icon-edit" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false">
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor" />
-                                <path d="M20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor" />
-                            </svg>
-                        </span>
-                        Editar
-                    </button>
+<div class="form-section">
+    <div id="datosResumen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="margin-bottom: 0;">Mis datos</h2>
+            <button class="btn-edit" type="button" onclick="editarDatos()">
+                <span class="icon icon-edit" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor" />
+                        <path d="M20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                            fill="currentColor" />
+                    </svg>
+                </span>
+                Editar
+            </button>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <p style="font-weight: 600; color: #333; margin-bottom: 5px;">{{ user.get_full_name|default:user.username }}
+            </p>
+            <p style="color: #666; margin-bottom: 3px;">{{ user_phone|default:'—' }}</p>
+            <p style="color: #666;">{{ user.email }}</p>
+        </div>
+    </div>
+
+
+    <div id="datosFormulario" style="display: none;">
+        <form method="post" action="{% url 'checkout' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_user" />
+            <h2>Datos personales</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" name="first_name" value="{{ user.first_name|default:user.username }}">
                 </div>
-                
-                <div style="margin-bottom: 30px;">
-                    <p style="font-weight: 600; color: #333; margin-bottom: 5px;">{{ user.get_full_name|default:user.username }}</p>
-                    <p style="color: #666; margin-bottom: 3px;">{{ user_phone|default:'—' }}</p>
-                    <p style="color: #666;">{{ user.email }}</p>
+                <div class="form-group">
+                    <label>Apellido</label>
+                    <input type="text" name="last_name" value="{{ user.last_name }}">
                 </div>
             </div>
 
-
-            <div id="datosFormulario" style="display: none;">
-                <form method="post" action="{% url 'checkout' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="save_user" />
-                    <h2>Datos personales</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Nombre</label>
-                            <input type="text" name="first_name" value="{{ user.first_name|default:user.username }}">
-                        </div>
-                        <div class="form-group">
-                            <label>Apellido</label>
-                            <input type="text" name="last_name" value="{{ user.last_name }}">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Teléfono</label>
-                            <input type="text" name="phone" value="{{ user_phone|default:'' }}" placeholder="912548922">
-                        </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" name="email" value="{{ user.email }}">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>RUT</label>
-                            <input type="text" name="rut" value="{{ user_rut|default:'' }}" placeholder="11.111.111-1">
-                        </div>
-                        <div class="form-group">
-                            <label>Tipo</label>
-                            <select name="rut_type">
-                                <option value="rut">RUT</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="button-group">
-                        <button class="btn-back" type="button" onclick="cancelarEdicionDatos()">CANCELAR</button>
-                        <button class="btn-continue" type="submit">GUARDAR</button>
-                    </div>
-                </form>
-            </div>
-
-
-            <div id="separador1" style="height: 40px;"></div>
-
-
-            <div id="direccionResumen">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="margin-bottom: 0;">Mi dirección</h2>
-                    <button class="btn-edit" type="button" onclick="editarDireccion()">
-                        <span class="icon icon-edit" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" focusable="false">
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor" />
-                                <path d="M20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor" />
-                            </svg>
-                        </span>
-                        {% if has_addresses %}Editar{% else %}Agregar{% endif %}
-                    </button>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="text" name="phone" value="{{ user_phone|default:'' }}" placeholder="912548922">
                 </div>
-
-                <div style="margin-bottom: 20px;">
-                    {% if default_address %}
-                        <p style="font-weight: 600; color: #333; margin-bottom: 5px;">{{ default_address.line1 }}, {{ default_address.comuna }}, {{ default_address.region }}</p>
-                        <p style="color: #666;">Recibe: {{ default_address.name }}</p>
-                    {% else %}
-                        <p style="color: #666;">No tienes direcciones guardadas.</p>
-                    {% endif %}
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ user.email }}">
                 </div>
-                {% if has_addresses %}
-                    <button class="btn-direcciones" type="button" aria-expanded="false" aria-controls="listaDirecciones">Mis direcciones</button>
-
-                    <div id="listaDirecciones" class="direcciones-panel" hidden>
-                        {% for addr in addresses %}
-                            <div class="direccion-item {% if default_address and addr.id == default_address.id %}direccion-item-activa{% endif %}">
-                                <div class="direccion-item-info">
-                                    <p class="direccion-alias">{{ addr.name }}</p>
-                                    <p class="direccion-linea">{{ addr.line1 }}, {{ addr.comuna }}, {{ addr.region }}</p>
-                                    <p class="direccion-recibe">Recibe: {{ addr.name }}</p>
-                                </div>
-                                <div style="display:flex; gap:8px; align-items:center;">
-                                    <form method="post" action="{% url 'set_default_address' addr.id %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn-back" style="width:auto; padding:8px 12px; text-transform:none;">Usar dirección</button>
-                                    </form>
-                                    <form method="post" action="{% url 'delete_address' addr.id %}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn-back" style="width:auto; padding:8px 12px;">Borrar</button>
-                                    </form>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
             </div>
 
-            <div id="direccionFormulario" style="display: none;">
-                <form method="post" action="{% url 'checkout' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="save_address"/>
-                    <input type="hidden" name="address_id" value="{% if default_address %}{{ default_address.id }}{% endif %}" />
-                    <h2>Dirección</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Nombre de quien recibe</label>
-                            <input type="text" name="name" value="{% if default_address %}{{ default_address.name }}{% else %}{{ user.get_full_name|default:user.username }}{% endif %}">
-                        </div>
-                        <div class="form-group">
-                            <label>Teléfono</label>
-                            <input type="text" name="phone" value="{{ user_phone|default:'' }}">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Calle</label>
-                            <input type="text" name="street" value="{% if default_address %}{{ default_street }}{% endif %}">   
-                        </div>
-                        <div class="form-group">
-                            <label>Número</label>
-                            <input type="text" name="number" value="{% if default_address %}{{ default_number }}{% endif %}">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Casa / Bloque / Departamento (Opcional)</label>
-                            <input type="text" name="line2" value="{% if default_address %}{{ default_address.line2 }}{% endif %}">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Región</label>
-                            <select id="regionSelect" name="region" data-initial-region="{% if default_address %}{{ default_address.region }}{% endif %}">
-                                <option value="">Seleccionar región</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Comuna</label>
-                            <select id="comunaSelect" name="comuna" data-initial-comuna="{% if default_address %}{{ default_address.comuna }}{% endif %}">
-                                <option value="">Seleccionar comuna</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Código postal</label>
-                            <input type="text" name="postal_code" value="{% if default_address %}{{ default_address.postal_code }}{% endif %}">
-                        </div>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="predeterminada" name="is_default" {% if default_address and default_address.is_default %}checked{% endif %}>
-                        <label for="predeterminada">Dirección predeterminada</label>
-                    </div>
-
-                    <div class="button-group">
-                        <button class="btn-back" type="button" onclick="cancelarEdicionDireccion()">CANCELAR</button>
-                        <button class="btn-continue" type="submit">GUARDAR</button>
-                    </div>
-                </form>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>RUT</label>
+                    <input type="text" name="rut" value="{{ user_rut|default:'' }}" placeholder="11.111.111-1">
+                </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select name="doc_type">
+                        <option value="RUT" selected>RUT</option>
+                        <option value="PASAPORTE">Pasaporte</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="flow-actions">
-                <a href="{% url 'carrito' %}"><button  class="btn-back btn-large">ATRÁS</button></a>
-                {% if can_continue %}
-                    <a href="{% url 'entrega' %}"><button class="btn-continue btn-large">CONTINUAR</button></a>
-                {% else %}
-                    <button class="btn-continue btn-large" type="button" disabled
-                            title="Completa tus datos personales y tu dirección para continuar">
-                        CONTINUAR
-                    </button>
-                {% endif %}
+            <div class="button-group">
+                <button class="btn-back" type="button" onclick="cancelarEdicionDatos()">CANCELAR</button>
+                <button class="btn-continue" type="submit">GUARDAR</button>
             </div>
-            {% if not can_continue %}
-                <p style="margin-top:10px; color:#c00; font-size:0.9rem;">
-                    Debes completar tus datos personales y tu dirección para continuar al siguiente paso.
-                </p>
+        </form>
+    </div>
+
+
+    <div id="separador1" style="height: 40px;"></div>
+
+
+    <div id="direccionResumen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin-bottom: 0;">Mi dirección</h2>
+            <button class="btn-edit" type="button" onclick="editarDireccion()">
+                <span class="icon icon-edit" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor" />
+                        <path d="M20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                            fill="currentColor" />
+                    </svg>
+                </span>
+                {% if has_addresses %}Editar{% else %}Agregar{% endif %}
+            </button>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            {% if default_address %}
+            <p style="font-weight: 600; color: #333; margin-bottom: 5px;">{{ default_address.line1 }}, {{ default_address.comuna }}, {{ default_address.region }}</p>
+            <p style="color: #666;">Recibe: {{ default_address.name }}</p>
+            {% else %}
+            <p style="color: #666;">No tienes direcciones guardadas.</p>
             {% endif %}
         </div>
+        {% if has_addresses %}
+        <button class="btn-direcciones" type="button" aria-expanded="false" aria-controls="listaDirecciones">Mis direcciones</button>
+
+        <div id="listaDirecciones" class="direcciones-panel" hidden>
+            {% for addr in addresses %}
+            <div class="direccion-item {% if default_address and addr.id == default_address.id %}direccion-item-activa{% endif %}">
+                <div class="direccion-item-info">
+                    <p class="direccion-alias">{{ addr.name }}</p>
+                    <p class="direccion-linea">{{ addr.line1 }}, {{ addr.comuna }}, {{ addr.region }}</p>
+                    <p class="direccion-recibe">Recibe: {{ addr.name }}</p>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <form method="post" action="{% url 'set_default_address' addr.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-back"
+                            style="width:auto; padding:8px 12px; text-transform:none;">Usar dirección</button>
+                    </form>
+                    <form method="post" action="{% url 'delete_address' addr.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-back" style="width:auto; padding:8px 12px;">Borrar</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="direccionFormulario" style="display: none;">
+        <form method="post" action="{% url 'checkout' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_address" />
+            <input type="hidden" name="address_id" value="{% if default_address %}{{ default_address.id }}{% endif %}" />
+            <h2>Dirección</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombre de quien recibe</label>
+                    <input type="text" name="name" value="{% if default_address %}{{ default_address.name }}{% else %}{{ user.get_full_name|default:user.username }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="text" name="phone" value="{{ user_phone|default:'' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Calle</label>
+                    <input type="text" name="street" value="{% if default_address %}{{ default_street }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label>Número</label>
+                    <input type="text" name="number" value="{% if default_address %}{{ default_number }}{% endif %}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Casa / Bloque / Departamento (Opcional)</label>
+                    <input type="text" name="line2" value="{% if default_address %}{{ default_address.line2 }}{% endif %}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Región</label>
+                    <select id="regionSelect" name="region" data-initial-region="{% if default_address %}{{ default_address.region }}{% endif %}">
+                        <option value="">Seleccionar región</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Comuna</label>
+                    <select id="comunaSelect" name="comuna" data-initial-comuna="{% if default_address %}{{ default_address.comuna }}{% endif %}">
+                        <option value="">Seleccionar comuna</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Código postal</label>
+                    <input type="text" name="postal_code" value="{% if default_address %}{{ default_address.postal_code }}{% endif %}">
+                </div>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="predeterminada" name="is_default" {% if default_address and default_address.is_default %}checked{% endif %}>
+                <label for="predeterminada">Dirección predeterminada</label>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-back" type="button" onclick="cancelarEdicionDireccion()">CANCELAR</button>
+                <button class="btn-continue" type="submit">GUARDAR</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="flow-actions">
+        <a href="{% url 'carrito' %}"><button class="btn-back btn-large">ATRÁS</button></a>
+        {% if can_continue %}
+        <a href="{% url 'entrega' %}"><button class="btn-continue btn-large">CONTINUAR</button></a>
+        {% else %}
+        <button class="btn-continue btn-large" type="button" disabled title="Completa tus datos personales y tu dirección para continuar">
+            CONTINUAR
+        </button>
+        {% endif %}
+    </div>
+    {% if not can_continue %}
+    <p style="margin-top:10px; color:#c00; font-size:0.9rem;">
+        Debes completar tus datos personales y tu dirección para continuar al siguiente paso.
+    </p>
+    {% endif %}
+</div>
 {% endblock %}
-
-
-
-
-
-
-

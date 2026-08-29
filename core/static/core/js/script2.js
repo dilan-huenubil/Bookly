@@ -553,15 +553,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 var rawCart = localStorage.getItem('booklyCart') || localStorage.getItem('bookly_cart') || '[]';
                 var arr = [];
                 try { arr = JSON.parse(rawCart || '[]'); } catch (_) { arr = []; }
-                var titles = [];
+                var cart = [];
                 if (Array.isArray(arr)) {
                     arr.forEach(function (it) {
-                        var t = (it && (it.title || it.nombre || it.name)) ? String(it.title || it.nombre || it.name).trim() : '';
-                        if (t && t.toLowerCase() !== 'producto') { titles.push(t); }
+                        if (!it) return;
+                        var sku = it.sku || it.id || '';
+                        var title = (it.title || it.nombre || it.name || '').trim();
+                        var qty = parseInt(it.qty || 1, 10) || 1;
+                        if (sku || title) {
+                            cart.push({ sku: String(sku || '').trim(), title: title, qty: qty });
+                        }
                     });
                 }
-                if (titles.length > 0) {
-                    url.searchParams.set('titles', JSON.stringify(titles));
+                if (cart.length > 0) {
+                    url.searchParams.set('cart', JSON.stringify(cart));
                 } else {
                     var firstTitle = '';
                     var nameEl = document.querySelector('.delivery-product-name');

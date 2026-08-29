@@ -1,0 +1,148 @@
+{% extends 'core/base_cuenta.html' %}
+{% load humanize %}
+
+{% block title %}Mis Compras - Bookly{% endblock %}
+
+{% block cuenta_content %}
+<div class="content-header-account">
+    <h2>Mis compras realizadas</h2>
+    <p>Aquí podrás encontrar los estados de todas tus compras.</p>
+</div>
+
+<div class="purchase-list">
+    {% for order in orders %}
+    <div class="purchase-card js-purchase-card">
+        <div class="purchase-header js-purchase-toggle">
+            <div class="purchase-icon">
+                <h2>B</h2>
+            </div>
+
+            <div class="purchase-title">{{ order.first_item_title|default:order.commerce_order }}</div>
+            <div class="purchase-date"><strong>Fecha de compra:</strong> {{ order.created_at|date:"d/m/Y" }}</div>
+            <div class="purchase-price"><strong>Total:</strong> <span>${{ order.amount|intcomma }}</span></div>
+
+            <div class="purchase-chevron">
+                <i class="bi bi-chevron-down"></i>
+            </div>
+        </div>
+        <div class="purchase-body">
+            <!-- Detalles del Producto -->
+            {% for item in order.items.all %}
+            <div class="order-item-detail">
+                <div class="oi-image">
+                    <img src="{{ item.book.image_url|default:'https://via.placeholder.com/150x200?text=Sin+imagen' }}" alt="{{ item.book.title }}">
+                </div>
+                <div class="oi-info">
+                    <p><strong>Nº de compra:</strong> {{ order.commerce_order|default:"Pendiente" }}</p>
+                    <p><strong>Sku:</strong> {{ item.book.sku }}</p>
+                    <p><strong>Cantidad:</strong> {{ item.quantity }}</p>
+                    <button class="btn-track js-track-toggle">Seguimiento de compra</button>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Información de Envío -->
+            <div class="shipping-info-box">
+                <div class="si-col">
+                    <span class="si-label">Fecha estimada de entrega</span>
+                    <span class="si-value">{{ order.estimated_delivery_date|date:"d/m/Y"|default:"Pendiente de confirmación" }}</span>
+                </div>
+                <div class="si-col">
+                    <span class="si-label">Dirección de envío</span>
+                    <span class="si-value">
+                        {{ order.shipping_line1 }}<br>
+                        {{ order.shipping_comuna }}, {{ order.shipping_region }}
+                    </span>
+                </div>
+                <div class="si-col">
+                    <span class="si-label">Persona que recibe <i class="bi bi-pencil-square"></i></span>
+                    <span class="si-value">{{ order.shipping_name|default:user.get_full_name }}</span>
+                </div>
+            </div>
+
+            <!-- Panel de Seguimiento -->
+            <div class="tracking-container js-tracking-container" style="display: none;">
+                <div class="track-header">
+                    <h4>Seguimiento de compra</h4>
+                    <button class="track-close js-track-close"><i class="bi bi-x-lg"></i></button>
+                </div>
+
+                <div class="track-timeline">
+                    <div class="track-line"></div>
+
+                    <!-- Paso 1: Preparando -->
+                    <div class="track-step {% if order.tracking_status == 'preparando' or order.tracking_status == 'en_camino' or order.tracking_status == 'entregado' %}completed{% else %}pending{% endif %}">
+                        <div class="track-icon"><i class="bi bi-shop"></i></div>
+                        <div class="track-text">
+                            <strong>Preparando Pedido</strong>
+                            <span>{{ order.created_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Paso 2: En Camino -->
+                    <div class="track-step {% if order.tracking_status == 'en_camino' or order.tracking_status == 'entregado' %}completed{% else %}pending{% endif %}">
+                        <div class="track-icon"><i class="bi bi-truck"></i></div>
+                        <div class="track-text">
+                            <strong>En Camino</strong>
+                            <span>{% if order.tracking_status == 'en_camino' %}En tránsito{% elif order.tracking_status == 'entregado' %}Completado{% else %}Pendiente{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <!-- Paso 3: Entregado -->
+                    <div class="track-step {% if order.tracking_status == 'entregado' %}completed{% else %}pending{% endif %}">
+                        <div class="track-icon"><i class="bi bi-check-lg"></i></div>
+                        <div class="track-text">
+                            <strong>Entregado</strong>
+                            <span>{% if order.tracking_status == 'entregado' %}Finalizado{% else %}Pendiente{% endif %}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="track-footer">
+                    <i class="bi bi-calendar3"></i> <strong>Recibe:</strong>
+                    {% if order.tracking_status == 'entregado' %}
+                        Entregado con éxito
+                    {% elif order.estimated_delivery_date %}
+                        El {{ order.estimated_delivery_date|date:"d/m/Y" }}
+                    {% else %}
+                        Próximamente
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 40px; color: #666; border: 1px dashed #ccc; border-radius: 6px;">
+        <i class="bi bi-box-seam" style="font-size: 48px; color: #ccc;"></i>
+        <p style="margin-top: 16px; font-size: 16px;">Aún no has realizado ninguna compra.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Paginación Dinámica -->
+<div class="pagination account-pagination">
+    {% if orders.has_previous %}
+        <a href="?page=1" title="Primera página"><i class="bi bi-chevron-double-left"></i></a>
+        <a href="?page={{ orders.previous_page_number }}" title="Anterior"><i class="bi bi-chevron-left"></i></a>
+    {% else %}
+        <a class="disabled" title="Primera página"><i class="bi bi-chevron-double-left"></i></a>
+        <a class="disabled" title="Anterior"><i class="bi bi-chevron-left"></i></a>
+    {% endif %}
+
+    {% for num in orders.paginator.page_range %}
+        {% if orders.number == num %}
+            <a href="#" class="active" aria-current="page" onclick="return false;">{{ num }}</a>
+        {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+            <a href="?page={{ num }}">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+
+    {% if orders.has_next %}
+        <a href="?page={{ orders.next_page_number }}" title="Siguiente"><i class="bi bi-chevron-right"></i></a>
+        <a href="?page={{ orders.paginator.num_pages }}" title="Última página"><i class="bi bi-chevron-double-right"></i></a>
+    {% else %}
+        <a class="disabled" title="Siguiente"><i class="bi bi-chevron-right"></i></a>
+        <a class="disabled" title="Última página"><i class="bi bi-chevron-double-right"></i></a>
+    {% endif %}
+</div>
+{% endblock %}

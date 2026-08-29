@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from . import views
 
 urlpatterns = [
     path('', index, name='index'),
@@ -21,4 +22,7 @@ urlpatterns = [
     path('addresses/set-default/<int:address_id>/', set_default_address, name='set_default_address'),
     path('addresses/delete/<int:address_id>/', delete_address, name='delete_address'),
     path('confirmacion_pedido/', confirmacion_pedido, name='confirmacion_pedido'),
+    path('mis_pedidos/', mis_pedidos, name='mis_pedidos'),
+    path('mi-perfil/', views.mi_perfil, name='mi_perfil'),
+    path('mi-contrasena/', views.mi_contrasena, name='mi_contrasena'),
 ]

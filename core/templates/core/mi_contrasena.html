@@ -1,0 +1,79 @@
+{% extends 'core/base_cuenta.html' %}
+
+{% block title %}Cambiar Contraseña - Bookly{% endblock %}
+
+{% block cuenta_content %}
+
+<div class="content-header-account">
+    <h2>Mi contraseña</h2>
+    <p>Actualiza tu clave de acceso regularmente para mantener tu cuenta segura.</p>
+</div>
+
+{% if messages %}
+    <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+            <div class="msg-box {% if message.tags == 'success' %}msg-success{% else %}msg-error{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<form id="pwdForm" method="POST" action="">
+    {% csrf_token %}
+    
+    <div class="form-grid" style="grid-template-columns: 1fr; max-width: 450px;">
+        
+        <!-- Contraseña Actual -->
+        <div class="form-pwd-wrapper">
+            <label for="{{ form.old_password.id_for_label }}" style="font-size: 14px; color: #666;">{{ form.old_password.label }}</label>
+            {{ form.old_password }}
+            {% if form.old_password.errors %}
+                <span style="color: #d93025; font-size: 12px;">{{ form.old_password.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <!-- Nueva Contraseña -->
+        <div class="form-pwd-wrapper">
+            <label for="{{ form.new_password1.id_for_label }}" style="font-size: 14px; color: #666;">{{ form.new_password1.label }}</label>
+            {{ form.new_password1 }}
+            
+            <!-- Lista de verificación en tiempo real -->
+            <ul class="password-requirements">
+                <li id="req-length">Mínimo 8 caracteres</li>
+                <li id="req-upper">Al menos una letra mayúscula</li>
+                <li id="req-symbol">Al menos un símbolo o carácter especial</li>
+            </ul>
+
+            {% if form.new_password1.errors %}
+                <span style="color: #d93025; font-size: 12px;">{{ form.new_password1.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+        <!-- Confirmación de Nueva Contraseña -->
+        <div class="form-pwd-wrapper">
+            <label for="{{ form.new_password2.id_for_label }}" style="font-size: 14px; color: #666;">{{ form.new_password2.label }}</label>
+            {{ form.new_password2 }}
+            
+            <div id="pwdErrorMsg" style="color: #d93025; font-size: 12px; display: none; margin-top: 2px;">
+                Las contraseñas nuevas no coinciden.
+            </div>
+
+            {% if form.new_password2.errors %}
+                <span style="color: #d93025; font-size: 12px;">{{ form.new_password2.errors.0 }}</span>
+            {% endif %}
+        </div>
+
+    </div>
+    
+    <div class="form-actions" style="justify-content: flex-start; margin-top: 20px;">
+        <button type="submit" id="submitBtn" class="btn-primary" style="width: auto; padding: 14px 30px;" disabled>
+            ACTUALIZAR CONTRASEÑA
+        </button>
+    </div>
+</form>
+
+
+
+
+{% endblock %}

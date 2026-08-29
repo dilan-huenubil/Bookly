@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mi Cuenta - Bookly{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/css/styles-MiCuenta.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body class="bg-light">
+
+    <!-- Encabezado de Mi Cuenta -->
+    <header class="cuenta-header">
+        <div class="cuenta-header-inner">
+            <div class="cuenta-logo-area">
+                <a href="{% url 'index' %}" class="cuenta-logo-link">
+                    <h3>BOOKLY LOGO</h3>
+                </a>
+                <span class="cuenta-title-top">Mi Cuenta</span>
+            </div>
+            <div class="cuenta-logout-area">
+                <a href="{% url 'logout' %}">Cerrar sesión <i class="bi bi-box-arrow-right"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <div class="cuenta-layout">
+
+        <!-- BARRA LATERAL IZQUIERDA -->
+        <aside class="cuenta-sidebar">
+            <div class="cuenta-greeting">
+                <h4>¡Hola {% firstof user.get_full_name user.username %}!</h4>
+                <div class="cuenta-avatar">
+                    {% if user.first_name or user.last_name %}
+                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                    {% else %}
+                    <!-- Respaldo por si el usuario solo se registró con un nombre de usuario (username) -->
+                    {{ user.username|first|upper }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <nav class="cuenta-nav">
+                <!-- Compras -->
+                <a href="{% url 'mis_pedidos' %}"
+                    class="{% if request.resolver_match.url_name == 'mis_pedidos' %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i> Mis compras realizadas
+                </a>
+
+                <!-- Contacto -->
+                <a href="{% url 'contacto' %}"
+                    class="{% if request.resolver_match.url_name == 'contacto' %}active{% endif %}">
+                    <i class="bi bi-envelope"></i> Contacto
+                </a>
+
+                <!-- Mi Perfil -->
+                <a href="{% url 'mi_perfil' %}"
+                    class="{% if request.resolver_match.url_name == 'mi_perfil' %}active{% endif %}">
+                    <i class="bi bi-person"></i> Mi perfil
+                </a>
+
+                <!-- Mi Contraseña (asumiendo que crearás una url llamada 'mi_contrasena' después) -->
+                <a href="{% url 'mi_contrasena' %}"
+                    class="{% if request.resolver_match.url_name == 'mi_contrasena' %}active{% endif %}">
+                    <i class="bi bi-lock"></i> Mi contraseña
+                </a>
+            </nav>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL DERECHO -->
+        <main class="cuenta-main">
+            {% block cuenta_content %}
+            {% endblock %}
+        </main>
+
+    </div>
+
+    <script src="{% static 'core/js/script-MiCuenta.js' %}"></script>
+</body>
+
+</html>
