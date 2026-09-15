@@ -25,4 +25,9 @@ urlpatterns = [
     path('mis_pedidos/', mis_pedidos, name='mis_pedidos'),
     path('mi-perfil/', views.mi_perfil, name='mi_perfil'),
     path('mi-contrasena/', views.mi_contrasena, name='mi_contrasena'),
+    path('admin/libros/', views.admin_books, name='admin_books'),
+    path('admin/libros/nuevo/', views.admin_book_save, name='admin_book_create'),
+    path('admin/libros/<int:book_id>/editar/', views.admin_book_save, name='admin_book_edit'),
+    path('admin/libros/<int:book_id>/estado/', views.admin_book_toggle, name='admin_book_toggle'),
+    path('admin/libros/<int:book_id>/stock/', views.admin_book_stock, name='admin_book_stock'),
 ]

@@ -72,6 +72,12 @@
                                 <i class="bi bi-person"></i>
                                 <span>Mi perfil</span>
                             </a>
+                            {% if user.is_staff or user.is_superuser or user.profile.role == 'admin' %}
+                            <a href="{% url 'admin_books' %}" class="user-dropdown__item">
+                                <i class="bi bi-kanban"></i>
+                                <span>Administrar libros</span>
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -127,6 +133,9 @@
                     <div class="mobile-user-submenu">
                         <a href="{% url 'mis_pedidos' %}"><i class="bi bi-bag-check"></i> Mis compras</a>
                         <a href="{% url 'mi_perfil' %}"><i class="bi bi-person"></i> Mi perfil</a>
+                        {% if user.is_staff or user.is_superuser or user.profile.role == 'admin' %}
+                        <a href="{% url 'admin_books' %}"><i class="bi bi-kanban"></i> Administrar libros</a>
+                        {% endif %}
                         <a href="{{ url_logout }}"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a>
                     </div>
                 </div>

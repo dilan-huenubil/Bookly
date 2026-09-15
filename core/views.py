@@ -20,18 +20,21 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from functools import wraps
 
 from .models import Order, OrderItem, Address, Book, CouponRedemption, Profile
+from .forms import BookAdminForm
 from django.core.paginator import Paginator
 
 # Create your views here.
 
 def index(request):
-    books = Book.objects.order_by('-created_at')
+    books = Book.objects.filter(is_active=True).order_by('-created_at')
     return render(request, 'core/index.html', { 'books': books })
 
 def libro_detalles(request, sku: str):
-    book = get_object_or_404(Book, sku=sku)
+    book = get_object_or_404(Book, sku=sku, is_active=True)
     tags_list = []
     if book.tags:
         tags_list = [t.strip() for t in book.tags.split(',') if t.strip()]
@@ -138,6 +141,99 @@ def carrito(request):
 
 def contacto(request):
     return render(request, 'core/contacto.html')
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(f'{settings.LOGIN_URL}?next={request.path}')
+        is_admin = request.user.is_superuser or request.user.is_staff
+        try:
+            is_admin = is_admin or request.user.profile.role == 'admin'
+        except ObjectDoesNotExist:
+            pass
+        if not is_admin:
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapped
+
+
+@login_required
+@admin_required
+def admin_books(request):
+    query = request.GET.get('q', '').strip()
+    books = Book.objects.all().order_by('-is_active', '-updated_at')
+    if query:
+        books = books.filter(
+            Q(title__icontains=query) |
+            Q(author__icontains=query) |
+            Q(sku__icontains=query) |
+            Q(category__icontains=query)
+        )
+    return render(request, 'core/admin_books.html', {
+        'books': books,
+        'form': BookAdminForm(),
+        'query': query,
+    })
+
+
+@login_required
+@admin_required
+def admin_book_save(request, book_id=None):
+    book = get_object_or_404(Book, pk=book_id) if book_id else None
+
+    if request.method == 'GET':
+        return render(request, 'core/admin_books.html', {
+            'books': Book.objects.all().order_by('-is_active', '-updated_at'),
+            'form': BookAdminForm(instance=book),
+            'editing_book': book,
+            'query': '',
+        })
+
+    if request.method != 'POST':
+        return redirect('admin_books')
+
+    form = BookAdminForm(request.POST, instance=book)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Libro guardado correctamente.')
+        return redirect('admin_books')
+    return render(request, 'core/admin_books.html', {
+        'books': Book.objects.all().order_by('-is_active', '-updated_at'),
+        'form': form,
+        'editing_book': book,
+        'query': '',
+    }, status=400)
+
+
+@login_required
+@admin_required
+def admin_book_toggle(request, book_id):
+    if request.method != 'POST':
+        return redirect('admin_books')
+    book = get_object_or_404(Book, pk=book_id)
+    book.is_active = not book.is_active
+    book.save(update_fields=['is_active', 'updated_at'])
+    messages.success(request, 'Estado del libro actualizado.')
+    return redirect('admin_books')
+
+
+@login_required
+@admin_required
+def admin_book_stock(request, book_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido.'}, status=405)
+    book = get_object_or_404(Book, pk=book_id)
+    try:
+        stock = int(request.POST.get('stock', ''))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'El stock debe ser un número entero.'}, status=400)
+    if stock < 0:
+        return JsonResponse({'error': 'El stock no puede ser negativo.'}, status=400)
+    book.stock = stock
+    book.save(update_fields=['stock', 'updated_at'])
+    return JsonResponse({'stock': book.stock})
 
 
 def logout_view(request):
@@ -309,7 +405,7 @@ def entrega(request):
     book = None
     if sku:
         try:
-            book = Book.objects.get(sku=sku)
+            book = Book.objects.get(sku=sku, is_active=True)
         except Book.DoesNotExist:
             book = None
     context = {
@@ -326,7 +422,7 @@ def pago(request):
     book = None
     if sku:
         try:
-            book = Book.objects.get(sku=sku)
+            book = Book.objects.get(sku=sku, is_active=True)
         except Book.DoesNotExist:
             book = None
 
@@ -455,9 +551,9 @@ def pago_create(request):
 
             book = None
             if raw_sku:
-                book = Book.objects.filter(sku__iexact=raw_sku).first()
+                book = Book.objects.filter(sku__iexact=raw_sku, is_active=True).first()
             if book is None and raw_title:
-                book = Book.objects.filter(title__iexact=raw_title).first()
+                book = Book.objects.filter(title__iexact=raw_title, is_active=True).first()
 
             if not book:
                 continue
@@ -667,7 +763,7 @@ def flow_debug(request):
     })
 
 def destacados(request):
-    books_qs = Book.objects.all()
+    books_qs = Book.objects.filter(is_active=True)
     discounted = books_qs.filter(discount_percent__gt=0).order_by('-discount_percent', '-created_at')
     if discounted.exists():
         books = discounted[:12]
@@ -764,7 +860,7 @@ def search(request):
     results = []
     
     if query:
-        results = Book.objects.filter(
+        results = Book.objects.filter(is_active=True).filter(
             Q(title__icontains=query) |
             Q(author__icontains=query) |
             Q(category__icontains=query)

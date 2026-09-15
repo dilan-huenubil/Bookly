@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Book, Order, OrderItem, Address
+from .models import Book, Order, OrderItem, Address, Profile
 
 class OrderItemInline(admin.TabularInline):
 	model = OrderItem
@@ -33,5 +33,12 @@ class OrderItemAdmin(admin.ModelAdmin):
 class AddressAdmin(admin.ModelAdmin):
 	list_display = ("user", "name", "line1", "comuna", "region", "is_default")
 	search_fields = ("user__username", "line1", "comuna", "region")
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+	list_display = ("user", "role", "phone", "rut")
+	list_filter = ("role",)
+	search_fields = ("user__username", "user__email")
 
 # Register your models here.

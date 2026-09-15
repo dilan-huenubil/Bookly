@@ -18,6 +18,7 @@ class Book(models.Model):
 	price_old = models.IntegerField("Precio anterior", blank=True, null=True)
 	discount_percent = models.IntegerField("Descuento (%)", blank=True, null=True)
 	stock = models.IntegerField("Stock", default=0)
+	is_active = models.BooleanField("Activo en catálogo", default=True)
 	weight_kg = models.DecimalField("Peso (kg)", max_digits=6, decimal_places=3, blank=True, null=True)
 	dimensions = models.CharField("Dimensiones", max_length=100, blank=True, null=True)
 	year = models.IntegerField("Año de edición", blank=True, null=True)
@@ -118,13 +119,19 @@ class Address(models.Model):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name="Usuario")
-    phone = models.CharField("Teléfono", max_length=32, blank=True, null=True)
-    rut = models.CharField("RUT", max_length=20, blank=True, null=True)
-    doc_type = models.CharField("Tipo de documento", max_length=20, default='RUT')
+	ROLE_CHOICES = (
+		('user', 'Usuario'),
+		('admin', 'Administrador'),
+	)
 
-    def __str__(self):
-        return f"Perfil de {self.user.username}"
+	user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name="Usuario")
+	role = models.CharField("Rol", max_length=16, choices=ROLE_CHOICES, default='user')
+	phone = models.CharField("Teléfono", max_length=32, blank=True, null=True)
+	rut = models.CharField("RUT", max_length=20, blank=True, null=True)
+	doc_type = models.CharField("Tipo de documento", max_length=20, default='RUT')
+
+	def __str__(self):
+		return f"Perfil de {self.user.username}"
 
 # Estas señales aseguran que cada vez que se cree un User nuevo, 
 # se cree automáticamente su Profile asociado en blanco.

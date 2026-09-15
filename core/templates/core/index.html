@@ -32,7 +32,7 @@
                         <span class="old-price" style="margin-left:8px; color:#888; text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
                     {% endif %}
                 </p>
-                {% if book.stock > 0 %}
+                {% if book.stock %}
                 <button class="add-to-cart" type="button">AGREGAR AL CARRITO</button>
                 {% else %}
                 <button type="button" disabled>Sin stock</button>

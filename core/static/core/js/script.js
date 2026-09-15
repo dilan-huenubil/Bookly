@@ -41,7 +41,7 @@
 	var lastState=false, headerHeight=header.offsetHeight;
 	function setBodyOffset(add){ document.body.style.paddingTop = add ? headerHeight+'px' : ''; }
 	function onResize(){ headerHeight = header.offsetHeight; if(header.classList.contains('is-sticky')) setBodyOffset(true); }
-	function onScroll(){ var y = window.scrollY||window.pageYOffset||0; var shouldStick = y>10; if(shouldStick!==lastState){ lastState=shouldStick; if(shouldStick){ header.classList.add('is-sticky'); setBodyOffset(true); } else { header.classList.remove('is-sticky'); setBodyOffset(false); } } }
+	function onScroll(){ if(document.body.classList.contains('modal-open')) return; var y = window.scrollY||window.pageYOffset||0; var shouldStick = y>10; if(shouldStick!==lastState){ lastState=shouldStick; if(shouldStick){ header.classList.add('is-sticky'); setBodyOffset(true); } else { header.classList.remove('is-sticky'); setBodyOffset(false); } } }
 	window.addEventListener('scroll', onScroll, { passive:true });
 	window.addEventListener('resize', onResize);
 })();
