@@ -21,6 +21,7 @@
 .admin-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 14px; }
 .admin-field-wide { grid-column: 1 / -1; }
 .admin-field { margin: 8px 0; }
+.book-field-edit-hidden { display: none; }
 .admin-field label { display: block; color: #495867; font-weight: 700; margin-bottom: 6px; }
 .admin-field input, .admin-field textarea, .admin-field select { width: 100%; border: 1px solid #cfcfcf; border-radius: 6px; padding: 8px 10px; font: inherit; background: #fff; }
 .admin-field textarea { resize: vertical; }
@@ -50,6 +51,20 @@
 .icon-action { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid #ddd; border-radius: 6px; background: #fff; color: #65798C; cursor: pointer; text-decoration: none; }
 .icon-action:hover { color: #d95316; border-color: #d95316; }
 .admin-empty { text-align: center !important; color: #777; padding: 30px !important; }
+.admin-orders-table { min-width: 1040px; }
+.admin-orders-table .icon-action { width: 42px; padding: 0 8px; }
+.admin-books-table .admin-row-actions .icon-action:first-child { width: 42px; padding: 0 8px; }
+.admin-order-details td { padding-top: 0; color: #777; background: #fafbfb; }
+.order-status { font-weight: 800; white-space: nowrap; }
+.status-paid { color: #27734d; }
+.status-created { color: #9a6b00; }
+.status-canceled, .status-error { color: #a80000; }
+.tracking-preparando { color: #65798C; }
+.tracking-en_camino { color: #27734d; }
+.tracking-entregado { color: #27734d; }
+.danger-action { color: #a80000; }
+.danger-action:hover { color: #fff; background: #a80000; border-color: #a80000; }
+.order-modal-dialog { width: min(520px, 100%); }
 
 .book-modal { display: flex; visibility: hidden; opacity: 0; pointer-events: none; position: fixed; inset: 0; z-index: 1100; align-items: center; justify-content: center; padding: 24px; transition: opacity .22s ease, visibility 0s linear .22s; }
 .book-modal.is-open { visibility: visible; opacity: 1; pointer-events: auto; transition-delay: 0s; }

@@ -32,7 +32,7 @@
                     <button class="btn-primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
                 </form>
                 <div class="admin-table-wrap">
-                    <table class="admin-table">
+                    <table class="admin-table admin-books-table">
                         <thead><tr><th>Libro</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
                         <tbody>
                         {% for book in books %}
@@ -79,13 +79,11 @@
             {{ form.non_field_errors }}
             <div class="admin-form-grid">
                 {% for field in form %}
-                {% if not editing_book or field.name != 'stock' %}
-                <div class="admin-field {% if field.name == 'description' or field.name == 'image_url' %}admin-field-wide{% endif %}">
+                <div class="admin-field {% if field.name == 'description' or field.name == 'image_url' %}admin-field-wide{% endif %}{% if editing_book and field.name == 'stock' or editing_book and field.name == 'is_active' %} book-field-edit-hidden{% endif %}">
                     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {{ field }}
                     {% for error in field.errors %}<small class="msg-error">{{ error }}</small>{% endfor %}
                 </div>
-                {% endif %}
                 {% endfor %}
             </div>
             <div class="admin-actions">
@@ -117,8 +115,12 @@
 
     if (openButton) openButton.addEventListener('click', function () {
         const form = modal.querySelector('[data-book-form]');
+        form.querySelectorAll('.book-field-edit-hidden').forEach(function (field) {
+            field.classList.remove('book-field-edit-hidden');
+        });
         form.querySelectorAll('input:not([type="hidden"]), textarea').forEach(function (field) {
-            field.value = '';
+            if (field.type === 'checkbox') field.checked = field.name === 'is_active';
+            else field.value = '';
         });
         form.querySelectorAll('select').forEach(function (field) {
             field.selectedIndex = 0;

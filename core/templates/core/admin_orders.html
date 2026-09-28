@@ -1,0 +1,131 @@
+{% extends 'core/base.html' %}
+{% load static humanize %}
+
+{% block title %}Bookly | Administración de pedidos{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+<main class="admin-page">
+    <div class="admin-container">
+        <div class="admin-heading-row">
+            <div>
+                <span class="admin-kicker">Bookly</span>
+                <h1 class="admin-heading">Pedidos de compra</h1>
+            </div>
+            <div class="admin-heading-actions">
+                <a class="btn-outline" href="{% url 'admin_books' %}"><i class="bi bi-book"></i> Administrar libros</a>
+                <a class="btn-outline" href="{% url 'index' %}"><i class="bi bi-arrow-left"></i> Volver a la tienda</a>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="admin-messages">
+            {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <section class="admin-inventory admin-inventory-wide">
+            <form class="admin-search" method="get" role="search">
+                <label class="sr-only" for="adminOrderSearch">Buscar pedidos</label>
+                <input class="auth-input" id="adminOrderSearch" name="q" value="{{ query }}" placeholder="Buscar por orden, cliente, correo o producto">
+                <button class="btn-primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
+            </form>
+            <div class="admin-table-wrap">
+                <table class="admin-table admin-orders-table">
+                    <thead>
+                        <tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Seguimiento</th><th>Fecha</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>
+                            <strong>{{ order.commerce_order }}</strong>
+                            <small>{{ order.first_item_title|default:'Sin productos' }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ order.user.get_full_name|default:order.user.username }}</strong>
+                            <small>{{ order.email }}</small>
+                        </td>
+                        <td><strong>${{ order.amount|intcomma }}</strong></td>
+                        <td><span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                        <td>
+                            {% if order.status == 'canceled' %}
+                            <span class="order-status status-canceled">Cancelado</span>
+                            {% else %}
+                            <span class="order-status tracking-{{ order.tracking_status }}">{{ order.get_tracking_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ order.created_at|date:'d/m/Y H:i' }}</td>
+                        <td class="admin-row-actions">
+                            <a class="icon-action" href="{% url 'admin_order_edit' order.pk %}" title="Editar pedido" aria-label="Editar pedido"><i class="bi bi-pencil"></i></a>
+                            <form method="post" action="{% url 'admin_order_delete' order.pk %}" onsubmit="return confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.');">
+                                {% csrf_token %}
+                                <button class="icon-action danger-action" type="submit" title="Eliminar pedido" aria-label="Eliminar pedido"><i class="bi bi-trash3"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr class="admin-order-details">
+                        <td colspan="7">
+                            <small><strong>Productos:</strong>
+                            {% for item in order.items.all %}{{ item.book.title }} x{{ item.quantity }}{% if not forloop.last %}, {% endif %}{% empty %}Sin productos registrados{% endfor %}
+                            </small>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="admin-empty">No hay pedidos que coincidan con la búsqueda.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</main>
+
+<div class="book-modal {% if editing_order or form.errors %}is-open{% endif %}" data-order-modal aria-hidden="{% if editing_order or form.errors %}false{% else %}true{% endif %}">
+    <div class="book-modal-backdrop" data-close-order-modal></div>
+    <section class="book-modal-dialog order-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="orderModalTitle">
+        <div class="book-modal-header">
+            <div>
+                <span class="admin-kicker">Pedido</span>
+                <h2 id="orderModalTitle">Editar pedido{% if editing_order %} {{ editing_order.commerce_order }}{% endif %}</h2>
+            </div>
+            <button class="book-modal-close" type="button" data-close-order-modal aria-label="Cerrar formulario"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form method="post" action="{% if editing_order %}{% url 'admin_order_edit' editing_order.pk %}{% endif %}">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="admin-form-grid">
+                {% for field in form %}
+                <div class="admin-field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<small class="msg-error">{{ error }}</small>{% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="admin-actions">
+                <button class="btn-primary" type="submit"><i class="bi bi-check2"></i> Guardar cambios</button>
+                <button class="btn-outline" type="button" data-close-order-modal>Cancelar</button>
+            </div>
+        </form>
+    </section>
+</div>
+<script>
+(function () {
+    const modal = document.querySelector('[data-order-modal]');
+    if (!modal) return;
+    function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+    }
+    document.querySelectorAll('[data-close-order-modal]').forEach(function (button) {
+        button.addEventListener('click', closeModal);
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+    });
+    if (modal.classList.contains('is-open')) document.body.classList.add('modal-open');
+}());
+</script>
+{% endblock %}

@@ -6,8 +6,9 @@ from django.contrib.auth.decorators import login_required
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.utils import timezone
+from datetime import timedelta
 from django.db.models import Q
 import re
 import hmac
@@ -24,10 +25,32 @@ from django.core.exceptions import PermissionDenied
 from functools import wraps
 
 from .models import Order, OrderItem, Address, Book, CouponRedemption, Profile
-from .forms import BookAdminForm
+from .forms import BookAdminForm, OrderAdminForm
 from django.core.paginator import Paginator
 
 # Create your views here.
+
+ORDER_PAYMENT_TIMEOUT = timedelta(minutes=15)
+COUPON_DISCOUNTS = {'bookly10': 10, 'bookly15': 15}
+
+
+def coupon_was_used(user, code):
+    return (
+        CouponRedemption.objects.filter(user=user, code__iexact=code).exists() or
+        Order.objects.filter(user=user, coupon_code__iexact=code).exists()
+    )
+
+
+def cancel_expired_orders(user=None):
+    expiration_time = timezone.now() - ORDER_PAYMENT_TIMEOUT
+    expired_orders = Order.objects.filter(
+        status='created',
+        confirmation_reached=False,
+        created_at__lt=expiration_time,
+    )
+    if user is not None:
+        expired_orders = expired_orders.filter(user=user)
+    return expired_orders.update(status='canceled', updated_at=timezone.now())
 
 def index(request):
     books = Book.objects.filter(is_active=True).order_by('-created_at')
@@ -236,6 +259,62 @@ def admin_book_stock(request, book_id):
     return JsonResponse({'stock': book.stock})
 
 
+@login_required
+@admin_required
+def admin_orders(request):
+    query = request.GET.get('q', '').strip()
+    orders = Order.objects.select_related('user').prefetch_related('items__book').order_by('-created_at')
+    if query:
+        orders = orders.filter(
+            Q(commerce_order__icontains=query) |
+            Q(first_item_title__icontains=query) |
+            Q(email__icontains=query) |
+            Q(user__username__icontains=query)
+        )
+    return render(request, 'core/admin_orders.html', {
+        'orders': orders,
+        'query': query,
+        'form': OrderAdminForm(),
+    })
+
+
+@login_required
+@admin_required
+def admin_order_edit(request, order_id):
+    order = get_object_or_404(Order.objects.select_related('user'), pk=order_id)
+    if request.method == 'GET':
+        return render(request, 'core/admin_orders.html', {
+            'orders': Order.objects.select_related('user').prefetch_related('items__book').order_by('-created_at'),
+            'query': '',
+            'form': OrderAdminForm(instance=order),
+            'editing_order': order,
+        })
+    if request.method != 'POST':
+        return redirect('admin_orders')
+    form = OrderAdminForm(request.POST, instance=order)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Pedido actualizado correctamente.')
+        return redirect('admin_orders')
+    return render(request, 'core/admin_orders.html', {
+        'orders': Order.objects.select_related('user').prefetch_related('items__book').order_by('-created_at'),
+        'query': '',
+        'form': form,
+        'editing_order': order,
+    }, status=400)
+
+
+@login_required
+@admin_required
+def admin_order_delete(request, order_id):
+    if request.method != 'POST':
+        return redirect('admin_orders')
+    order = get_object_or_404(Order, pk=order_id)
+    order.delete()
+    messages.success(request, 'Pedido eliminado correctamente.')
+    return redirect('admin_orders')
+
+
 def logout_view(request):
     logout(request)
     return redirect('index')
@@ -326,10 +405,8 @@ def checkout(request):
 
             return redirect('checkout')
 
-    coupon_already_used = (
-        CouponRedemption.objects.filter(user=user, code__iexact='Bookly10').exists() or
-        Order.objects.filter(user=user, coupon_code__iexact='Bookly10').exists()
-    )
+    coupon_already_used = coupon_was_used(user, 'Bookly10')
+    coupon15_already_used = coupon_was_used(user, 'Bookly15')
 
     addresses = Address.objects.filter(user=user, address_type='shipping').order_by('-is_default', '-updated_at')
     default_address = addresses.filter(is_default=True).first() or addresses.first()
@@ -378,6 +455,7 @@ def checkout(request):
         'has_user_data': has_user_data,
         'can_continue': has_user_data and has_addresses,
         'coupon_already_used': coupon_already_used,
+        'coupon15_already_used': coupon15_already_used,
     }
     return render(request, 'core/checkout.html', context)
 
@@ -396,10 +474,8 @@ def entrega(request):
     if not (has_addresses and has_user_data):
         return redirect('checkout')
 
-    coupon_already_used = (
-        CouponRedemption.objects.filter(user=request.user, code__iexact='Bookly10').exists() or
-        Order.objects.filter(user=request.user, coupon_code__iexact='Bookly10').exists()
-    )
+    coupon_already_used = coupon_was_used(request.user, 'Bookly10')
+    coupon15_already_used = coupon_was_used(request.user, 'Bookly15')
 
     sku = request.GET.get('sku')
     book = None
@@ -412,6 +488,7 @@ def entrega(request):
         'book': book,
         'show_shipping': True,
         'coupon_already_used': coupon_already_used,
+        'coupon15_already_used': coupon15_already_used,
     }
     return render(request, 'core/entrega.html', context)
 
@@ -426,15 +503,14 @@ def pago(request):
         except Book.DoesNotExist:
             book = None
 
-    coupon_already_used = (
-        CouponRedemption.objects.filter(user=request.user, code__iexact='Bookly10').exists() or
-        Order.objects.filter(user=request.user, coupon_code__iexact='Bookly10').exists()
-    )
+    coupon_already_used = coupon_was_used(request.user, 'Bookly10')
+    coupon15_already_used = coupon_was_used(request.user, 'Bookly15')
 
     return render(request, 'core/pago.html', {
         'book': book,
         'show_shipping': True,
         'coupon_already_used': coupon_already_used,
+        'coupon15_already_used': coupon15_already_used,
     })
 
 
@@ -481,29 +557,22 @@ def _parse_cart_payload(request):
 
 @login_required
 def pago_create(request):
-
-    raw_amount = request.GET.get('amount') or request.POST.get('amount')
-    try:
-        amount = int(str(raw_amount)) if raw_amount is not None else 1000
-    except (TypeError, ValueError):
-        amount = 1000
-    if amount <= 0:
-        amount = 1000
-
+    cancel_expired_orders(request.user)
     raw_coupon = (request.GET.get('coupon') or request.POST.get('coupon') or '').strip()
     applied_coupon_code = None
-    if raw_coupon and raw_coupon.lower() == 'bookly10':
-        already_used = (
-            CouponRedemption.objects.filter(user=request.user, code__iexact='Bookly10').exists()
-            or Order.objects.filter(user=request.user, coupon_code__iexact='Bookly10').exists()
-        )
+    discount_percent = 0
+    coupon_key = raw_coupon.lower()
+    if coupon_key in COUPON_DISCOUNTS:
+        coupon_code = 'Bookly' + coupon_key[-2:]
+        already_used = coupon_was_used(request.user, coupon_code)
         if already_used:
             return render(request, 'core/pago.html', {
                 'book': None,
                 'show_shipping': True,
-                'flow_error': 'El cupón Bookly10 ya fue utilizado en esta cuenta. Elimínalo para continuar sin descuento.',
+                'flow_error': f'El cupón {coupon_code} ya fue utilizado en esta cuenta. Elimínalo para continuar sin descuento.',
             }, status=400)
-        applied_coupon_code = 'Bookly10'
+        applied_coupon_code = coupon_code
+        discount_percent = COUPON_DISCOUNTS[coupon_key]
 
     api_key = settings.FLOW_API_KEY
     secret = settings.FLOW_SECRET
@@ -567,6 +636,21 @@ def pago_create(request):
 
     if cart_items and not order_items:
         return JsonResponse({'error': 'No se pudieron identificar los libros del carrito.'}, status=400)
+
+    if not order_items:
+        return JsonResponse({'error': 'El carrito está vacío.'}, status=400)
+
+    raw_shipping = request.GET.get('shipping') or request.POST.get('shipping')
+    try:
+        shipping_amount = int(str(raw_shipping)) if raw_shipping is not None else 3990
+    except (TypeError, ValueError):
+        shipping_amount = 3990
+    if shipping_amount not in (3990, 5990):
+        shipping_amount = 3990
+
+    subtotal = sum(item['book'].price * item['quantity'] for item in order_items)
+    discount_amount = round(subtotal * discount_percent / 100) if applied_coupon_code else 0
+    amount = subtotal - discount_amount + shipping_amount
 
     first_title = None
     if order_items:
@@ -797,7 +881,17 @@ def confirmacion_pedido(request):
 
     if token:
         try:
-            order = Order.objects.get(flow_token=token)
+            with transaction.atomic():
+                order = Order.objects.select_for_update().get(flow_token=token)
+                if not order.confirmation_reached:
+                    order.confirmation_reached = True
+                if not order.stock_updated:
+                    for item in order.items.all():
+                        book = Book.objects.select_for_update().get(pk=item.book_id)
+                        book.stock = max(0, book.stock - item.quantity)
+                        book.save(update_fields=['stock', 'updated_at'])
+                    order.stock_updated = True
+                order.save(update_fields=['confirmation_reached', 'stock_updated', 'updated_at'])
 
             if not request.user.is_authenticated:
                 if order.user:
@@ -875,6 +969,7 @@ def search(request):
 
 
 def mis_pedidos(request):
+    cancel_expired_orders(request.user)
     # 1. Obtener la lista completa
     order_list = Order.objects.filter(user=request.user).order_by('-created_at')
     

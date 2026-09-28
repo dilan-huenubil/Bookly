@@ -146,12 +146,15 @@ initDireccionesPanel();
             alert('Ingresa un código de cupón.');
             return;
         }
-        if (code.toLowerCase() !== 'bookly10') {
-            alert('Cupón inválido. Usa "Bookly10".');
+        var normalizedCode = code.toLowerCase();
+        if (normalizedCode !== 'bookly10' && normalizedCode !== 'bookly15') {
+            alert('Cupón inválido. Usa "Bookly10" o "Bookly15".');
             return;
         }
-        if (typeof window !== 'undefined' && window.couponAlreadyUsed === 'true') {
-            alert('El cupón Bookly10 ya fue utilizado en una compra anterior de esta cuenta. No puedes volver a usarlo.');
+        var isBookly15 = normalizedCode === 'bookly15';
+        var alreadyUsed = isBookly15 ? window.coupon15AlreadyUsed : window.couponAlreadyUsed;
+        if (typeof window !== 'undefined' && alreadyUsed === 'true') {
+            alert('El cupón ' + (isBookly15 ? 'Bookly15' : 'Bookly10') + ' ya fue utilizado en una compra anterior de esta cuenta.');
             try {
                 setActiveCoupon(null);
                 refreshCouponUI();
@@ -160,11 +163,13 @@ initDireccionesPanel();
             } catch (e) {}
             return;
         }
-        setActiveCoupon({ code: 'Bookly10', type: 'percent_one_per_item', value: 10 });
+        var couponCode = isBookly15 ? 'Bookly15' : 'Bookly10';
+        var couponValue = isBookly15 ? 15 : 10;
+        setActiveCoupon({ code: couponCode, type: 'percent', value: couponValue });
         refreshCouponUI();
         input.value = '';
         try { if (typeof renderSummary === 'function') renderSummary(); } catch (e) {}
-        alert('Cupón Bookly10 aplicado: 10% en 1 unidad de cada producto.');
+        alert('Cupón ' + couponCode + ' aplicado: ' + couponValue + '%.');
     }
 
 
@@ -382,11 +387,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var coupon = getActiveCoupon();
         var discount = 0;
-        if (coupon && coupon.code === 'Bookly10') {
-            items.forEach(function (it) {
-                var price = parseInt(it.price || 0, 10) || 0;
-                discount += Math.round(price * 0.10);
-            });
+        if (coupon && (coupon.code === 'Bookly10' || coupon.code === 'Bookly15')) {
+            var couponRate = coupon.code === 'Bookly15' ? 0.15 : 0.10;
+            discount = Math.round(gross * couponRate);
         }
         var grossAfter = Math.max(0, gross - discount);
 
@@ -540,11 +543,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             var url = new URL(pagarLink.href, window.location.origin);
-            url.searchParams.set('amount', String(total));
+            var shipping = parseInt(localStorage.getItem('booklyShipping') || '3990', 10) || 3990;
+            url.searchParams.set('shipping', String(shipping));
             try {
                 var activeCoupon = null;
                 try { activeCoupon = JSON.parse(localStorage.getItem('booklyCoupon') || 'null'); } catch (_) { activeCoupon = null; }
-                if (activeCoupon && activeCoupon.code && activeCoupon.code.toLowerCase() === 'bookly10') {
+                if (activeCoupon && activeCoupon.code && (activeCoupon.code.toLowerCase() === 'bookly10' || activeCoupon.code.toLowerCase() === 'bookly15')) {
                     url.searchParams.set('coupon', activeCoupon.code);
                 }
             } catch (e) { }

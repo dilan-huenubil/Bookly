@@ -50,11 +50,6 @@
                     <i class="bi bi-box-seam"></i> Mis compras realizadas
                 </a>
 
-                <!-- Contacto -->
-                <a href="{% url 'contacto' %}"
-                    class="{% if request.resolver_match.url_name == 'contacto' %}active{% endif %}">
-                    <i class="bi bi-envelope"></i> Contacto
-                </a>
 
                 <!-- Mi Perfil -->
                 <a href="{% url 'mi_perfil' %}"
@@ -67,6 +62,13 @@
                     class="{% if request.resolver_match.url_name == 'mi_contrasena' %}active{% endif %}">
                     <i class="bi bi-lock"></i> Mi contraseña
                 </a>
+
+                <!-- Contacto -->
+                <a href="{% url 'contacto' %}"
+                    class="{% if request.resolver_match.url_name == 'contacto' %}active{% endif %}">
+                    <i class="bi bi-envelope"></i> Contacto
+                </a>
+
             </nav>
         </aside>
 

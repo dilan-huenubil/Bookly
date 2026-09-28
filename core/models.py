@@ -36,7 +36,7 @@ class Order(models.Model):
     STATUS_CHOICES = (
         ('created', 'Creada'),
         ('paid', 'Pagada'),
-        ('canceled', 'Cancelada'),
+		('canceled', 'Cancelado'),
         ('error', 'Error'),
     )
 
@@ -63,6 +63,8 @@ class Order(models.Model):
     shipping_region = models.CharField("Región", max_length=64, blank=True, null=True)
     shipping_postal_code = models.CharField("Código postal", max_length=16, blank=True, null=True)
     status = models.CharField("Estado", max_length=16, choices=STATUS_CHOICES, default='created')
+    confirmation_reached = models.BooleanField("Llegó a confirmación", default=False)
+    stock_updated = models.BooleanField("Stock actualizado", default=False)
     tracking_status = models.CharField("Estado de seguimiento", max_length=20, choices=TRACKING_CHOICES, default='preparando')
     estimated_delivery_date = models.DateField("Fecha estimada de entrega", blank=True, null=True)
     created_at = models.DateTimeField("Creado el", auto_now_add=True)

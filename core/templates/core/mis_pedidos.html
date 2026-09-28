@@ -20,12 +20,18 @@
             <div class="purchase-title">{{ order.first_item_title|default:order.commerce_order }}</div>
             <div class="purchase-date"><strong>Fecha de compra:</strong> {{ order.created_at|date:"d/m/Y" }}</div>
             <div class="purchase-price"><strong>Total:</strong> <span>${{ order.amount|intcomma }}</span></div>
+            <div class="purchase-status">
+                {% if order.status == 'paid' %}Pagado{% elif order.status == 'canceled' %}Cancelado{% else %}Pendiente{% endif %}
+            </div>
 
             <div class="purchase-chevron">
                 <i class="bi bi-chevron-down"></i>
             </div>
         </div>
         <div class="purchase-body">
+            {% if order.status == 'canceled' %}
+            <p class="order-canceled-message">Este pedido fue cancelado porque el pago no se completó dentro de 15 minutos.</p>
+            {% else %}
             <!-- Detalles del Producto -->
             {% for item in order.items.all %}
             <div class="order-item-detail">
@@ -109,6 +115,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
     {% empty %}

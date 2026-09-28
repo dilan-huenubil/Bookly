@@ -1,7 +1,7 @@
 from django import forms
 from decimal import Decimal, ROUND_HALF_UP
 
-from .models import Book
+from .models import Book, Order
 
 
 class BookAdminForm(forms.ModelForm):
@@ -17,11 +17,18 @@ class BookAdminForm(forms.ModelForm):
 
     class Meta:
         model = Book
-        fields = ('title', 'author', 'sku', 'price', 'discount_percent', 'stock', 'category', 'description', 'image_url')
+        fields = (
+            'title', 'author', 'editorial', 'binding', 'sku', 'category', 'tags',
+            'description', 'price', 'discount_percent', 'stock', 'is_active',
+            'weight_kg', 'dimensions', 'year', 'pages', 'language', 'image_url',
+        )
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3}),
             'price': forms.NumberInput(attrs={'min': 0}),
             'stock': forms.NumberInput(attrs={'min': 0}),
+            'weight_kg': forms.NumberInput(attrs={'min': 0, 'step': '0.001'}),
+            'year': forms.NumberInput(attrs={'min': 0}),
+            'pages': forms.NumberInput(attrs={'min': 0}),
             'image_url': forms.URLInput(attrs={'placeholder': 'https://...'}),
         }
 
@@ -29,6 +36,7 @@ class BookAdminForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.fields['stock'].required = False
+            self.fields['is_active'].required = False
             self.initial['price'] = self.instance.price_old or self.instance.price
             self.initial['discount_percent'] = str(self.instance.discount_percent or '')
 
@@ -60,6 +68,8 @@ class BookAdminForm(forms.ModelForm):
         book = super().save(commit=False)
         if self.instance.pk and self.cleaned_data.get('stock') is None:
             book.stock = current_stock
+        if self.instance.pk and 'is_active' not in self.data:
+            book.is_active = self.instance.is_active
         original_price = self.cleaned_data['price']
         discount = int(self.cleaned_data.get('discount_percent') or 0)
 
@@ -76,3 +86,12 @@ class BookAdminForm(forms.ModelForm):
         if commit:
             book.save()
         return book
+
+
+class OrderAdminForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ('status', 'tracking_status', 'estimated_delivery_date')
+        widgets = {
+            'estimated_delivery_date': forms.DateInput(attrs={'type': 'date'}),
+        }

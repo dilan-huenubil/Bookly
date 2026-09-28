@@ -104,7 +104,8 @@
         } catch (e) {
             activeCoupon = null;
         }
-        var hasBookly10 = activeCoupon && activeCoupon.code && activeCoupon.code.toLowerCase() === 'bookly10';
+            var couponRate = activeCoupon && activeCoupon.code && activeCoupon.code.toLowerCase() === 'bookly15' ? 0.15 : 0.10;
+            var hasCoupon = activeCoupon && activeCoupon.code && (activeCoupon.code.toLowerCase() === 'bookly10' || activeCoupon.code.toLowerCase() === 'bookly15');
 
         var hasServerItems = listEl.getAttribute('data-server-items') === '1';
         if (!hasServerItems) {
@@ -137,9 +138,7 @@
                 listEl.appendChild(li);
 
 
-                if (hasBookly10 && price > 0) {
-                    discountTotal += Math.round(price * 0.10);
-                }
+                if (hasCoupon && price > 0) discountTotal += Math.round(price * couponRate);
             });
 
 
