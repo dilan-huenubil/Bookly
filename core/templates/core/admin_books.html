@@ -1,0 +1,156 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Bookly | Administración de libros{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+<main class="admin-page">
+    <div class="admin-container">
+        <div class="admin-heading-row">
+            <div>
+                <span class="admin-kicker">Bookly</span>
+                <h1 class="admin-heading">Inventario de libros</h1>
+            </div>
+            <div class="admin-heading-actions">
+                <button class="btn-primary" type="button" data-open-book-modal><i class="bi bi-plus-lg"></i> Nuevo libro</button>
+                <a class="btn-outline" href="{% url 'admin_orders' %}"><i class="bi bi-receipt"></i> Administrar pedidos</a>
+                <a class="btn-outline" href="{% url 'index' %}"><i class="bi bi-arrow-left"></i> Volver a la tienda</a>
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="admin-messages">
+            {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="admin-grid">
+            <section class="admin-inventory admin-inventory-wide">
+                <form class="admin-search" method="get" role="search">
+                    <label class="sr-only" for="adminSearch">Buscar inventario</label>
+                    <input class="auth-input" id="adminSearch" name="q" value="{{ query }}" placeholder="Buscar por título, autor, SKU o categoría">
+                    <button class="btn-primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
+                </form>
+                <div class="admin-table-wrap">
+                    <table class="admin-table admin-books-table">
+                        <thead><tr><th>Libro</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <tbody>
+                        {% for book in books %}
+                        <tr class="{% if not book.is_active %}is-inactive{% endif %}">
+                            <td data-label="Libro"><strong>{{ book.title }}</strong><small>{{ book.author }} · {{ book.sku }}</small></td>
+                            <td data-label="Precio">
+                                {% if book.price_old %}<small class="admin-old-price">${{ book.price_old }}</small>{% endif %}
+                                <strong>${{ book.price }}</strong>
+                                {% if book.discount_percent %}<small class="admin-discount">-{{ book.discount_percent }}%</small>{% endif %}
+                            </td>
+                            <td data-label="Stock">
+                                <input class="stock-input" type="number" min="0" value="{{ book.stock }}" data-stock-url="{% url 'admin_book_stock' book.pk %}" aria-label="Stock de {{ book.title }}">
+                                <small class="stock-status" aria-live="polite"></small>
+                            </td>
+                            <td data-label="Estado">{% if book.is_active %}<span class="status-active">Activo</span>{% else %}<span class="status-inactive">Inactivo</span>{% endif %}</td>
+                            <td class="admin-row-actions" data-label="Acciones">
+                                <a class="icon-action" href="{% url 'admin_book_edit' book.pk %}" title="Editar {{ book.title }}" aria-label="Editar {{ book.title }}"><i class="bi bi-pencil"></i></a>
+                                <form method="post" action="{% url 'admin_book_toggle' book.pk %}">
+                                    {% csrf_token %}<button class="icon-action" type="submit" title="Cambiar estado" aria-label="Cambiar estado"><i class="bi bi-power"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}<tr><td colspan="5" class="admin-empty">No hay libros que coincidan con la búsqueda.</td></tr>{% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+<div class="book-modal {% if editing_book or form.errors %}is-open{% endif %}" data-book-modal data-create-url="{% url 'admin_book_create' %}" aria-hidden="{% if editing_book or form.errors %}false{% else %}true{% endif %}">
+    <div class="book-modal-backdrop" data-close-book-modal></div>
+    <section class="book-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle">
+        <div class="book-modal-header">
+            <div>
+                <span class="admin-kicker">Inventario</span>
+                <h2 id="bookModalTitle" data-book-modal-title>{% if editing_book %}Editar libro{% else %}Nuevo libro{% endif %}</h2>
+            </div>
+            <button class="book-modal-close" type="button" data-close-book-modal aria-label="Cerrar formulario"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form method="post" action="{% if editing_book %}{% url 'admin_book_edit' editing_book.pk %}{% else %}{% url 'admin_book_create' %}{% endif %}" data-book-form>
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div class="admin-form-grid">
+                {% for field in form %}
+                <div class="admin-field {% if field.name == 'description' or field.name == 'image_url' %}admin-field-wide{% endif %}{% if editing_book and field.name == 'stock' or editing_book and field.name == 'is_active' %} book-field-edit-hidden{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<small class="msg-error">{{ error }}</small>{% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="admin-actions">
+                <button class="btn-primary" type="submit"><i class="bi bi-check2"></i> Guardar libro</button>
+                <button class="btn-outline" type="button" data-close-book-modal>Cancelar</button>
+            </div>
+        </form>
+    </section>
+</div>
+<script>
+(function () {
+    const modal = document.querySelector('[data-book-modal]');
+    const openButton = document.querySelector('[data-open-book-modal]');
+    const closeButtons = document.querySelectorAll('[data-close-book-modal]');
+
+    function openModal() {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        const firstField = modal.querySelector('input, select, textarea');
+        if (firstField) firstField.focus();
+    }
+
+    function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+    }
+
+    if (openButton) openButton.addEventListener('click', function () {
+        const form = modal.querySelector('[data-book-form]');
+        form.querySelectorAll('.book-field-edit-hidden').forEach(function (field) {
+            field.classList.remove('book-field-edit-hidden');
+        });
+        form.querySelectorAll('input:not([type="hidden"]), textarea').forEach(function (field) {
+            if (field.type === 'checkbox') field.checked = field.name === 'is_active';
+            else field.value = '';
+        });
+        form.querySelectorAll('select').forEach(function (field) {
+            field.selectedIndex = 0;
+        });
+        form.action = modal.dataset.createUrl;
+        modal.querySelector('[data-book-modal-title]').textContent = 'Nuevo libro';
+        openModal();
+    });
+    closeButtons.forEach(function (button) { button.addEventListener('click', closeModal); });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
+    });
+
+    if (modal.classList.contains('is-open')) document.body.classList.add('modal-open');
+
+    const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    document.querySelectorAll('.stock-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+            const status = input.nextElementSibling;
+            const body = new URLSearchParams({stock: input.value, csrfmiddlewaretoken: csrf});
+            fetch(input.dataset.stockUrl, {method: 'POST', headers: {'X-Requested-With': 'XMLHttpRequest'}, body: body})
+                .then(function (response) { return response.json().then(function (data) { return {ok: response.ok, data: data}; }); })
+                .then(function (result) {
+                    status.textContent = result.ok ? 'Guardado' : result.data.error;
+                    status.className = 'stock-status ' + (result.ok ? 'is-ok' : 'is-error');
+                    if (!result.ok) input.value = input.defaultValue;
+                });
+        });
+    });
+}());
+</script>
+{% endblock %}

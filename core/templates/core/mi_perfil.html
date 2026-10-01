@@ -1,0 +1,54 @@
+{% extends 'core/base_cuenta.html' %}
+
+{% block title %}Mi Perfil - Bookly{% endblock %}
+
+{% block cuenta_content %}
+<div class="content-header-account">
+    <h2>Datos personales</h2>
+</div>
+
+<form class="profile-form" method="POST" action="">
+    {% csrf_token %}
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="id_first_name">Nombre</label>
+            <input type="text" id="id_first_name" name="first_name" value="{{ user.first_name }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_last_name">Apellido</label>
+            <input type="text" id="id_last_name" name="last_name" value="{{ user.last_name }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_phone">Teléfono</label>
+            <!-- Nota: asumiendo que tienes un modelo Profile con este campo -->
+            <input type="text" id="id_phone" name="phone" value="{{ user.profile.phone|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+            <label for="id_email">Email</label>
+            <input type="email" id="id_email" name="email" value="{{ user.email }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_rut">RUT</label>
+            <input type="text" id="id_rut" name="rut" value="{{ user.profile.rut|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+            <label for="id_doc_type">Tipo</label>
+            <select id="id_doc_type" name="doc_type">
+                <option value="RUT" selected>RUT</option>
+                <option value="PASAPORTE">Pasaporte</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="form-actions">
+        <!-- El botón cancelar puede redirigir al índice o a mis compras -->
+        <a href="{% url 'index' %}" class="btn-secondary" style="text-align: center;">CANCELAR</a>
+        <button type="submit" class="btn-primary">GUARDAR</button>
+    </div>
+</form>
+{% endblock %}

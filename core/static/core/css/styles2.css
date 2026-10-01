@@ -1637,3 +1637,244 @@ p.subtitle {
         gap: 10px;
     }
 }
+
+/* Tema otoñal de Bookly */
+:root {
+    --autumn-paper: #f4eee3;
+    --autumn-paper-deep: #e8dbc8;
+    --autumn-ink: #3f2d2a;
+    --autumn-wine: #6f3030;
+    --autumn-terracotta: #b45f43;
+    --autumn-ochre: #c9963e;
+    --autumn-line: #d8c5ae;
+}
+
+body {
+    background: var(--autumn-paper);
+    color: var(--autumn-ink);
+    font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+}
+
+.header,
+.footer {
+    background-color: var(--autumn-ink);
+    border-color: var(--autumn-ink);
+}
+
+.progress-bar {
+    background: var(--autumn-paper);
+    border-bottom-color: var(--autumn-line);
+}
+
+.progress-circle.active,
+.progress-circle.active-current,
+.button-group .btn-back,
+.button-group .btn-continue,
+.btn-back,
+.btn-continue,
+.btn-apply {
+    background-color: var(--autumn-wine);
+}
+
+.form-section,
+.summary-section {
+    background: #fffdf9;
+    border: 1px solid var(--autumn-line);
+    border-radius: 10px;
+}
+
+.form-section input,
+.form-section select,
+.summary-section input {
+    border-color: var(--autumn-line);
+    border-radius: 7px;
+    color: var(--autumn-ink);
+}
+
+.form-section input:focus,
+.form-section select:focus,
+.summary-section input:focus {
+    border-color: var(--autumn-terracotta);
+    box-shadow: 0 0 0 3px rgba(180, 95, 67, .16);
+}
+
+.delivery-options,
+.delivery-option,
+.direccion-item {
+    border-color: var(--autumn-line);
+}
+
+.delivery-option:hover,
+.direccion-item {
+    background: var(--autumn-paper-deep);
+}
+
+.delivery-badge,
+.coupon-applied {
+    background: var(--autumn-paper-deep);
+    color: var(--autumn-ink);
+}
+
+.btn-direcciones,
+.btn-usar-direccion {
+    border-color: var(--autumn-line);
+}
+
+.direccion-item-activa {
+    border-color: var(--autumn-terracotta);
+    box-shadow: 0 0 0 1px var(--autumn-terracotta);
+}
+
+/* Checkout y confirmación */
+.delivery-card,
+.shipping-option,
+.confirmation-card,
+.order-details {
+    background: #fffdf9;
+    border-color: var(--autumn-line);
+    border-radius: 10px;
+}
+
+.delivery-card {
+    padding: 20px;
+}
+
+.delivery-section-title,
+.shipping-title,
+.payment-text,
+.detail-row,
+.order-details {
+    color: var(--autumn-ink);
+}
+
+.shipping-option {
+    border-color: var(--autumn-line);
+}
+
+.shipping-option.active {
+    border-color: var(--autumn-terracotta);
+    background: var(--autumn-paper-deep);
+}
+
+.shipping-highlight,
+.shipping-link,
+.shipping-price {
+    color: var(--autumn-terracotta);
+}
+
+.confirmation-page {
+    background: var(--autumn-paper);
+}
+
+.confirmation-card {
+    border-top: 5px solid var(--autumn-ochre);
+    box-shadow: 0 12px 30px rgba(63, 45, 42, .10);
+}
+
+.confirmation-card h1,
+.confirmation-card .total,
+.success-icon {
+    color: var(--autumn-wine);
+}
+
+.success-icon {
+    background: var(--autumn-paper-deep);
+    border-color: var(--autumn-ochre);
+}
+
+.book-list,
+.book-list li,
+.detail-row {
+    border-color: var(--autumn-line);
+}
+
+.btn-group .btn-primary,
+.btn-group .btn-secondary {
+    background: var(--autumn-wine);
+    border-radius: 7px;
+}
+
+.btn-group .btn-primary:hover,
+.btn-group .btn-secondary:hover {
+    background: var(--autumn-terracotta);
+}
+
+.form-section p[style*="color"],
+.form-section div[style*="color"] {
+    color: var(--autumn-ink) !important;
+}
+
+/* Paleta clara editorial */
+:root {
+    --autumn-paper: #FAF8F5;
+    --autumn-paper-deep: #F4EFEA;
+    --autumn-ink: #2E2223;
+    --autumn-wine: #8C4A32;
+    --autumn-terracotta: #A65D37;
+    --autumn-ochre: #D2B495;
+    --autumn-line: #EAE3D9;
+}
+
+body,
+.confirmation-page {
+    background: var(--autumn-paper);
+    color: var(--autumn-ink);
+}
+
+.header {
+    background: var(--autumn-white, #FFFFFF);
+    border-bottom: 1px solid var(--autumn-line);
+    color: var(--autumn-ink);
+}
+
+.progress-bar {
+    background: var(--autumn-white, #FFFFFF);
+    border-bottom-color: var(--autumn-line);
+}
+
+.progress-circle.active,
+.progress-circle.active-current,
+.btn-back,
+.btn-continue,
+.btn-apply,
+.btn-primary,
+.btn-secondary {
+    background-color: var(--autumn-terracotta);
+}
+
+.progress-circle,
+.progress-line-horizontal {
+    background-color: var(--autumn-paper-deep);
+}
+
+.form-section,
+.summary-section,
+.confirmation-card,
+.order-details,
+.delivery-card {
+    background: #FFFFFF;
+    border-color: var(--autumn-line);
+    box-shadow: none;
+}
+
+.shipping-option.active,
+.delivery-badge,
+.coupon-applied {
+    background: var(--autumn-paper-deep);
+    border-color: var(--autumn-terracotta);
+}
+
+.shipping-price,
+.shipping-highlight,
+.shipping-link,
+.success-icon {
+    color: var(--autumn-terracotta);
+}
+
+.btn-back:hover,
+.btn-continue:hover,
+.btn-apply:hover,
+.btn-primary:hover,
+.btn-secondary:hover {
+    background-color: var(--autumn-wine);
+}
