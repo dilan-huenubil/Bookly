@@ -1,13 +1,14 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block title %}Bookly | Acceder o Registrarse{% endblock %}
 
 {% block content %}
-    <main class="auth-page">
+    <main class="auth-page {% if request.resolver_match.url_name == 'register' %}auth-page--register{% else %}auth-page--login{% endif %}">
         <div class="auth-container">
-            <div class="auth-grid">
-                <!-- Login -->
-                <section class="auth-card" aria-labelledby="loginTitle">
+            <div class="auth-layout">
+                <section class="auth-card" aria-labelledby="{% if request.resolver_match.url_name == 'login' %}loginTitle{% else %}registerTitle{% endif %}">
+                    {% if request.resolver_match.url_name == 'login' %}
                     <h2 class="auth-heading" id="loginTitle">Acceder</h2>
 
                     {% if login_error %}
@@ -37,10 +38,8 @@
 
                         <button class="btn-auth" type="submit">ACCEDER</button>
                     </form>
-                </section>
-
-                <!-- Register -->
-                <section class="auth-card" aria-labelledby="registerTitle">
+                    <p class="auth-switch">¿No tienes una cuenta? <a href="{% url 'register' %}">Regístrate</a></p>
+                    {% else %}
                     <h2 class="auth-heading" id="registerTitle">Registrarse</h2>
 
                     {% if register_error %}
@@ -71,12 +70,20 @@
                         <input class="auth-input" id="regPass2" name="password2" type="password" autocomplete="new-password" minlength="6" required>
 
                         <p class="fine-print">
-                            Sus datos personales se utilizarán para procesar su pedido, mejorar su experiencia en esta web, gestionar el acceso a su cuenta y otros propósitos descritos en nuestra <a href="#" class="auth-link">política de privacidad</a>.
+                            Sus datos personales se utilizarán para procesar su pedido, mejorar su experiencia en esta web, gestionar el acceso a su cuenta y otros propósitos descritos en nuestra política de privacidad.
                         </p>
 
                         <button class="btn-auth" type="submit">REGISTRARSE</button>
                     </form>
+                    <p class="auth-switch">¿Ya tienes una cuenta? <a href="{% url 'login' %}">Inicia sesión</a></p>
+                    {% endif %}
                 </section>
+                <aside class="auth-visual" aria-hidden="true">
+                    <img src="{% static 'core/images/4.png' %}" alt="">
+                    <div class="auth-visual__caption">
+                        <span>Bookly</span>
+                    </div>
+                </aside>
             </div>
         </div>
     </main>

@@ -17,12 +17,16 @@
         <div class="cuenta-header-inner">
             <div class="cuenta-logo-area">
                 <a href="{% url 'index' %}" class="cuenta-logo-link">
-                    <h3>BOOKLY LOGO</h3>
+                    <img src="{% static 'core/images/logo.png' %}" alt="Bookly">
                 </a>
                 <span class="cuenta-title-top">Mi Cuenta</span>
             </div>
             <div class="cuenta-logout-area">
-                <a href="{% url 'logout' %}">Cerrar sesión <i class="bi bi-box-arrow-right"></i></a>
+                <a href="{% url 'index' %}" class="cuenta-store-link" aria-label="Volver a la tienda">
+                    <i class="bi bi-house-door"></i>
+                    <span>Volver a la tienda</span>
+                </a>
+                <a href="{% url 'logout' %}" class="cuenta-logout-link">Cerrar sesión <i class="bi bi-box-arrow-right"></i></a>
             </div>
         </div>
     </header>

@@ -2,6 +2,33 @@
 // ACORDEÓN MIS COMPRAS (Página Mi Cuenta)
 // =========================
 document.addEventListener('DOMContentLoaded', () => {
+    const userMenu = document.querySelector('.js-cuenta-user-menu');
+    const userToggle = document.querySelector('.js-cuenta-user-toggle');
+    const userClose = document.querySelector('.js-cuenta-user-close');
+
+    if (userMenu && userToggle) {
+        userToggle.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const isOpen = userMenu.classList.toggle('is-open');
+            userToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+
+        if (userClose) {
+            userClose.addEventListener('click', (event) => {
+                event.stopPropagation();
+                userMenu.classList.remove('is-open');
+                userToggle.setAttribute('aria-expanded', 'false');
+            });
+        }
+
+        document.addEventListener('click', (event) => {
+            if (!userMenu.contains(event.target)) {
+                userMenu.classList.remove('is-open');
+                userToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
     const purchaseCards = document.querySelectorAll('.js-purchase-card');
 
     purchaseCards.forEach(card => {

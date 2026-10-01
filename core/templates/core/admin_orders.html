@@ -30,7 +30,7 @@
                 <input class="auth-input" id="adminOrderSearch" name="q" value="{{ query }}" placeholder="Buscar por orden, cliente, correo o producto">
                 <button class="btn-primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
             </form>
-            <div class="admin-table-wrap">
+            <div class="admin-table-wrap admin-orders-wrap">
                 <table class="admin-table admin-orders-table">
                     <thead>
                         <tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Seguimiento</th><th>Fecha</th><th>Acciones</th></tr>
@@ -38,25 +38,25 @@
                     <tbody>
                     {% for order in orders %}
                     <tr>
-                        <td>
+                        <td data-label="Pedido">
                             <strong>{{ order.commerce_order }}</strong>
                             <small>{{ order.first_item_title|default:'Sin productos' }}</small>
                         </td>
-                        <td>
+                        <td data-label="Cliente">
                             <strong>{{ order.user.get_full_name|default:order.user.username }}</strong>
                             <small>{{ order.email }}</small>
                         </td>
-                        <td><strong>${{ order.amount|intcomma }}</strong></td>
-                        <td><span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span></td>
-                        <td>
+                        <td data-label="Total"><strong>${{ order.amount|intcomma }}</strong></td>
+                        <td data-label="Estado"><span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                        <td data-label="Seguimiento">
                             {% if order.status == 'canceled' %}
                             <span class="order-status status-canceled">Cancelado</span>
                             {% else %}
                             <span class="order-status tracking-{{ order.tracking_status }}">{{ order.get_tracking_status_display }}</span>
                             {% endif %}
                         </td>
-                        <td>{{ order.created_at|date:'d/m/Y H:i' }}</td>
-                        <td class="admin-row-actions">
+                        <td data-label="Fecha">{{ order.created_at|date:'d/m/Y H:i' }}</td>
+                        <td class="admin-row-actions" data-label="Acciones">
                             <a class="icon-action" href="{% url 'admin_order_edit' order.pk %}" title="Editar pedido" aria-label="Editar pedido"><i class="bi bi-pencil"></i></a>
                             <form method="post" action="{% url 'admin_order_delete' order.pk %}" onsubmit="return confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.');">
                                 {% csrf_token %}
@@ -65,7 +65,7 @@
                         </td>
                     </tr>
                     <tr class="admin-order-details">
-                        <td colspan="7">
+                        <td colspan="7" data-label="Productos">
                             <small><strong>Productos:</strong>
                             {% for item in order.items.all %}{{ item.book.title }} x{{ item.quantity }}{% if not forloop.last %}, {% endif %}{% empty %}Sin productos registrados{% endfor %}
                             </small>

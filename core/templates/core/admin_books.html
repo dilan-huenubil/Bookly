@@ -14,6 +14,7 @@
             </div>
             <div class="admin-heading-actions">
                 <button class="btn-primary" type="button" data-open-book-modal><i class="bi bi-plus-lg"></i> Nuevo libro</button>
+                <a class="btn-outline" href="{% url 'admin_orders' %}"><i class="bi bi-receipt"></i> Administrar pedidos</a>
                 <a class="btn-outline" href="{% url 'index' %}"><i class="bi bi-arrow-left"></i> Volver a la tienda</a>
             </div>
         </div>
@@ -37,18 +38,18 @@
                         <tbody>
                         {% for book in books %}
                         <tr class="{% if not book.is_active %}is-inactive{% endif %}">
-                            <td><strong>{{ book.title }}</strong><small>{{ book.author }} · {{ book.sku }}</small></td>
-                            <td>
+                            <td data-label="Libro"><strong>{{ book.title }}</strong><small>{{ book.author }} · {{ book.sku }}</small></td>
+                            <td data-label="Precio">
                                 {% if book.price_old %}<small class="admin-old-price">${{ book.price_old }}</small>{% endif %}
                                 <strong>${{ book.price }}</strong>
                                 {% if book.discount_percent %}<small class="admin-discount">-{{ book.discount_percent }}%</small>{% endif %}
                             </td>
-                            <td>
+                            <td data-label="Stock">
                                 <input class="stock-input" type="number" min="0" value="{{ book.stock }}" data-stock-url="{% url 'admin_book_stock' book.pk %}" aria-label="Stock de {{ book.title }}">
                                 <small class="stock-status" aria-live="polite"></small>
                             </td>
-                            <td>{% if book.is_active %}<span class="status-active">Activo</span>{% else %}<span class="status-inactive">Inactivo</span>{% endif %}</td>
-                            <td class="admin-row-actions">
+                            <td data-label="Estado">{% if book.is_active %}<span class="status-active">Activo</span>{% else %}<span class="status-inactive">Inactivo</span>{% endif %}</td>
+                            <td class="admin-row-actions" data-label="Acciones">
                                 <a class="icon-action" href="{% url 'admin_book_edit' book.pk %}" title="Editar {{ book.title }}" aria-label="Editar {{ book.title }}"><i class="bi bi-pencil"></i></a>
                                 <form method="post" action="{% url 'admin_book_toggle' book.pk %}">
                                     {% csrf_token %}<button class="icon-action" type="submit" title="Cambiar estado" aria-label="Cambiar estado"><i class="bi bi-power"></i></button>

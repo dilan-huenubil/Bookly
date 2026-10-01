@@ -11,7 +11,8 @@
 }
 
 .admin-container { max-width: 1280px; margin: 0 auto; }
-.admin-heading-row, .admin-search, .admin-actions, .admin-heading-actions { display: flex; align-items: center; gap: 12px; }
+.admin-heading-row, .admin-actions, .admin-heading-actions { display: flex; align-items: center; gap: 12px; }
+.admin-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
 .admin-heading-row { justify-content: space-between; margin-bottom: 24px; }
 .admin-kicker { color: #d95316; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: 12px; }
 .admin-heading { color: #495867; margin-top: 4px; }
@@ -29,7 +30,8 @@
 .admin-actions { margin-top: 18px; flex-wrap: wrap; }
 .admin-messages { margin-bottom: 18px; padding: 12px 16px; border-left: 4px solid #65798C; background: #fff; color: #495867; }
 .admin-search { margin-bottom: 14px; }
-.admin-search .auth-input { flex: 1; }
+.admin-search .auth-input { width: 100%; min-width: 0; }
+.admin-search .btn-primary { min-width: 100px; white-space: nowrap; }
 .admin-table-wrap { overflow-x: auto; background: #fff; border: 1px solid #e6e6e6; box-shadow: 0 4px 12px rgba(0, 0, 0, .05); }
 .admin-table { width: 100%; min-width: 700px; border-collapse: collapse; }
 .admin-table th, .admin-table td { padding: 13px 12px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
@@ -53,6 +55,54 @@
 .admin-empty { text-align: center !important; color: #777; padding: 30px !important; }
 .admin-orders-table { min-width: 1040px; }
 .admin-orders-table .icon-action { width: 42px; padding: 0 8px; }
+.admin-orders-wrap {
+    overflow-x: hidden;
+}
+.admin-orders-wrap .admin-orders-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+.admin-orders-table td.admin-row-actions {
+    display: table-cell;
+    width: 112px;
+    min-width: 112px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.admin-orders-table td.admin-row-actions form,
+.admin-orders-table td.admin-row-actions .icon-action {
+    display: inline-flex;
+    vertical-align: middle;
+
+@media (min-width: 701px) {
+    .admin-table-wrap:has(.admin-orders-table) {
+        overflow-x: hidden;
+    }
+
+    .admin-orders-table {
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+    }
+
+    .admin-orders-table th:last-child,
+    .admin-orders-table td:last-child {
+        width: 112px;
+    }
+
+    .admin-orders-table td {
+        overflow-wrap: anywhere;
+    }
+
+    .admin-orders-table .order-status {
+        white-space: normal;
+    }
+}
+}
+.admin-orders-table td.admin-row-actions form {
+    margin: 0;
+}
 .admin-books-table .admin-row-actions .icon-action:first-child { width: 42px; padding: 0 8px; }
 .admin-order-details td { padding-top: 0; color: #777; background: #fafbfb; }
 .order-status { font-weight: 800; white-space: nowrap; }
@@ -97,8 +147,329 @@
     .admin-heading-row { align-items: flex-start; flex-direction: column; }
     .admin-heading-actions { width: 100%; flex-wrap: wrap; }
     .admin-heading-actions .btn-primary, .admin-heading-actions .btn-outline { flex: 1; }
-    .admin-search { align-items: stretch; flex-direction: column; }
-    .admin-search .btn-primary { width: 100%; }
+    .admin-search { align-items: center; flex-direction: row; }
+    .admin-search .btn-primary { width: auto; flex-shrink: 0; }
     .book-modal { padding: 12px; }
     .book-modal-dialog { max-height: calc(100vh - 24px); padding: 20px; }
+}
+
+/* Tema otoñal de Bookly */
+:root {
+    --autumn-paper: #f4eee3;
+    --autumn-paper-deep: #e8dbc8;
+    --autumn-ink: #3f2d2a;
+    --autumn-wine: #6f3030;
+    --autumn-terracotta: #b45f43;
+    --autumn-ochre: #c9963e;
+    --autumn-line: #d8c5ae;
+}
+
+body {
+    background: var(--autumn-paper);
+    color: var(--autumn-ink);
+    font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+}
+
+.admin-page {
+    background: var(--autumn-paper);
+}
+
+.admin-heading,
+.admin-form-card h2,
+.admin-field label,
+.admin-table th,
+.book-modal-header h2 {
+    color: var(--autumn-ink);
+}
+
+.admin-form-card,
+.admin-table-wrap,
+.book-modal-dialog {
+    background: #fffdf9;
+    border: 1px solid var(--autumn-line);
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+.admin-field input,
+.admin-field textarea,
+.admin-field select,
+.admin-search .auth-input,
+.stock-input {
+    border-color: var(--autumn-line);
+    border-radius: 7px;
+    color: var(--autumn-ink);
+}
+
+.admin-field input:focus,
+.admin-field textarea:focus,
+.admin-field select:focus,
+.admin-search .auth-input:focus,
+.stock-input:focus {
+    border-color: var(--autumn-terracotta);
+    box-shadow: 0 0 0 3px rgba(180, 95, 67, .16);
+}
+
+.admin-table th,
+.admin-messages {
+    background: var(--autumn-paper-deep);
+}
+
+.admin-table th,
+.admin-table td {
+    border-bottom-color: var(--autumn-line);
+}
+
+.admin-table td:first-child strong,
+.icon-action,
+.tracking-preparando {
+    color: var(--autumn-terracotta);
+}
+
+.admin-messages {
+    border-left-color: var(--autumn-wine);
+    color: var(--autumn-ink);
+}
+
+.icon-action,
+.book-modal-close {
+    border-color: var(--autumn-line);
+    border-radius: 7px;
+}
+
+.icon-action:hover,
+.book-modal-close:hover {
+    color: var(--autumn-wine);
+    border-color: var(--autumn-terracotta);
+    background: var(--autumn-paper-deep);
+}
+
+.admin-actions .btn-primary,
+.admin-heading-actions .btn-primary {
+    background: var(--autumn-wine);
+}
+
+/* Paleta clara editorial */
+:root {
+    --autumn-paper: #FAF8F5;
+    --autumn-paper-deep: #F4EFEA;
+    --autumn-ink: #2E2223;
+    --autumn-wine: #8C4A32;
+    --autumn-terracotta: #A65D37;
+    --autumn-ochre: #D2B495;
+    --autumn-line: #EAE3D9;
+}
+
+body,
+.admin-page {
+    background: var(--autumn-paper);
+    color: var(--autumn-ink);
+}
+
+.admin-form-card,
+.admin-table-wrap,
+.book-modal-dialog {
+    background: #FFFFFF;
+    border-color: var(--autumn-line);
+    box-shadow: none;
+}
+
+.admin-table th,
+.admin-messages {
+    background: var(--autumn-paper-deep);
+}
+
+.admin-actions .btn-primary,
+.admin-heading-actions .btn-primary {
+    background: var(--autumn-terracotta);
+}
+
+.admin-actions .btn-primary:hover,
+.admin-heading-actions .btn-primary:hover {
+    background: var(--autumn-wine);
+}
+
+.admin-field input:focus,
+.admin-field textarea:focus,
+.admin-field select:focus,
+.admin-search .auth-input:focus,
+.stock-input:focus {
+    border-color: var(--autumn-terracotta);
+    box-shadow: 0 0 0 3px rgba(166, 93, 55, .14);
+}
+
+/* La celda de acciones debe conservar el layout nativo de la tabla. */
+.admin-books-table td.admin-row-actions {
+    display: table-cell;
+    width: 170px;
+    min-width: 170px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.admin-books-table td.admin-row-actions form,
+.admin-books-table td.admin-row-actions .icon-action {
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.admin-books-table td.admin-row-actions form {
+    margin: 0;
+}
+
+.admin-books-table td.admin-row-actions .icon-action {
+    flex: 0 0 36px;
+}
+
+@media (max-width: 700px) {
+    .admin-books-table td.admin-row-actions {
+        display: flex;
+        width: 100%;
+        min-width: 0;
+        white-space: normal;
+    }
+}
+
+/* El inventario ocupa el ancho disponible sin generar scroll horizontal. */
+.admin-table-wrap:has(.admin-books-table) {
+    overflow-x: hidden;
+}
+
+.admin-books-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.admin-books-table th:nth-child(1),
+.admin-books-table td:nth-child(1) {
+    width: 46%;
+}
+
+.admin-books-table th:nth-child(2),
+.admin-books-table td:nth-child(2) {
+    width: 13%;
+}
+
+.admin-books-table th:nth-child(3),
+.admin-books-table td:nth-child(3) {
+    width: 12%;
+}
+
+.admin-books-table th:nth-child(4),
+.admin-books-table td:nth-child(4) {
+    width: 13%;
+}
+
+.admin-books-table th:nth-child(5),
+.admin-books-table td:nth-child(5) {
+    width: 16%;
+}
+
+.admin-books-table td:first-child strong,
+.admin-books-table td:first-child small {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+@media (max-width: 700px) {
+    .admin-table-wrap:has(.admin-books-table) {
+        overflow: visible;
+    }
+
+    .admin-books-table {
+        table-layout: auto;
+    }
+}
+
+@media (max-width: 700px) {
+    .admin-table-wrap,
+    .admin-table-wrap:has(.admin-orders-table) {
+        overflow: visible;
+    }
+
+    .admin-table {
+        display: block;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .admin-table thead {
+        display: none;
+    }
+
+    .admin-table tbody {
+        display: block;
+    }
+
+    .admin-table tbody tr:not(.admin-order-details) {
+        display: block;
+        margin-bottom: 12px;
+        border: 1px solid var(--autumn-line);
+        border-radius: 8px;
+        background: var(--autumn-white);
+        overflow: hidden;
+    }
+
+    .admin-table tbody tr:not(.admin-order-details) td {
+        display: grid;
+        grid-template-columns: minmax(82px, 30%) minmax(0, 1fr);
+        gap: 10px;
+        width: 100%;
+        min-width: 0;
+        padding: 10px 12px;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .admin-table tbody tr:not(.admin-order-details) td::before {
+        content: attr(data-label);
+        color: var(--autumn-terracotta);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    .admin-table td.admin-row-actions {
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+        min-height: 54px;
+    }
+
+    .admin-table td.admin-row-actions::before {
+        margin-right: auto;
+    }
+
+    .admin-table tbody tr.admin-order-details {
+        display: block;
+        margin: -12px 0 12px;
+        border: 1px solid var(--autumn-line);
+        border-top: 0;
+        border-radius: 0 0 8px 8px;
+        background: var(--autumn-paper-deep);
+    }
+
+    .admin-table tbody tr.admin-order-details td {
+        display: block;
+        width: 100%;
+        padding: 10px 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-table tbody tr.admin-order-details td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 4px;
+        color: var(--autumn-terracotta);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    .admin-table .order-status {
+        white-space: normal;
+    }
 }

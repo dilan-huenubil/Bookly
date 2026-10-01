@@ -54,6 +54,12 @@ body.bg-light {
     font-size: 22px;
 }
 
+.cuenta-logo-link img {
+    height: 40px;
+    width: auto;
+    display: block;
+}
+
 .cuenta-title-top {
     font-size: 18px;
     font-weight: 700;
@@ -439,6 +445,222 @@ body.bg-light {
     }
 }
 
+/* Acciones del header compartidas con la tienda */
+.cuenta-logout-area {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.cuenta-logout-area > a:first-child,
+.cuenta-cart-link {
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.cuenta-logout-area > a:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cuenta-logout-area > a:first-child:hover,
+.cuenta-cart-link:hover {
+    color: var(--account-detail);
+}
+
+.cuenta-cart-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: 24px;
+}
+
+.cuenta-user-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 7px 12px;
+    background: var(--account-paper);
+    border: 1px solid var(--account-line);
+    border-radius: 999px;
+    color: var(--account-ink);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.cuenta-user-pill__arrow {
+    font-size: 11px;
+    color: var(--account-hover);
+}
+
+.cuenta-logout-area > a:first-child i {
+    font-size: 24px;
+}
+
+.cuenta-cart-link i {
+    font-size: 25px;
+}
+
+.cuenta-store-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, .35);
+    border-radius: 8px;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.cuenta-store-link i {
+    font-size: 20px;
+}
+
+.cuenta-store-link:hover {
+    background: rgba(255, 255, 255, .12);
+    border-color: var(--account-detail);
+    color: var(--account-detail);
+}
+
+.cuenta-logout-area .cuenta-store-link,
+.cuenta-logout-area .cuenta-logout-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.cuenta-logout-area .cuenta-logout-link {
+    font-weight: 700;
+}
+
+.cuenta-logout-area .cuenta-logout-link i {
+    font-size: 24px;
+}
+
+.cuenta-logout-area .cuenta-logout-link:hover {
+    color: var(--account-detail);
+}
+
+.cuenta-user-menu {
+    position: relative;
+}
+
+.cuenta-user-pill {
+    border: 1px solid var(--account-line);
+    cursor: pointer;
+    font: inherit;
+}
+
+.cuenta-user-pill > i:first-child {
+    font-size: 20px;
+}
+
+.cuenta-user-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 1200;
+    width: 220px;
+    padding: 8px;
+    background: #FFFFFF;
+    border: 1px solid var(--account-line);
+    border-radius: 10px;
+    box-shadow: 0 10px 26px rgba(46, 34, 35, .14);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+}
+
+.cuenta-user-menu.is-open .cuenta-user-dropdown {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.cuenta-user-dropdown__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px 12px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--account-line);
+    color: var(--account-ink);
+    font-weight: 700;
+}
+
+.cuenta-user-dropdown__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--account-cta);
+    cursor: pointer;
+}
+
+.cuenta-user-dropdown__close:hover {
+    background: var(--account-soft);
+    color: var(--account-hover);
+}
+
+.cuenta-user-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 10px;
+    border-radius: 8px;
+    color: var(--account-ink) !important;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.cuenta-user-dropdown a i {
+    width: 20px;
+    color: var(--account-cta);
+    font-size: 17px;
+    text-align: center;
+}
+
+.cuenta-user-dropdown a:hover {
+    background: var(--account-soft);
+    color: var(--account-hover) !important;
+}
+
+.cuenta-user-dropdown a:hover i {
+    color: var(--account-hover);
+}
+
+@media (max-width: 600px) {
+    .cuenta-logout-area {
+        width: 100%;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .cuenta-user-pill span:not(.cuenta-user-pill__arrow) {
+        display: none;
+    }
+
+    .cuenta-user-pill {
+        padding: 7px 10px;
+    }
+}
+
 
 
 /* =========================
@@ -785,6 +1007,10 @@ body.bg-light {
     }
 }
 
+.cuenta-header {
+    border-bottom: 0 !important;
+}
+
 /* =========================
    DISEÑO RESPONSIVO
    ========================= */
@@ -912,4 +1138,430 @@ body.bg-light {
     color: #888888;
     cursor: not-allowed;
     pointer-events: none;
+}
+
+/* Tema otoñal de Bookly */
+:root {
+    --autumn-paper: #f4eee3;
+    --autumn-paper-deep: #e8dbc8;
+    --autumn-ink: #3f2d2a;
+    --autumn-wine: #6f3030;
+    --autumn-terracotta: #b45f43;
+    --autumn-ochre: #c9963e;
+    --autumn-line: #d8c5ae;
+}
+
+body.bg-light {
+    background: var(--autumn-paper);
+    color: var(--autumn-ink);
+    font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+}
+
+.cuenta-header {
+    background: var(--autumn-ink);
+    border-bottom-color: var(--autumn-ochre);
+}
+
+.cuenta-sidebar,
+.cuenta-main {
+    background: #fffdf9;
+    border-color: var(--autumn-line);
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+.cuenta-greeting h4,
+.cuenta-nav a,
+.content-header-account h2,
+.purchase-title,
+.purchase-date strong,
+.purchase-price strong,
+.oi-info strong,
+.si-label,
+.track-header h4 {
+    color: var(--autumn-ink);
+}
+
+.cuenta-avatar,
+.cuenta-nav a.active,
+.btn-primary,
+.btn-secondary,
+.btn-track {
+    background: var(--autumn-wine);
+}
+
+.cuenta-nav a i,
+.purchase-chevron,
+.si-label i {
+    color: var(--autumn-terracotta);
+}
+
+.cuenta-nav a,
+.purchase-card,
+.form-group input,
+.form-group select,
+.account-pagination a,
+.shipping-info-box,
+.track-footer {
+    border-color: var(--autumn-line);
+}
+
+.purchase-card,
+.purchase-body,
+.shipping-info-box,
+.track-footer {
+    background: var(--autumn-paper-deep);
+}
+
+.purchase-header:hover,
+.account-pagination a:hover,
+.cuenta-nav a:not(.active):hover {
+    background: var(--autumn-paper-deep);
+}
+
+.purchase-icon {
+    background: var(--autumn-ochre);
+    color: var(--autumn-ink);
+}
+
+.account-pagination a.active {
+    background: var(--autumn-wine);
+    border-color: var(--autumn-wine);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--autumn-terracotta);
+    box-shadow: 0 0 0 3px rgba(180, 95, 67, .16);
+}
+
+/* Paleta clara editorial */
+:root {
+    --autumn-paper: #FAF8F5;
+    --autumn-paper-deep: #F4EFEA;
+    --autumn-ink: #2E2223;
+    --autumn-wine: #8C4A32;
+    --autumn-terracotta: #A65D37;
+    --autumn-ochre: #D2B495;
+    --autumn-line: #EAE3D9;
+}
+
+body.bg-light {
+    background: var(--autumn-paper);
+    color: var(--autumn-ink);
+}
+
+.cuenta-header {
+    background: var(--autumn-ink);
+    border-bottom-color: var(--autumn-ochre);
+}
+
+.cuenta-sidebar,
+.cuenta-main {
+    background: #FFFFFF;
+    border-color: var(--autumn-line);
+    box-shadow: none;
+}
+
+.cuenta-nav a.active,
+.cuenta-avatar,
+.btn-primary,
+.btn-secondary,
+.btn-track {
+    background: var(--autumn-terracotta);
+}
+
+.cuenta-nav a:not(.active):hover,
+.purchase-header:hover,
+.account-pagination a:hover {
+    background: var(--autumn-paper-deep);
+}
+
+.purchase-card,
+.purchase-body,
+.shipping-info-box,
+.track-footer {
+    background: var(--autumn-paper-deep);
+    border-color: var(--autumn-line);
+}
+
+.purchase-icon {
+    background: var(--autumn-ochre);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-pwd-wrapper input:focus {
+    border-color: var(--autumn-terracotta);
+    box-shadow: 0 0 0 3px rgba(166, 93, 55, .14);
+}
+
+/* Rediseño final de Mi Cuenta */
+:root {
+    --account-paper: #FAF8F5;
+    --account-surface: #FFFFFF;
+    --account-soft: #F4EFEA;
+    --account-ink: #2E2223;
+    --account-cta: #A65D37;
+    --account-hover: #8C4A32;
+    --account-line: #EAE3D9;
+    --account-detail: #D2B495;
+}
+
+body.bg-light {
+    background: var(--account-paper);
+    color: var(--account-ink);
+    font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+}
+
+.cuenta-header {
+    height: 76px;
+    background: var(--account-ink);
+    border-bottom: 3px solid var(--account-detail);
+}
+
+.cuenta-logo-link {
+    color: #FFFFFF;
+    border-right-color: rgba(255, 255, 255, .28);
+}
+
+.cuenta-logo-link h3 {
+    letter-spacing: .1em;
+}
+
+.cuenta-title-top,
+.cuenta-logout-area a {
+    color: #FFFFFF;
+}
+
+.cuenta-logout-area a:hover {
+    color: var(--account-detail);
+}
+
+.cuenta-layout {
+    max-width: 1240px;
+    margin-top: 46px;
+    gap: 28px;
+}
+
+.cuenta-sidebar,
+.cuenta-main {
+    background: var(--account-surface);
+    border: 1px solid var(--account-line);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(46, 34, 35, .06);
+}
+
+.cuenta-sidebar {
+    width: 290px;
+}
+
+.cuenta-greeting {
+    padding: 30px 20px 26px;
+    border-bottom-color: var(--account-line);
+}
+
+.cuenta-greeting h4,
+.content-header-account h2 {
+    color: var(--account-ink);
+}
+
+.cuenta-avatar {
+    background: var(--account-cta);
+    border-color: var(--account-surface);
+    outline-color: var(--account-detail);
+}
+
+.cuenta-nav a {
+    color: var(--account-ink);
+    border-bottom-color: var(--account-line);
+}
+
+.cuenta-nav a i {
+    color: var(--account-cta);
+}
+
+.cuenta-nav a.active {
+    background: var(--account-cta);
+    color: #FFFFFF;
+}
+
+.cuenta-nav a.active i {
+    color: #FFFFFF;
+}
+
+.cuenta-nav a:not(.active):hover {
+    background: var(--account-soft);
+    color: var(--account-hover);
+}
+
+.cuenta-main {
+    padding: 34px;
+}
+
+.content-header-account {
+    margin-bottom: 26px;
+}
+
+.content-header-account h2 {
+    font-size: 30px;
+}
+
+.content-header-account p,
+.form-group label,
+.purchase-date,
+.purchase-price {
+    color: #6F5E59;
+}
+
+.profile-form {
+    margin-top: 0;
+    padding: 28px;
+    background: var(--account-paper);
+    border: 1px solid var(--account-line);
+    border-radius: 12px;
+}
+
+.form-grid {
+    gap: 22px 28px;
+    margin-bottom: 8px;
+}
+
+.form-group {
+    gap: 9px;
+}
+
+.form-group label {
+    color: var(--account-ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.form-group input,
+.form-group select,
+.form-pwd-wrapper input {
+    min-height: 46px;
+    background: #FFFFFF;
+    border: 1px solid var(--account-line);
+    border-radius: 8px;
+    color: var(--account-ink);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-pwd-wrapper input:focus {
+    border-color: var(--account-cta);
+    box-shadow: 0 0 0 3px rgba(166, 93, 55, .14);
+}
+
+.form-actions {
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.form-actions .btn-secondary,
+.form-actions .btn-primary {
+    width: 156px;
+    min-height: 44px;
+    border-radius: 8px;
+}
+
+.form-actions .btn-secondary {
+    background: #FFFFFF;
+    border: 1px solid var(--account-line);
+    color: var(--account-hover);
+}
+
+.form-actions .btn-secondary:hover {
+    background: var(--account-soft);
+}
+
+.form-actions .btn-primary,
+.btn-primary,
+.btn-secondary,
+.btn-track {
+    background: var(--account-cta);
+    color: #FFFFFF;
+}
+
+.form-actions .btn-primary:hover,
+.btn-primary:hover,
+.btn-secondary:hover,
+.btn-track:hover {
+    background: var(--account-hover);
+}
+
+.purchase-card {
+    border-color: var(--account-line);
+    border-radius: 10px;
+    background: var(--account-surface);
+}
+
+.purchase-header:hover {
+    background: var(--account-soft);
+}
+
+.purchase-title,
+.purchase-date strong,
+.purchase-price strong,
+.oi-info strong,
+.si-label,
+.track-header h4 {
+    color: var(--account-ink);
+}
+
+.purchase-icon {
+    background: var(--account-detail);
+    color: var(--account-ink);
+}
+
+.purchase-price span,
+.purchase-chevron,
+.si-label i {
+    color: var(--account-cta);
+}
+
+@media (max-width: 992px) {
+    .cuenta-sidebar {
+        width: 100%;
+    }
+
+    .cuenta-main {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 600px) {
+    .cuenta-header {
+        height: auto;
+        padding: 18px 20px;
+    }
+
+    .cuenta-layout {
+        margin-top: 24px;
+        padding: 0 14px;
+    }
+
+    .cuenta-main {
+        padding: 20px 16px;
+    }
+
+    .profile-form {
+        padding: 20px 16px;
+    }
+
+    .content-header-account h2 {
+        font-size: 24px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .form-actions .btn-secondary,
+    .form-actions .btn-primary {
+        width: 100%;
+    }
 }
