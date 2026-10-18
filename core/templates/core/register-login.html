@@ -33,7 +33,7 @@
                             <label class="check">Recuérdame
                                 <input type="checkbox" id="rememberMe">
                             </label>
-                            <a class="auth-link" href="#">¿Olvidaste la contraseña?</a>
+                            <a class="auth-link" href="{% url 'password_reset' %}">¿Olvidaste la contraseña?</a>
                         </div>
 
                         <button class="btn-auth" type="submit">ACCEDER</button>
@@ -88,6 +88,5 @@
         </div>
     </main>
 {% endblock %}
-
 
 

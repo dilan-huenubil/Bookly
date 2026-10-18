@@ -51,4 +51,22 @@
         <button type="submit" class="btn-primary">GUARDAR</button>
     </div>
 </form>
+
+<section class="account-deletion" aria-labelledby="delete-account-title">
+    <div class="account-deletion-copy">
+        <span class="account-deletion-icon" aria-hidden="true"><i class="bi bi-exclamation-triangle"></i></span>
+        <div>
+            <h3 id="delete-account-title">Eliminar cuenta</h3>
+            <p>
+                Tu cuenta se conservará durante 30 días. Si inicias sesión antes
+                de ese plazo, la eliminación se cancelará automáticamente.
+            </p>
+        </div>
+    </div>
+    <form method="POST" action="{% url 'delete_account' %}"
+        onsubmit="return confirm('¿Quieres solicitar la eliminación de tu cuenta? Tendrás 30 días para recuperarla iniciando sesión.');">
+        {% csrf_token %}
+        <button type="submit" class="btn-danger-account">Solicitar eliminación</button>
+    </form>
+</section>
 {% endblock %}

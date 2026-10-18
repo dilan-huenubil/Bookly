@@ -3,6 +3,11 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from datetime import timedelta
+
+
+ACCOUNT_DELETION_GRACE_PERIOD = timedelta(days=30)
 
 
 class Book(models.Model):
@@ -131,6 +136,17 @@ class Profile(models.Model):
 	phone = models.CharField("Teléfono", max_length=32, blank=True, null=True)
 	rut = models.CharField("RUT", max_length=20, blank=True, null=True)
 	doc_type = models.CharField("Tipo de documento", max_length=20, default='RUT')
+	deletion_requested_at = models.DateTimeField(
+		"Eliminación solicitada el",
+		blank=True,
+		null=True,
+	)
+
+	def deletion_has_expired(self, now=None):
+		if self.deletion_requested_at is None:
+			return False
+		now = now or timezone.now()
+		return now >= self.deletion_requested_at + ACCOUNT_DELETION_GRACE_PERIOD
 
 	def __str__(self):
 		return f"Perfil de {self.user.username}"

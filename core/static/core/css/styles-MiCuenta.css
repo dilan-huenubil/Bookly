@@ -1565,3 +1565,84 @@ body.bg-light {
         width: 100%;
     }
 }
+
+/* Zona de acciones irreversibles */
+.account-deletion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 32px;
+    padding: 24px 28px;
+    background: #FFF8F6;
+    border: 1px solid #E8C8BE;
+    border-left: 4px solid #B94A3A;
+    border-radius: 12px;
+}
+
+.account-deletion-copy {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    min-width: 0;
+}
+
+.account-deletion-icon {
+    flex: 0 0 auto;
+    color: #B94A3A;
+    font-size: 22px;
+    line-height: 1.2;
+}
+
+.account-deletion h3 {
+    margin: 0 0 8px;
+    color: #7F3028;
+    font-size: 17px;
+}
+
+.account-deletion p {
+    max-width: 620px;
+    margin: 0;
+    color: #6F5E59;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.account-deletion form {
+    flex: 0 0 auto;
+}
+
+.btn-danger-account {
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid #B94A3A;
+    border-radius: 8px;
+    background: #B94A3A;
+    color: #FFFFFF;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: background-color .2s ease, border-color .2s ease;
+}
+
+.btn-danger-account:hover {
+    border-color: #8F332A;
+    background: #8F332A;
+}
+
+@media (max-width: 600px) {
+    .account-deletion {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 18px;
+        margin-top: 24px;
+        padding: 20px 16px;
+    }
+
+    .account-deletion form,
+    .btn-danger-account {
+        width: 100%;
+    }
+}

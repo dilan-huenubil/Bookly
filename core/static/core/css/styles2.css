@@ -36,15 +36,34 @@ body {
     color: white;
 }
 
+.logo a {
+    display: inline-flex;
+    align-items: center;
+}
+
+.logo img {
+    display: block;
+    width: 150px;
+    height: auto;
+}
+
 @media (max-width: 768px) {
     .logo {
         font-size: 24px;
+    }
+
+    .logo img {
+        width: 130px;
     }
 }
 
 @media (max-width: 480px) {
     .logo {
         font-size: 18px;
+    }
+
+    .logo img {
+        width: 110px;
     }
 }
 
@@ -1822,9 +1841,13 @@ body,
 }
 
 .header {
-    background: var(--autumn-white, #FFFFFF);
-    border-bottom: 1px solid var(--autumn-line);
-    color: var(--autumn-ink);
+    background: var(--autumn-ink);
+    border-bottom: 1px solid var(--autumn-ink);
+    color: #FFFFFF;
+}
+
+.header .logo {
+    color: #FFFFFF;
 }
 
 .progress-bar {

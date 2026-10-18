@@ -210,6 +210,11 @@ select.large-scroll[size] {
     font-size: 0.85rem;
     margin-top: 4px;
 }
+.msg-success {
+    color: #2f7d32;
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
 
 
 @media (max-width: 900px) {
@@ -3572,13 +3577,13 @@ footer {
 .mobile-controls .mobile-cart[data-count]:not([data-count="0"])::after {
     content: attr(data-count);
     position: absolute;
-    top: 5px;
+    top: -5px;
     right: 1px;
     min-width: 16px;
     height: 16px;
     padding: 0 4px;
     border-radius: 999px;
-    background: #d92525;
+    background: var(--autumn-terracotta);
     color: #fff;
     font-size: 10px;
     font-weight: 800;
@@ -3598,12 +3603,20 @@ footer {
     height: 16px;
     padding: 0 4px;
     border-radius: 999px;
-    background: #d92525;
+    background: var(--autumn-terracotta);
     color: #fff;
     font-size: 10px;
     font-weight: 800;
     line-height: 16px;
     text-align: center;
+}
+
+.overlay-actions .overlay-cart-btn:hover i {
+    color: var(--autumn-terracotta) !important;
+}
+
+.overlay-actions .overlay-search-btn:hover i {
+    color: var(--autumn-terracotta) !important;
 }
 
 /* Componentes de tienda: acabado editorial */
@@ -4420,6 +4433,11 @@ body {
     color: var(--autumn-white) !important;
 }
 
+.main-menu a.active:hover {
+    background: var(--autumn-paper-deep) !important;
+    color: var(--autumn-wine) !important;
+}
+
 .user-pill {
     background: var(--autumn-paper-deep);
     border-color: var(--autumn-line);
@@ -4437,6 +4455,14 @@ body {
 .mobile-search i,
 .mobile-cart i {
     color: var(--autumn-ink) !important;
+}
+
+.mobile-controls .mobile-cart i {
+    color: var(--autumn-white) !important;
+}
+
+.mobile-controls .mobile-cart:hover i {
+    color: var(--autumn-terracotta) !important;
 }
 
 .title,
@@ -4462,8 +4488,34 @@ body {
     border-color: var(--autumn-line);
     border-radius: 12px;
     padding: 14px;
+    position: relative;
     transition: transform .25s ease, box-shadow .25s ease;
     will-change: transform;
+}
+
+.card-discount {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 1;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--autumn-wine);
+    color: var(--autumn-white);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.card .old-price {
+    color: var(--autumn-ink);
+    opacity: .45;
+    text-decoration: line-through;
+}
+
+.card .price {
+    color: var(--autumn-terracotta);
+    font-weight: 800;
 }
 
 .products .card:hover {
@@ -4535,10 +4587,11 @@ body {
 
 /* Acceso y registro: composición dividida */
 .auth-page {
+    flex: 0 0 auto;
     min-height: calc(100vh - 170px);
     display: flex;
-    align-items: center;
-    padding: 42px 20px 64px;
+    align-items: flex-start;
+    padding: 24px 20px 64px;
     background: var(--autumn-paper);
 }
 
@@ -4646,7 +4699,7 @@ body {
 .auth-visual {
     position: relative;
     min-height: 0;
-    height: 100%;
+    height: auto;
     align-self: stretch;
     overflow: hidden;
     background: var(--autumn-ink);

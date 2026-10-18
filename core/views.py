@@ -18,13 +18,22 @@ import time
 import uuid
 import json
 from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash, views as auth_views
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from functools import wraps
 
-from .models import Order, OrderItem, Address, Book, CouponRedemption, Profile
+from .models import (
+    Order,
+    OrderItem,
+    Address,
+    Book,
+    CouponRedemption,
+    Profile,
+)
 from .forms import BookAdminForm, OrderAdminForm
 from django.core.paginator import Paginator
 
@@ -32,6 +41,32 @@ from django.core.paginator import Paginator
 
 ORDER_PAYMENT_TIMEOUT = timedelta(minutes=15)
 COUPON_DISCOUNTS = {'bookly10': 10, 'bookly15': 15}
+
+
+def send_password_changed_email(user):
+    context = {'user': user}
+    text_body = render_to_string(
+        'core/password_changed_email.txt',
+        context,
+    )
+    html_body = render_to_string(
+        'core/password_changed_email.html',
+        context,
+    )
+    email = EmailMultiAlternatives(
+        subject='Tu contraseña de Bookly fue actualizada',
+        body=text_body,
+        to=[user.email],
+    )
+    email.attach_alternative(html_body, 'text/html')
+    email.send(fail_silently=False)
+
+
+class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        send_password_changed_email(self.user)
+        return response
 
 
 def coupon_was_used(user, code):
@@ -148,6 +183,11 @@ def register(request):
             })
 
         login(request, user)
+        profile = getattr(user, 'profile', None)
+        if profile and profile.deletion_requested_at is not None:
+            profile.deletion_requested_at = None
+            profile.save(update_fields=['deletion_requested_at'])
+            messages.success(request, 'Tu cuenta fue recuperada correctamente.')
 
         if next_url and url_has_allowed_host_and_scheme(
             url=next_url,
@@ -317,6 +357,23 @@ def admin_order_delete(request, order_id):
 
 def logout_view(request):
     logout(request)
+    return redirect('index')
+
+
+@login_required
+def delete_account(request):
+    if request.method != 'POST':
+        return redirect('mi_perfil')
+
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    profile.deletion_requested_at = timezone.now()
+    profile.save(update_fields=['deletion_requested_at'])
+    logout(request)
+    messages.success(
+        request,
+        'Tu cuenta se eliminará definitivamente en 30 días. '
+        'Inicia sesión antes de esa fecha para recuperarla.',
+    )
     return redirect('index')
 
 
@@ -1043,6 +1100,7 @@ def mi_contrasena(request):
         elif form.is_valid():
             user = form.save()
             update_session_auth_hash(request, user)
+            send_password_changed_email(user)
             messages.success(request, 'Tu contraseña ha sido actualizada correctamente.')
             return redirect('mi_contrasena')
         else:
@@ -1051,5 +1109,3 @@ def mi_contrasena(request):
         form = PasswordChangeForm(request.user)
 
     return render(request, 'core/mi_contrasena.html', {'form': form})
-
-

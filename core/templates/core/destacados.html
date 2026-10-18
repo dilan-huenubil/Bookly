@@ -25,6 +25,9 @@
     <div class="products">
         {% for book in books %}
         <div class="card" data-sku="{{ book.sku }}" data-title="{{ book.title }}" data-price="{{ book.price }}" data-image="{{ book.image_url|default:'https://via.placeholder.com/300x400?text=Sin+Imagen' }}">
+            {% if book.discount_percent and book.discount_percent > 0 %}
+            <span class="card-discount">-{{ book.discount_percent }}%</span>
+            {% endif %}
             <a href="{% url 'libro_detalles' book.sku %}" class="card-thumb"
                 aria-label="Ver detalles de {{ book.title }}">
                 <img src="{{ book.image_url|default:'https://via.placeholder.com/300x400?text=Sin+Imagen' }}"
@@ -37,9 +40,6 @@
                 <span class="old-price">${{ book.price_old|intcomma }}</span>
                 {% endif %}
                 <span class="price">${{ book.price|intcomma }}</span>
-                {% if book.discount_percent and book.discount_percent > 0 %}
-                <span class="discount">-{{ book.discount_percent }}%</span>
-                {% endif %}
             </p>
             {% if book.stock > 0 %}
             <button class="add-to-cart" type="button">AGREGAR AL CARRITO</button>
