@@ -16,8 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from core import views as core_views
 
 urlpatterns = [
+    path('admin/libros/', core_views.admin_books, name='admin_books'),
+    path('admin/libros/nuevo/', core_views.admin_book_save, name='admin_book_create'),
+    path('admin/libros/<int:book_id>/editar/', core_views.admin_book_save, name='admin_book_edit'),
+    path('admin/libros/<int:book_id>/estado/', core_views.admin_book_toggle, name='admin_book_toggle'),
+    path('admin/libros/<int:book_id>/stock/', core_views.admin_book_stock, name='admin_book_stock'),
+    path('admin/pedidos/', core_views.admin_orders, name='admin_orders'),
+    path('admin/pedidos/<int:order_id>/editar/', core_views.admin_order_edit, name='admin_order_edit'),
+    path('admin/pedidos/<int:order_id>/eliminar/', core_views.admin_order_delete, name='admin_order_delete'),
     path('admin/', admin.site.urls),
     path('', include('core.urls')),
 ]

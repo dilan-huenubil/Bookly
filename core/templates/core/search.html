@@ -3,13 +3,13 @@
 
 {% block content %}
 <main class="content search-page">
-    <div class="content-header">
+    <div class="content-header{% if not query %} search-header-empty{% endif %}">
         {% if query %}
             <h1 class="title">Resultados para "{{ query }}"</h1>
-            <p style="margin-left:auto; color:#65798C; font-weight:700;">{{ count }} resultado{{ count|pluralize }} encontrados</p>
+            <p class="search-status">{{ count }} resultado{{ count|pluralize }} encontrados</p>
         {% else %}
             <h1 class="title">Buscar libros</h1>
-            <p style="margin-left:auto; color:#65798C; font-weight:700;">Ingresa un término para buscar</p>
+            <p class="search-status search-status-empty">Ingresa un término para buscar</p>
         {% endif %}
     </div>
 

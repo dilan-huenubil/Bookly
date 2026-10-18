@@ -1,12 +1,63 @@
 {% extends 'core/base.html' %}
+{% load static %}
 {% load humanize %}
 
 {% block title %}Bookly | Inicio{% endblock %}
 
 {% block content %}
+    <section class="home-hero" aria-label="Selección destacada de Bookly">
+        <div class="home-hero__slides">
+            <article class="home-hero__slide is-active" data-slide="0" aria-hidden="false">
+                <div class="home-hero__copy">
+                    <span class="home-hero__eyebrow">Bookly / Librería online</span>
+                    <h1 id="heroTitle">Historias para volver a leer el mundo.</h1>
+                    <p>Encuentra tu próxima lectura entre libros elegidos para acompañar cada temporada.</p>
+                    <a class="home-hero__cta" href="#catalogo">Explorar selección <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <div class="home-hero__visual"><img src="{% static 'core/images/1.png' %}" alt="Biblioteca Bookly"></div>
+            </article>
+            <article class="home-hero__slide" data-slide="1" aria-hidden="true">
+                <div class="home-hero__copy">
+                    <span class="home-hero__eyebrow">Una pausa para leer</span>
+                    <h2>Tu próxima historia empieza aquí.</h2>
+                    <p>Descubre novelas, clásicos y nuevas voces para llenar tus horas de calma.</p>
+                    <a class="home-hero__cta" href="#catalogo">Ver libros <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <div class="home-hero__visual"><img src="{% static 'core/images/2.png' %}" alt="Selección de libros Bookly"></div>
+            </article>
+            <article class="home-hero__slide" data-slide="2" aria-hidden="true">
+                <div class="home-hero__copy">
+                    <span class="home-hero__eyebrow">Lecturas que permanecen</span>
+                    <h2>Un libro puede cambiar tu día.</h2>
+                    <p>Regala tiempo, imaginación y una historia que se queda contigo.</p>
+                    <a class="home-hero__cta" href="#catalogo">Descubrir libros <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <div class="home-hero__visual"><img src="{% static 'core/images/3.png' %}" alt="Lecturas destacadas de Bookly"></div>
+            </article>
+            <article class="home-hero__slide" data-slide="3" aria-hidden="true">
+                <div class="home-hero__copy">
+                    <span class="home-hero__eyebrow">Para cada momento</span>
+                    <h2>Haz espacio para una nueva historia.</h2>
+                    <p>Explora nuestra selección y encuentra esa lectura que estabas buscando.</p>
+                    <a class="home-hero__cta" href="#catalogo">Explorar catálogo <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <div class="home-hero__visual"><img src="{% static 'core/images/4.png' %}" alt="Libros seleccionados por Bookly"></div>
+            </article>
+        </div>
+        <div class="home-hero__dots" role="tablist" aria-label="Slides destacados">
+            <button class="is-active" type="button" role="tab" aria-selected="true" aria-label="Ver slide 1" data-slide="0"></button>
+            <button type="button" role="tab" aria-selected="false" aria-label="Ver slide 2" data-slide="1"></button>
+            <button type="button" role="tab" aria-selected="false" aria-label="Ver slide 3" data-slide="2"></button>
+            <button type="button" role="tab" aria-selected="false" aria-label="Ver slide 4" data-slide="3"></button>
+        </div>
+    </section>
+
     <main class="content">
-        <div class="content-header">
-            <h1 class="title">Bienvenidos a Bookly</h1>
+        <div class="content-header welcome-header">
+            <div>
+                <span class="welcome-kicker">Nuestra selección</span>
+                <h1 class="title welcome-title">Bienvenidos a Bookly</h1>
+            </div>
             <div class="filters">
                 <label for="priceFilter" class="sr-only">Filtrar por precio</label>
                 <select id="priceFilter" aria-label="Filtrar por precio">
@@ -18,7 +69,7 @@
                 </select>
             </div>
         </div>
-        <div class="products">
+        <div class="products" id="catalogo">
             {% for book in books %}
             <div class="card" data-sku="{{ book.sku }}" data-title="{{ book.title }}" data-price="{{ book.price }}" data-image="{{ book.image_url|default:'https://via.placeholder.com/300x400?text=Sin+imagen' }}">
                 <a href="{% url 'libro_detalles' book.sku %}" class="card-thumb" aria-label="Ver detalles de {{ book.title }}">
@@ -32,7 +83,7 @@
                         <span class="old-price" style="margin-left:8px; color:#888; text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
                     {% endif %}
                 </p>
-                {% if book.stock > 0 %}
+                {% if book.stock %}
                 <button class="add-to-cart" type="button">AGREGAR AL CARRITO</button>
                 {% else %}
                 <button type="button" disabled>Sin stock</button>
