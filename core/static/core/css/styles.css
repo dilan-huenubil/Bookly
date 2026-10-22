@@ -51,6 +51,7 @@ html, body {
     height: 100%;
 }
 body {
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
@@ -4587,18 +4588,20 @@ body {
 
 /* Acceso y registro: composición dividida */
 .auth-page {
-    flex: 0 0 auto;
+    flex: 1 0 auto;
     min-height: calc(100vh - 170px);
     display: flex;
-    align-items: flex-start;
-    padding: 24px 20px 64px;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    box-sizing: border-box;
     background: var(--autumn-paper);
 }
 
 .auth-container {
     width: 100%;
     max-width: 980px;
-    margin: 0 auto;
+    margin: auto;
 }
 
 .auth-layout {
@@ -4772,6 +4775,11 @@ body {
     .auth-page {
         min-height: auto;
         padding: 24px 12px 42px;
+        align-items: flex-start;
+    }
+
+    .auth-container {
+        margin: 0 auto;
     }
 
     .auth-layout {
