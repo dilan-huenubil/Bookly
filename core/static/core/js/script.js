@@ -534,6 +534,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const mobileCategoryToggle = document.querySelector('.mobile-category-menu__toggle');
+    if (mobileCategoryToggle) {
+        mobileCategoryToggle.addEventListener('click', function() {
+            const menu = this.closest('.mobile-category-menu');
+            const isOpen = menu.classList.toggle('is-open');
+            this.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    }
+
+    const categoryToggle = document.querySelector('.category-menu__toggle');
+    const categoryMenu = document.querySelector('.category-menu');
+    if (categoryToggle && categoryMenu) {
+        categoryToggle.addEventListener('click', function() {
+            const isOpen = categoryMenu.classList.toggle('is-open');
+            this.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+        document.addEventListener('click', function(event) {
+            if (!categoryMenu.contains(event.target)) {
+                categoryMenu.classList.remove('is-open');
+                categoryToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
 	// Rotación editorial del hero de la página principal.
 	const heroSlides = document.querySelectorAll('.home-hero__slide');
 	const heroDots = document.querySelectorAll('.home-hero__dots button');

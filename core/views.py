@@ -1008,17 +1008,22 @@ def confirmacion_pedido(request):
 
 def search(request):
     query = request.GET.get('q', '').strip()
-    results = []
+    selected_category = request.GET.get('category', '').strip()
+    results = Book.objects.filter(is_active=True)
     
     if query:
-        results = Book.objects.filter(is_active=True).filter(
+        results = results.filter(
             Q(title__icontains=query) |
             Q(author__icontains=query) |
             Q(category__icontains=query)
-        ).order_by('-created_at')
+        )
+    if selected_category:
+        results = results.filter(category__iexact=selected_category)
+    results = results.order_by('-created_at') if query or selected_category else Book.objects.none()
     
     context = {
         'query': query,
+        'selected_category': selected_category,
         'results': results,
         'count': results.count() if results else 0,
     }

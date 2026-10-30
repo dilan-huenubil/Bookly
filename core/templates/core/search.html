@@ -4,7 +4,10 @@
 {% block content %}
 <main class="content search-page">
     <div class="content-header{% if not query %} search-header-empty{% endif %}">
-        {% if query %}
+        {% if selected_category %}
+            <h1 class="title">Libros de {{ selected_category }}</h1>
+            <p class="search-status">{{ count }} resultado{{ count|pluralize }} encontrados</p>
+        {% elif query %}
             <h1 class="title">Resultados para "{{ query }}"</h1>
             <p class="search-status">{{ count }} resultado{{ count|pluralize }} encontrados</p>
         {% else %}
@@ -37,7 +40,7 @@
         {% endfor %}
     </div>
     {% else %}
-        {% if query %}
+        {% if query or selected_category %}
         <section class="search-empty">
             <div class="empty-icon" aria-hidden="true"></div>
             <h2>No se encontraron resultados</h2>
