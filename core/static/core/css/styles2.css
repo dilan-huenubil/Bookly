@@ -1,4 +1,4 @@
-* {
+﻿* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -6,13 +6,13 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: #f5f5f5;
+    background-color: var(--autumn-paper);
 }
 
 .header {
-    background-color: #65798C;
+    background-color: var(--autumn-terracotta);
     padding: 20px 40px;
-    border-bottom: 1px solid #495867;
+    border-bottom: 1px solid var(--autumn-ink);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -68,9 +68,9 @@ body {
 }
 
 .progress-bar {
-    background-color: #f5f5f5;
+    background-color: var(--autumn-paper);
     padding: 30px 40px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--autumn-line);
 }
 
 @media (max-width: 768px) {
@@ -116,8 +116,8 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #e0e0e0;
-    color: #999;
+    background-color: var(--autumn-line);
+    color: var(--autumn-ochre);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -139,7 +139,7 @@ body {
 }
 
 .progress-circle.active-current {
-    background-color: #666;
+    background-color: var(--autumn-ink);
     color: white;
 }
 
@@ -173,7 +173,7 @@ body {
 
 .progress-text {
     font-size: 13px;
-    color: #666;
+    color: var(--autumn-ink);
     font-weight: 500;
     white-space: nowrap;
 }
@@ -193,7 +193,7 @@ body {
 .progress-line-horizontal {
     width: 80px;
     height: 2px;
-    background-color: #e0e0e0;
+    background-color: var(--autumn-line);
     margin: 0 10px;
     margin-bottom: 30px;
 }
@@ -278,7 +278,7 @@ body {
 #direccionResumen,
 #direccionFormulario {
     background-color: #fdfdfd;
-    border: 1px solid #ededed;
+    border: 1px solid var(--autumn-line);
     border-radius: 10px;
     padding: 24px;
 }
@@ -326,7 +326,7 @@ body {
 h2 {
     font-size: 20px;
     margin-bottom: 25px;
-    color: #333;
+    color: var(--autumn-ink);
 }
 
 .form-row {
@@ -353,24 +353,24 @@ h2 {
 
 label {
     font-size: 13px;
-    color: #666;
+    color: var(--autumn-ink);
     margin-bottom: 8px;
 }
 
 input,
 select {
     padding: 12px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--autumn-line);
     border-radius: 4px;
     font-size: 14px;
-    background-color: #f9f9f9;
+    background-color: var(--autumn-paper);
     width: 100%;
 }
 
 input:focus,
 select:focus {
     outline: none;
-    border-color: #65798C;
+    border-color: var(--autumn-terracotta);
 }
 
 .checkbox-group {
@@ -404,13 +404,13 @@ select:focus {
 }
 
 .button-group .btn-back {
-    background-color: #65798C;
-    border: 1px solid #ddd;
+    background-color: var(--autumn-terracotta);
+    border: 1px solid var(--autumn-line);
     color: #fff;
 }
 
 .button-group .btn-continue {
-    background-color: #65798C;
+    background-color: var(--autumn-terracotta);
     border: none;
     color: #fff;
 }
@@ -430,13 +430,13 @@ button:hover {
 }
 
 .btn-back {
-    background-color: #65798C;
+    background-color: var(--autumn-terracotta);
     border: none;
     color: #fff;
 }
 
 .btn-continue {
-    background-color: #65798C;
+    background-color: var(--autumn-terracotta);
     color: #fff;
 }
 
@@ -483,7 +483,7 @@ button:hover {
     justify-content: space-between;
     align-items: center;
     padding-bottom: 20px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--autumn-line);
     margin-bottom: 20px;
 }
 
@@ -493,7 +493,7 @@ button:hover {
 }
 
 .ver-menos {
-    color: #666;
+    color: var(--autumn-ink);
     text-decoration: underline;
     cursor: pointer;
     font-size: 13px;
@@ -508,7 +508,7 @@ button:hover {
 .product-image {
     width: 80px;
     height: 80px;
-    background-color: #f0f0f0;
+    background-color: var(--autumn-paper-deep);
     border-radius: 4px;
     overflow: hidden;
     flex-shrink: 0;
@@ -527,7 +527,7 @@ button:hover {
 
 .product-brand {
     font-size: 12px;
-    color: #999;
+    color: var(--autumn-ochre);
     margin-bottom: 4px;
 }
 
@@ -540,17 +540,17 @@ button:hover {
 
 .product-size {
     font-size: 12px;
-    color: #666;
+    color: var(--autumn-ink);
     margin-bottom: 4px;
 }
 
 .product-quantity {
     font-size: 12px;
-    color: #666;
+    color: var(--autumn-ink);
 }
 
 .delivery-badge {
-    background-color: #C7CCD9;
+    background-color: var(--autumn-ochre);
     padding: 4px 10px;
     border-radius: 3px;
     font-size: 11px;
@@ -570,7 +570,7 @@ button:hover {
 
 .product-price-label {
     font-size: 13px;
-    color: #666;
+    color: var(--autumn-ink);
     font-weight: 500;
 }
 
@@ -608,7 +608,7 @@ button:hover {
 
 .btn-apply {
     padding: 12px 20px;
-    background-color: #65798C;
+    background-color: var(--autumn-terracotta);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -626,8 +626,8 @@ button:hover {
 }
 
 .coupon-applied {
-    background-color: #C7CCD9;
-    color: #333;
+    background-color: var(--autumn-ochre);
+    color: var(--autumn-ink);
     padding: 4px 0 4px 6px;
     border-radius: 4px;
     font-size: 13px;
@@ -648,7 +648,7 @@ button:hover {
 }
 
 .summary-totals {
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--autumn-line);
     padding-top: 20px;
     margin-top: 20px;
 }
@@ -670,18 +670,18 @@ button:hover {
 
 .installments {
     font-size: 12px;
-    color: #666;
+    color: var(--autumn-ink);
     margin-bottom: 5px;
 }
 
 .terms {
     font-size: 11px;
-    color: #999;
+    color: var(--autumn-ochre);
     text-align: right;
 }
 
 .footer {
-    background-color: #65798C;
+    background-color: var(--autumn-terracotta);
     text-align: center;
     padding: 20px;
     font-size: 13px;
@@ -691,7 +691,7 @@ button:hover {
 .btn-edit {
     background-color: transparent;
     border: none;
-    color: #666;
+    color: var(--autumn-ink);
     cursor: pointer;
     font-size: 14px;
     padding: 5px 10px;
@@ -701,13 +701,13 @@ button:hover {
 }
 
 .btn-edit:hover {
-    color: #333;
+    color: var(--autumn-ink);
 }
 
 .btn-direcciones {
     background-color: white;
-    border: 1px solid #ddd;
-    color: #333;
+    border: 1px solid var(--autumn-line);
+    color: var(--autumn-ink);
     padding: 12px 24px;
     border-radius: 4px;
     font-size: 14px;
@@ -716,7 +716,7 @@ button:hover {
 }
 
 .btn-direcciones:hover {
-    background-color: #f9f9f9;
+    background-color: var(--autumn-paper);
 }
 
 .direcciones-panel {
@@ -737,7 +737,7 @@ button:hover {
     gap: 20px;
     padding: 20px;
     background-color: #fdfdfd;
-    border: 1px solid #ededed;
+    border: 1px solid var(--autumn-line);
     border-radius: 10px;
 }
 
@@ -748,30 +748,30 @@ button:hover {
 .direccion-alias {
     font-size: 14px;
     font-weight: 600;
-    color: #333;
+    color: var(--autumn-ink);
     margin-bottom: 6px;
     text-transform: uppercase;
 }
 
 .direccion-linea {
     font-size: 13px;
-    color: #555;
+    color: var(--autumn-ink);
     margin-bottom: 4px;
 }
 
 .direccion-recibe {
     font-size: 13px;
-    color: #666;
+    color: var(--autumn-ink);
 }
 
 .direccion-item-activa {
-    border-color: #495867;
+    border-color: var(--autumn-ink);
     box-shadow: 0 0 0 1px rgba(73, 88, 103, 0.4);
 }
 
 .btn-usar-direccion {
-    background-color: #65798C;
-    border: 1px solid #495867;
+    background-color: var(--autumn-terracotta);
+    border: 1px solid var(--autumn-ink);
     color: #fff;
     padding: 10px 18px;
     border-radius: 6px;
@@ -780,7 +780,7 @@ button:hover {
 }
 
 .btn-usar-direccion:hover {
-    background-color: #495867;
+    background-color: var(--autumn-ink);
 }
 
 
@@ -888,7 +888,7 @@ button:hover {
 
 /* CSS Entrega */
 .delivery-options {
-    border: 1px solid #ddd;
+    border: 1px solid var(--autumn-line);
     border-radius: 8px;
     padding: 20px;
 }
@@ -898,7 +898,7 @@ button:hover {
     align-items: center;
     margin-bottom: 15px;
     padding: 15px;
-    border: 1px solid #eee;
+    border: 1px solid var(--autumn-line);
     border-radius: 6px;
     cursor: pointer;
 }
@@ -920,14 +920,14 @@ button:hover {
 }
 
 .delivery-option.disabled {
-    color: #aaa;
-    background-color: #f9f9f9;
+    color: var(--autumn-line);
+    background-color: var(--autumn-paper);
     cursor: not-allowed;
 }
 
 .store-pickup {
     margin-top: 20px;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--autumn-line);
     padding-top: 20px;
 }
 
@@ -935,7 +935,7 @@ button:hover {
 .delivery-card {
     display: flex;
     gap: 24px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--autumn-line);
     background: #fff;
     border-radius: 12px;
     padding: 24px;
@@ -997,9 +997,9 @@ button:hover {
     width: 65px;
     height: 85px;
     object-fit: cover;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--autumn-line);
     border-radius: 6px;
-    background: #fafafa;
+    background: var(--autumn-paper);
     flex-shrink: 0;
 }
 
@@ -1023,7 +1023,7 @@ button:hover {
 
 .delivery-product-brand {
     font-size: 12px;
-    color: #555;
+    color: var(--autumn-ink);
 }
 
 .delivery-product-name {
@@ -1034,7 +1034,7 @@ button:hover {
 
 .delivery-product-qty {
     font-size: 11px;
-    color: #666;
+    color: var(--autumn-ink);
 }
 
 @media (max-width: 1024px) {
@@ -1069,17 +1069,17 @@ button:hover {
     margin: 0 0 16px;
     font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: var(--autumn-ink);
 }
 
 .delivery-separator {
     border: 0;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--autumn-line);
     margin: 24px 0 16px;
 }
 
 .shipping-option {
-    border: 1px solid #d2d2d2;
+    border: 1px solid var(--autumn-line);
     border-radius: 10px;
     padding: 14px 16px;
     display: flex;
@@ -1117,8 +1117,8 @@ button:hover {
 }
 
 .shipping-option.active {
-    border-color: #333;
-    box-shadow: 0 0 0 1px #333;
+    border-color: var(--autumn-ink);
+    box-shadow: 0 0 0 1px var(--autumn-ink);
 }
 
 .shipping-option.disabled {
@@ -1151,7 +1151,7 @@ button:hover {
 .radio-custom {
     width: 18px;
     height: 18px;
-    border: 2px solid #666;
+    border: 2px solid var(--autumn-ink);
     border-radius: 50%;
     display: inline-block;
     margin-top: 2px;
@@ -1192,7 +1192,7 @@ button:hover {
 
 .shipping-desc {
     font-size: 12px;
-    color: #555;
+    color: var(--autumn-ink);
 }
 
 .shipping-link {
@@ -1226,11 +1226,11 @@ button:hover {
 .datetime-picker {
     width: 100%;
     padding: 8px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--autumn-line);
     border-radius: 6px;
     font-size: 13px;
     font-family: inherit;
-    color: #333;
+    color: var(--autumn-ink);
     background-color: #fff;
     cursor: pointer;
 }
@@ -1461,9 +1461,9 @@ button:hover {
 }
 
 
-/* CSS confirmación pedido */
+/* CSS confirmaciÃ³n pedido */
 body.confirmation-page {
-    background-color: #f4f7f6;
+    background-color: var(--autumn-paper);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1515,12 +1515,12 @@ p.subtitle {
 }
 
 .order-details {
-    background-color: #f8f9fa;
+    background-color: var(--autumn-paper);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 25px;
     text-align: left;
-    border: 1px solid #eee;
+    border: 1px solid var(--autumn-line);
 }
 
 .detail-row {
@@ -1536,7 +1536,7 @@ p.subtitle {
 }
 
 .detail-row.total {
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--autumn-line);
     padding-top: 15px;
     margin-top: 15px;
     font-weight: bold;
@@ -1554,7 +1554,7 @@ p.subtitle {
 
 .book-list li {
     padding: 8px 0;
-    border-bottom: 1px dashed #eee;
+    border-bottom: 1px dashed var(--autumn-line);
     display: flex;
     justify-content: space-between;
     color: #7f8c8d;
@@ -1586,21 +1586,21 @@ p.subtitle {
 }
 
 .btn-primary {
-    background-color: #65798C;
+    background-color: var(--autumn-terracotta);
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: #556677;
+    background-color: var(--autumn-wine);
 }
 
 .btn-secondary {
-    background-color: #65798C;
+    background-color: var(--autumn-terracotta);
     color: white;
 }
 
 .btn-secondary:hover {
-    background-color: #556677;
+    background-color: var(--autumn-wine);
 }
 
 
@@ -1630,11 +1630,11 @@ p.subtitle {
     .detail-row strong,
     .book-list li span:first-child {
         color: #000 !important;
-        border-color: #ccc !important;
+        border-color: var(--autumn-line) !important;
     }
 
     .book-list li {
-        border-bottom: 1px dashed #ccc !important;
+        border-bottom: 1px dashed var(--autumn-line) !important;
     }
 }
 
@@ -1657,7 +1657,7 @@ p.subtitle {
     }
 }
 
-/* Tema otoñal de Bookly */
+/* Tema otoÃ±al de Bookly */
 :root {
     --autumn-paper: #f4eee3;
     --autumn-paper-deep: #e8dbc8;
@@ -1744,7 +1744,7 @@ body {
     box-shadow: 0 0 0 1px var(--autumn-terracotta);
 }
 
-/* Checkout y confirmación */
+/* Checkout y confirmaciÃ³n */
 .delivery-card,
 .shipping-option,
 .confirmation-card,

@@ -61,6 +61,7 @@ urlpatterns = [
     path('mi-perfil/', views.mi_perfil, name='mi_perfil'),
     path('mi-contrasena/', views.mi_contrasena, name='mi_contrasena'),
     path('admin/libros/', views.admin_books, name='admin_books'),
+    path('admin/libros/importar/', views.admin_book_import, name='admin_book_import'),
     path('admin/libros/nuevo/', views.admin_book_save, name='admin_book_create'),
     path('admin/libros/<int:book_id>/editar/', views.admin_book_save, name='admin_book_edit'),
     path('admin/libros/<int:book_id>/estado/', views.admin_book_toggle, name='admin_book_toggle'),

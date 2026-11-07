@@ -37,6 +37,21 @@ class Book(models.Model):
 		return f"{self.title} ({self.sku})"
 
 
+class BookRecommendation(models.Model):
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="recommendations_from")
+    recommended_book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="recommendations_to")
+    score = models.FloatField("Puntaje de similitud")
+    rank = models.PositiveSmallIntegerField("Posición")
+
+    class Meta:
+        ordering = ["rank"]
+        unique_together = ("book", "recommended_book")
+        indexes = [models.Index(fields=["book", "rank"])]
+
+
+
+
+
 class Order(models.Model):
     STATUS_CHOICES = (
         ('created', 'Creada'),

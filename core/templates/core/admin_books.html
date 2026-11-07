@@ -65,7 +65,7 @@
     </div>
 </main>
 
-<div class="book-modal {% if editing_book or form.errors %}is-open{% endif %}" data-book-modal data-create-url="{% url 'admin_book_create' %}" aria-hidden="{% if editing_book or form.errors %}false{% else %}true{% endif %}">
+<div class="book-modal {% if editing_book or form.errors %}is-open{% endif %}" data-book-modal data-create-url="{% url 'admin_book_create' %}" data-import-url="{% url 'admin_book_import' %}" aria-hidden="{% if editing_book or form.errors %}false{% else %}true{% endif %}">
     <div class="book-modal-backdrop" data-close-book-modal></div>
     <section class="book-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle">
         <div class="book-modal-header">
@@ -78,6 +78,16 @@
         <form method="post" action="{% if editing_book %}{% url 'admin_book_edit' editing_book.pk %}{% else %}{% url 'admin_book_create' %}{% endif %}" data-book-form>
             {% csrf_token %}
             {{ form.non_field_errors }}
+            {% if not editing_book %}
+            <div class="book-import">
+                <label for="bookImportUrl">Importar desde Feria Chilena del Libro</label>
+                <div class="book-import-row">
+                    <input class="auth-input" id="bookImportUrl" type="url" placeholder="https://feriachilenadellibro.cl/producto/...">
+                    <button class="btn-outline" type="button" data-import-book>Completar datos</button>
+                </div>
+                <small class="stock-status" data-import-status aria-live="polite"></small>
+            </div>
+            {% endif %}
             <div class="admin-form-grid">
                 {% for field in form %}
                 <div class="admin-field {% if field.name == 'description' or field.name == 'image_url' %}admin-field-wide{% endif %}{% if editing_book and field.name == 'stock' or editing_book and field.name == 'is_active' %} book-field-edit-hidden{% endif %}">
@@ -99,6 +109,9 @@
     const modal = document.querySelector('[data-book-modal]');
     const openButton = document.querySelector('[data-open-book-modal]');
     const closeButtons = document.querySelectorAll('[data-close-book-modal]');
+    const importButton = document.querySelector('[data-import-book]');
+    const importUrl = document.getElementById('bookImportUrl');
+    const importStatus = document.querySelector('[data-import-status]');
 
     function openModal() {
         modal.classList.add('is-open');
@@ -131,6 +144,53 @@
         openModal();
     });
     closeButtons.forEach(function (button) { button.addEventListener('click', closeModal); });
+    if (importButton) importButton.addEventListener('click', function () {
+        const url = importUrl.value.trim();
+        if (!url) {
+            importStatus.textContent = 'Ingresa una URL primero.';
+            importStatus.className = 'stock-status is-error';
+            return;
+        }
+        importButton.disabled = true;
+        importStatus.textContent = 'Consultando ficha...';
+        importStatus.className = 'stock-status';
+        const body = new URLSearchParams({url: url, csrfmiddlewaretoken: csrf});
+        fetch(modal.dataset.importUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrf},
+            body: body
+        })
+            .then(function (response) {
+                return response.text().then(function (text) {
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (error) {
+                        throw new Error(
+                            response.status === 403
+                                ? 'La sesión o el token de seguridad expiró. Recarga la página e inténtalo nuevamente.'
+                                : 'El servidor devolvió una respuesta inesperada (' + response.status + ').'
+                        );
+                    }
+                    return {ok: response.ok, data: data};
+                });
+            })
+            .then(function (result) {
+                if (!result.ok) throw new Error(result.data.error || 'No se pudieron importar los datos.');
+                Object.keys(result.data).forEach(function (name) {
+                    const field = document.getElementById('id_' + name);
+                    if (field && result.data[name] !== null && result.data[name] !== '') field.value = result.data[name];
+                });
+                importStatus.textContent = 'Datos completados. Revísalos antes de guardar.';
+                importStatus.className = 'stock-status is-ok';
+            })
+            .catch(function (error) {
+                importStatus.textContent = error.message;
+                importStatus.className = 'stock-status is-error';
+            })
+            .finally(function () { importButton.disabled = false; });
+    });
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
     });

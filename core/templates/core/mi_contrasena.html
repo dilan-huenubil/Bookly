@@ -26,7 +26,7 @@
         
         <!-- Contraseña Actual -->
         <div class="form-pwd-wrapper">
-            <label for="{{ form.old_password.id_for_label }}" style="font-size: 14px; color: #666;">{{ form.old_password.label }}</label>
+            <label for="{{ form.old_password.id_for_label }}" style="font-size: 14px; color: var(--autumn-ink);">{{ form.old_password.label }}</label>
             {{ form.old_password }}
             {% if form.old_password.errors %}
                 <span style="color: #d93025; font-size: 12px;">{{ form.old_password.errors.0 }}</span>
@@ -35,7 +35,7 @@
 
         <!-- Nueva Contraseña -->
         <div class="form-pwd-wrapper">
-            <label for="{{ form.new_password1.id_for_label }}" style="font-size: 14px; color: #666;">{{ form.new_password1.label }}</label>
+            <label for="{{ form.new_password1.id_for_label }}" style="font-size: 14px; color: var(--autumn-ink);">{{ form.new_password1.label }}</label>
             {{ form.new_password1 }}
             
             <!-- Lista de verificación en tiempo real -->
@@ -52,7 +52,7 @@
 
         <!-- Confirmación de Nueva Contraseña -->
         <div class="form-pwd-wrapper">
-            <label for="{{ form.new_password2.id_for_label }}" style="font-size: 14px; color: #666;">{{ form.new_password2.label }}</label>
+            <label for="{{ form.new_password2.id_for_label }}" style="font-size: 14px; color: var(--autumn-ink);">{{ form.new_password2.label }}</label>
             {{ form.new_password2 }}
             
             <div id="pwdErrorMsg" style="color: #d93025; font-size: 12px; display: none; margin-top: 2px;">

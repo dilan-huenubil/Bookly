@@ -63,7 +63,7 @@
 	var select = document.getElementById('priceFilter');
 	var cards = Array.prototype.slice.call(document.querySelectorAll('.products .card'));
 	var emptyState = document.getElementById('filterEmpty');
-	if(!select || !cards.length) return;
+	if(!select || !cards.length || select.closest('[data-server-filter]')) return;
 	function normalizar(text){ if(!text) return 0; return parseInt(text.replace(/[^0-9]/g,''),10)||0; }
 	function precio(card){ var span=card.querySelector('.price'); return normalizar(span?span.textContent:'0'); }
 	function cumple(v,r){ switch(r){ case '0-15000': return v<=15000; case '15000-30000': return v>15000 && v<=30000; case '30000-60000': return v>30000 && v<=60000; case '60000-plus': return v>60000; default: return true; } }
@@ -80,6 +80,7 @@
 			emptyState.style.display = (r!=='all' && !anyVisible) ? 'flex' : 'none';
 		}
 	}
+
 	select.addEventListener('change', aplicar);
 })();
 
@@ -582,4 +583,18 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 			window.setInterval(() => showHeroSlide((activeHeroSlide + 1) % heroSlides.length), 5000);
 		}
+	}
+
+	const recommendationsTrack = document.querySelector('.recommendations__track');
+	const recommendationsPrevious = document.querySelector('.js-recommendations-prev');
+	const recommendationsNext = document.querySelector('.js-recommendations-next');
+	if (recommendationsTrack && recommendationsPrevious && recommendationsNext) {
+		const scrollRecommendations = (direction) => {
+			const card = recommendationsTrack.querySelector('.recommendation-card');
+			const distance = card ? card.getBoundingClientRect().width + 16 : recommendationsTrack.clientWidth;
+			recommendationsTrack.scrollBy({ left: direction * distance, behavior: 'smooth' });
+		};
+
+		recommendationsPrevious.addEventListener('click', () => scrollRecommendations(-1));
+		recommendationsNext.addEventListener('click', () => scrollRecommendations(1));
 	}

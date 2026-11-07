@@ -1,6 +1,16 @@
 {% extends 'core/base.html' %}
 {% load humanize %}
 
+{% block title %}
+    {% if selected_category %}
+        Bookly | Libros de {{ selected_category }}
+    {% elif query %}
+        Bookly | Resultados para "{{ query }}"
+    {% else %}
+        Bookly | Buscar libros
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 <main class="content search-page">
     <div class="content-header{% if not query %} search-header-empty{% endif %}">
@@ -28,7 +38,7 @@
                 Precio:
                 <span class="price">${{ book.price|intcomma }}</span>
                 {% if book.price_old %}
-                    <span class="old-price" style="margin-left:8px; color:#888; text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
+                    <span class="old-price" style="margin-left:8px; color:var(--autumn-ochre); text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
                 {% endif %}
             </p>
             {% if book.stock > 0 %}

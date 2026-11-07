@@ -33,10 +33,10 @@
         </div>
 
         <div style="margin-bottom: 30px;">
-            <p style="font-weight: 600; color: #333; margin-bottom: 5px;">{{ user.get_full_name|default:user.username }}
+            <p style="font-weight: 600; color: var(--autumn-ink); margin-bottom: 5px;">{{ user.get_full_name|default:user.username }}
             </p>
-            <p style="color: #666; margin-bottom: 3px;">{{ user_phone|default:'—' }}</p>
-            <p style="color: #666;">{{ user.email }}</p>
+            <p style="color: var(--autumn-ink); margin-bottom: 3px;">{{ user_phone|default:'—' }}</p>
+            <p style="color: var(--autumn-ink);">{{ user.email }}</p>
         </div>
     </div>
 
@@ -110,10 +110,10 @@
 
         <div style="margin-bottom: 20px;">
             {% if default_address %}
-            <p style="font-weight: 600; color: #333; margin-bottom: 5px;">{{ default_address.line1 }}, {{ default_address.comuna }}, {{ default_address.region }}</p>
-            <p style="color: #666;">Recibe: {{ default_address.name }}</p>
+            <p style="font-weight: 600; color: var(--autumn-ink); margin-bottom: 5px;">{{ default_address.line1 }}, {{ default_address.comuna }}, {{ default_address.region }}</p>
+            <p style="color: var(--autumn-ink);">Recibe: {{ default_address.name }}</p>
             {% else %}
-            <p style="color: #666;">No tienes direcciones guardadas.</p>
+            <p style="color: var(--autumn-ink);">No tienes direcciones guardadas.</p>
             {% endif %}
         </div>
         {% if has_addresses %}

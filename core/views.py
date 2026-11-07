@@ -9,7 +9,7 @@ from django.http import JsonResponse, HttpResponse
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Q
+from django.db.models import Count, Max, Q
 import re
 import hmac
 import hashlib
@@ -17,6 +17,9 @@ import requests
 import time
 import uuid
 import json
+from html.parser import HTMLParser
+from html import unescape
+from urllib.parse import urlparse
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import update_session_auth_hash, views as auth_views
 from django.contrib.auth.forms import PasswordChangeForm
@@ -41,6 +44,171 @@ from django.core.paginator import Paginator
 
 ORDER_PAYMENT_TIMEOUT = timedelta(minutes=15)
 COUPON_DISCOUNTS = {'bookly10': 10, 'bookly15': 15}
+
+
+class FeriaBookParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.meta = {}
+        self.text_parts = []
+        self.image_url = ''
+        self.heading = ''
+        self.in_heading = False
+        self.in_json_ld = False
+        self.json_ld = ''
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'meta' and attrs.get('property', '').startswith('og:'):
+            self.meta[attrs['property']] = attrs.get('content', '').strip()
+        if tag == 'img' and not self.image_url and attrs.get('class', '').find('wp-post-image') >= 0:
+            self.image_url = attrs.get('src', '')
+        if tag == 'script' and attrs.get('type') == 'application/ld+json':
+            self.in_json_ld = True
+        if tag == 'h1':
+            self.in_heading = True
+
+    def handle_endtag(self, tag):
+        if tag == 'script':
+            self.in_json_ld = False
+        if tag == 'h1':
+            self.in_heading = False
+
+    def handle_data(self, data):
+        if self.in_heading and not self.heading:
+            self.heading = ' '.join(data.split())
+        if self.in_json_ld:
+            self.json_ld += data
+        else:
+            text = ' '.join(data.split())
+            if text:
+                self.text_parts.append(text)
+
+
+def _feria_number(value):
+    match = re.search(r'[\d.]+', value or '')
+    return int(match.group(0).replace('.', '')) if match else None
+
+
+def _feria_book_data(url):
+    parsed = urlparse(url)
+    if parsed.scheme not in ('http', 'https') or parsed.netloc.lower() != 'feriachilenadellibro.cl':
+        raise ValueError('La URL debe pertenecer a feriachilenadellibro.cl.')
+
+    response = requests.get(
+        url,
+        headers={'User-Agent': 'Bookly inventory importer'},
+        timeout=10,
+    )
+    response.raise_for_status()
+    response.encoding = 'utf-8'
+    parser = FeriaBookParser()
+    parser.feed(response.text)
+    text = ' '.join(parser.text_parts)
+    title = parser.heading or parser.meta.get('og:title', '')
+    if not title:
+        title_match = re.search(r'(?<!Autor: )(?<!/ )([A-ZÁÉÍÓÚÑ][^|]{2,100}) Autor:', text)
+        title = title_match.group(1).strip() if title_match else ''
+
+    def field(label, next_label):
+        match = re.search(
+            rf'{re.escape(label)}:\s*(.*?)(?=\s+{re.escape(next_label)}:)',
+            text,
+            re.IGNORECASE,
+        )
+        return match.group(1).strip() if match else ''
+
+    sku_match = re.search(r'(?:SKU|ISBN):\s*([0-9X-]{10,17})', text, re.IGNORECASE)
+    if not sku_match:
+        sku_match = re.search(r'/producto/([0-9X-]+)-', url, re.IGNORECASE)
+    price_match = re.search(r'Precio Internet:\s*\$?\s*([\d.]+)', text, re.IGNORECASE)
+    description_match = re.search(
+        r'id=["\']tab-description["\'][^>]*>(.*?)(?=</div>\s*<div[^>]+id=["\']tab-additional_information["\'])',
+        response.text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    description = ''
+    if description_match:
+        description = re.sub(r'<[^>]+>', ' ', description_match.group(1))
+        description = re.sub(r'\s+', ' ', unescape(description)).strip()
+        if title and description.casefold().startswith(title.casefold()):
+            description = description[len(title):].lstrip(' .:-')
+        description = re.split(r'\s+Adquiera\s+', description, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+    if not description:
+        description = parser.meta.get('og:description', '')
+    data = {
+        'title': title,
+        'author': field('Autor', 'Editorial'),
+        'editorial': field('Editorial', 'Encuadernación'),
+        'binding': field('Encuadernación', 'Precio Internet'),
+        'sku': sku_match.group(1).replace('-', '').upper() if sku_match else '',
+        'price': int(price_match.group(1).replace('.', '')) if price_match else None,
+        'description': description,
+        'image_url': parser.meta.get('og:image', '') or parser.image_url,
+    }
+    def attribute_value(attribute):
+        match = re.search(
+            rf'product-attributes-item--{attribute}[^>]*>.*?'
+            r'woocommerce-product-attributes-item__value[^>]*>(.*?)</td>',
+            response.text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if not match:
+            return ''
+        value = re.sub(r'<[^>]+>', ' ', unescape(match.group(1)))
+        return re.sub(r'\s+', ' ', value).strip()
+
+    weight = attribute_value('weight')
+    dimensions = attribute_value('dimensions')
+    language = attribute_value('attribute_pa_idioma')
+    pages = attribute_value('attribute_pa_paginas')
+    year = attribute_value('attribute_pa_ano-edicion')
+    if weight:
+        data['weight_kg'] = weight.replace(' kg', '').replace(',', '.').strip()
+    if dimensions:
+        data['dimensions'] = dimensions.replace('×', 'x').strip()
+    if language:
+        data['language'] = language
+    if pages:
+        data['pages'] = pages
+    if year:
+        data['year'] = year
+    category_html = re.search(
+        r'<span[^>]+class=["\'][^"\']*posted_in[^"\']*["\'][^>]*>(.*?)</span>',
+        response.text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if category_html:
+        category_links = re.findall(
+            r'<a[^>]*>(.*?)</a>',
+            category_html.group(1),
+            re.IGNORECASE | re.DOTALL,
+        )
+        categories = [
+            re.sub(r'\s+', ' ', unescape(re.sub(r'<[^>]+>', '', value))).strip()
+            for value in category_links
+        ]
+        if categories:
+            data['category'] = categories[-1]
+
+    tags_html = re.search(
+        r'<span[^>]+class=["\'][^"\']*tagged_as[^"\']*["\'][^>]*>(.*?)</span>',
+        response.text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if tags_html:
+        tag_links = re.findall(
+            r'<a[^>]*>(.*?)</a>',
+            tags_html.group(1),
+            re.IGNORECASE | re.DOTALL,
+        )
+        tags = [
+            re.sub(r'\s+', ' ', unescape(re.sub(r'<[^>]+>', '', value))).strip()
+            for value in tag_links
+        ]
+        if tags:
+            data['tags'] = ', '.join(tags)
+    return data
 
 
 def send_password_changed_email(user):
@@ -89,7 +257,100 @@ def cancel_expired_orders(user=None):
 
 def index(request):
     books = Book.objects.filter(is_active=True).order_by('-created_at')
-    return render(request, 'core/index.html', { 'books': books })
+    price_filter = request.GET.get('price', 'all')
+    price_filters = {
+        '0-15000': {'price__lte': 15000},
+        '15000-30000': {'price__gt': 15000, 'price__lte': 30000},
+        '30000-60000': {'price__gt': 30000, 'price__lte': 60000},
+        '60000-plus': {'price__gt': 60000},
+    }
+    if price_filter not in price_filters and price_filter != 'all':
+        price_filter = 'all'
+    if price_filter in price_filters:
+        books = books.filter(**price_filters[price_filter])
+    books_paginator = Paginator(books, 15)
+    books_page = books_paginator.get_page(request.GET.get('page'))
+    pagination_window = 15
+    pagination_start = max(1, books_page.number - pagination_window // 2)
+    pagination_end = min(
+        books_paginator.num_pages,
+        pagination_start + pagination_window - 1,
+    )
+    pagination_start = max(1, pagination_end - pagination_window + 1)
+    pagination_page_numbers = range(pagination_start, pagination_end + 1)
+    recommendations = []
+    section_title = 'Los libros más vendidos'
+
+    if request.user.is_authenticated:
+        purchased_book_ids = OrderItem.objects.filter(
+            order__user=request.user,
+            order__status='paid',
+        ).values_list('book_id', flat=True)
+
+        if purchased_book_ids.exists():
+            section_title = 'Basado en tus compras recientes'
+            purchased_categories = Book.objects.filter(
+                pk__in=purchased_book_ids,
+            ).values_list('category', flat=True).distinct()
+
+            recommendations = list(
+                Book.objects.filter(
+                    recommendations_to__book_id__in=purchased_book_ids,
+                    category__in=purchased_categories,
+                    is_active=True,
+                    stock__gt=0,
+                )
+                .exclude(pk__in=purchased_book_ids)
+                .annotate(recommendation_score=Max('recommendations_to__score'))
+                .distinct()
+                .order_by('-recommendation_score', '-created_at')[:6]
+            )
+
+            if len(recommendations) < 6:
+                excluded_book_ids = list(purchased_book_ids) + [
+                    book.pk for book in recommendations
+                ]
+                recommendations.extend(
+                    Book.objects.filter(
+                        category__in=purchased_categories,
+                        is_active=True,
+                        stock__gt=0,
+                    )
+                    .exclude(pk__in=excluded_book_ids)
+                    .annotate(
+                        total_vendidos=Count(
+                            'orderitem',
+                            filter=Q(orderitem__order__status='paid'),
+                        )
+                    )
+                    .order_by('-total_vendidos', '-created_at')[
+                        :6 - len(recommendations)
+                    ]
+                )
+
+    if not recommendations:
+        section_title = 'Los libros más vendidos'
+        recommendations = list(
+            Book.objects.filter(
+                is_active=True,
+                stock__gt=0,
+            )
+            .annotate(
+                total_vendidos=Count(
+                    'orderitem',
+                    filter=Q(orderitem__order__status='paid'),
+                )
+            )
+            .order_by('-total_vendidos', '-created_at')[:6]
+        )
+
+    return render(request, 'core/index.html', {
+        'books': books_page,
+        'recommendations': recommendations,
+        'section_title': section_title,
+        'price_filter': price_filter,
+        'pagination_page_numbers': pagination_page_numbers,
+    })
 
 def libro_detalles(request, sku: str):
     book = get_object_or_404(Book, sku=sku, is_active=True)
@@ -239,6 +500,23 @@ def admin_books(request):
         'form': BookAdminForm(),
         'query': query,
     })
+
+
+@login_required
+@admin_required
+def admin_book_import(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido.'}, status=405)
+    url = request.POST.get('url', '').strip()
+    if not url:
+        return JsonResponse({'error': 'Ingresa la URL de una ficha de producto.'}, status=400)
+    try:
+        data = _feria_book_data(url)
+    except (ValueError, requests.RequestException) as error:
+        return JsonResponse({'error': str(error)}, status=400)
+    if not data.get('title') or not data.get('sku'):
+        return JsonResponse({'error': 'No se pudo identificar el título o ISBN del libro.'}, status=422)
+    return JsonResponse(data)
 
 
 @login_required
@@ -853,12 +1131,13 @@ def flow_callback(request):
 
     try:
         order = Order.objects.get(flow_token=token)
-        order.status = mapped
+        if order.status != 'paid' or mapped == 'paid':
+            order.status = mapped
         order.flow_order = str(data.get('flowOrder', order.flow_order))
         order.save(update_fields=['status', 'flow_order'])
 
 
-        if mapped == 'paid' and getattr(order, 'coupon_code', None):
+        if order.status == 'paid' and getattr(order, 'coupon_code', None):
             try:
                 CouponRedemption.objects.get_or_create(
                     user=order.user,
@@ -907,10 +1186,12 @@ def destacados(request):
     books_qs = Book.objects.filter(is_active=True)
     discounted = books_qs.filter(discount_percent__gt=0).order_by('-discount_percent', '-created_at')
     if discounted.exists():
-        books = discounted[:12]
+        books = discounted
     else:
-        books = books_qs.order_by('-created_at')[:12]
-    return render(request, 'core/destacados.html', { 'books': books })
+        books = books_qs.order_by('-created_at')
+    paginator = Paginator(books, 12)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'core/destacados.html', {'page_obj': page_obj, 'books': page_obj})
 
 
 @login_required
@@ -942,13 +1223,20 @@ def confirmacion_pedido(request):
                 order = Order.objects.select_for_update().get(flow_token=token)
                 if not order.confirmation_reached:
                     order.confirmation_reached = True
+                if order.status == 'created':
+                    order.status = 'paid'
                 if not order.stock_updated:
                     for item in order.items.all():
                         book = Book.objects.select_for_update().get(pk=item.book_id)
                         book.stock = max(0, book.stock - item.quantity)
                         book.save(update_fields=['stock', 'updated_at'])
                     order.stock_updated = True
-                order.save(update_fields=['confirmation_reached', 'stock_updated', 'updated_at'])
+                order.save(update_fields=[
+                    'status',
+                    'confirmation_reached',
+                    'stock_updated',
+                    'updated_at',
+                ])
 
             if not request.user.is_authenticated:
                 if order.user:

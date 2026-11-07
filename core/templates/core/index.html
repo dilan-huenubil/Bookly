@@ -52,6 +52,42 @@
         </div>
     </section>
 
+    {% if recommendations %}
+    <section class="recommendations" aria-labelledby="recommendations-title">
+        <div class="recommendations__header">
+            <div>
+                <span class="welcome-kicker">Selección Bookly</span>
+                <h2 id="recommendations-title">{{ section_title }}</h2>
+            </div>
+        </div>
+        <div class="recommendations__viewport js-recommendations-viewport">
+            <div class="recommendations__controls">
+                <button class="recommendations__button js-recommendations-prev" type="button"
+                    aria-label="Ver recomendaciones anteriores">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                </button>
+                <button class="recommendations__button js-recommendations-next" type="button"
+                    aria-label="Ver siguientes recomendaciones">
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="recommendations__track">
+                {% for recommendation in recommendations %}
+                <article class="card recommendation-card">
+                    <a href="{% url 'libro_detalles' recommendation.sku %}" aria-label="Ver detalles de {{ recommendation.title }}">
+                        <img src="{{ recommendation.image_url|default:'https://via.placeholder.com/200x300?text=Sin+imagen' }}"
+                            alt="{{ recommendation.title }}">
+                    </a>
+                    <h3>{{ recommendation.title }}</h3>
+                    <p>Precio: <span class="price">${{ recommendation.price|intcomma }}</span></p>
+                    <a href="{% url 'libro_detalles' recommendation.sku %}" class="recommendation-card__button">VER DETALLES</a>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
     <main class="content">
         <div class="content-header welcome-header">
             <div>
@@ -59,14 +95,17 @@
                 <h1 class="title welcome-title">Bienvenidos a Bookly</h1>
             </div>
             <div class="filters">
-                <label for="priceFilter" class="sr-only">Filtrar por precio</label>
-                <select id="priceFilter" aria-label="Filtrar por precio">
-                    <option value="all">Todos los precios</option>
-                    <option value="0-15000">Hasta $15.000</option>
-                    <option value="15000-30000">$15.000 - $30.000</option>
-                    <option value="30000-60000">$30.000 - $60.000</option>
-                    <option value="60000-plus">Más de $60.000</option>
-                </select>
+                <form method="get" action="{% url 'index' %}" data-server-filter>
+                    <label for="priceFilter" class="sr-only">Filtrar por precio</label>
+                    <select id="priceFilter" name="price" aria-label="Filtrar por precio"
+                        onchange="this.form.submit()">
+                        <option value="all" {% if price_filter == 'all' %}selected{% endif %}>Todos los precios</option>
+                        <option value="0-15000" {% if price_filter == '0-15000' %}selected{% endif %}>Hasta $15.000</option>
+                        <option value="15000-30000" {% if price_filter == '15000-30000' %}selected{% endif %}>$15.000 - $30.000</option>
+                        <option value="30000-60000" {% if price_filter == '30000-60000' %}selected{% endif %}>$30.000 - $60.000</option>
+                        <option value="60000-plus" {% if price_filter == '60000-plus' %}selected{% endif %}>Más de $60.000</option>
+                    </select>
+                </form>
             </div>
         </div>
         <div class="products" id="catalogo">
@@ -80,7 +119,7 @@
                     Precio:
                     <span class="price">${{ book.price|intcomma }}</span>
                     {% if book.price_old %}
-                        <span class="old-price" style="margin-left:8px; color:#888; text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
+                        <span class="old-price" style="margin-left:8px; color:var(--autumn-ochre); text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
                     {% endif %}
                 </p>
                 {% if book.stock %}
@@ -100,14 +139,26 @@
             <p class="hint">Intenta con otro rango de precio</p>
         </section>
 
-        <div class="pagination">
-            <a href="#" class="active">1</a>
-            <a href="#">2</a>
-            <a href="#">3</a>
-            <a href="#">→</a>
-        </div>
+        {% if books.has_other_pages %}
+        <nav class="pagination" aria-label="Paginación del catálogo">
+            {% if books.has_previous %}
+            <a href="?price={{ price_filter }}&page={{ books.previous_page_number }}" aria-label="Página anterior">←</a>
+            {% endif %}
+
+            {% for page_number in pagination_page_numbers %}
+            <a href="?price={{ price_filter }}&page={{ page_number }}"
+                class="{% if books.number == page_number %}active{% endif %}"
+                {% if books.number == page_number %}aria-current="page"{% endif %}>
+                {{ page_number }}
+            </a>
+            {% endfor %}
+
+            {% if books.has_next %}
+            <a href="?price={{ price_filter }}&page={{ books.next_page_number }}" aria-label="Página siguiente">→</a>
+            {% endif %}
+        </nav>
+        {% endif %}
     </main>
 
 
 {% endblock %}
-

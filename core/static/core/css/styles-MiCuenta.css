@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
    RESET Y BASE
    ========================= */
 * {
@@ -9,20 +9,20 @@
 }
 
 body.bg-light {
-    background-color: #f5f8f6;
+    background-color: var(--autumn-paper);
 }
 
 /* =========================
    HEADER SUPERIOR
    ========================= */
 .cuenta-header {
-    background-color: #495867;
+    background-color: var(--autumn-ink);
     color: #ffffff;
     padding: 0 20px;
     height: 70px;
     display: flex;
     align-items: center;
-    border-bottom: 2px solid #333d47;
+    border-bottom: 2px solid var(--autumn-wine);
 }
 
 .cuenta-header-inner {
@@ -77,7 +77,7 @@ body.bg-light {
 }
 
 .cuenta-logout-area a:hover {
-    color: #B0C0D1;
+    color: var(--autumn-ochre);
 }
 
 /* =========================
@@ -99,7 +99,7 @@ body.bg-light {
     width: 300px;
     flex-shrink: 0;
     background: #ffffff;
-    border: 1px solid #e6e6e6;
+    border: 1px solid var(--autumn-line);
     border-radius: 6px;
     box-shadow: 0 4px 14px rgba(0, 0, 0, .03);
 }
@@ -107,11 +107,11 @@ body.bg-light {
 .cuenta-greeting {
     text-align: center;
     padding: 30px 20px;
-    border-bottom: 1px solid #e6e6e6;
+    border-bottom: 1px solid var(--autumn-line);
 }
 
 .cuenta-greeting h4 {
-    color: #495867;
+    color: var(--autumn-ink);
     font-size: 18px;
     margin-bottom: 16px;
     font-weight: 800;
@@ -120,7 +120,7 @@ body.bg-light {
 .cuenta-avatar {
     width: 90px;
     height: 90px;
-    background: #65798C;
+    background: var(--autumn-terracotta);
     color: #ffffff;
     font-size: 36px;
     font-weight: 700;
@@ -133,7 +133,7 @@ body.bg-light {
     outline: 2px solid #e1e5e8;
 }
 
-/* Navegación Sidebar */
+/* NavegaciÃ³n Sidebar */
 .cuenta-nav {
     display: flex;
     flex-direction: column;
@@ -144,11 +144,11 @@ body.bg-light {
     align-items: center;
     gap: 14px;
     padding: 18px 24px;
-    color: #495867;
+    color: var(--autumn-ink);
     text-decoration: none;
     font-weight: 700;
     font-size: 15px;
-    border-bottom: 1px solid #e6e6e6;
+    border-bottom: 1px solid var(--autumn-line);
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -158,11 +158,11 @@ body.bg-light {
 
 .cuenta-nav a i {
     font-size: 20px;
-    color: #65798C;
+    color: var(--autumn-terracotta);
 }
 
 .cuenta-nav a.active {
-    background: #65798C;
+    background: var(--autumn-terracotta);
     color: #ffffff;
 }
 
@@ -182,7 +182,7 @@ body.bg-light {
     min-width: 0;
     background: #ffffff;
     padding: 30px;
-    border: 1px solid #e6e6e6;
+    border: 1px solid var(--autumn-line);
     border-radius: 6px;
     box-shadow: 0 4px 14px rgba(0, 0, 0, .03);
 }
@@ -193,13 +193,13 @@ body.bg-light {
 
 .content-header-account h2 {
     font-size: 24px;
-    color: #495867;
+    color: var(--autumn-ink);
     font-weight: 800;
     margin-bottom: 8px;
 }
 
 .content-header-account p {
-    color: #666;
+    color: var(--autumn-ink);
     font-size: 14px;
 }
 
@@ -236,8 +236,8 @@ body.bg-light {
 .purchase-icon {
     width: 44px;
     height: 44px;
-    background: #f5f8f6;
-    color: #495867;
+    background: var(--autumn-paper);
+    color: var(--autumn-ink);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -251,7 +251,7 @@ body.bg-light {
 
 .purchase-title {
     font-weight: 800;
-    color: #495867;
+    color: var(--autumn-ink);
     font-size: 15px;
     white-space: nowrap;
     overflow: hidden;
@@ -261,12 +261,12 @@ body.bg-light {
 .purchase-date,
 .purchase-price {
     font-size: 14px;
-    color: #555;
+    color: var(--autumn-ink);
 }
 
 .purchase-date strong,
 .purchase-price strong {
-    color: #495867;
+    color: var(--autumn-ink);
 }
 
 .purchase-price span {
@@ -276,7 +276,7 @@ body.bg-light {
 }
 
 .purchase-chevron {
-    color: #65798C;
+    color: var(--autumn-terracotta);
     font-size: 20px;
     transition: transform 0.3s ease;
 }
@@ -289,7 +289,7 @@ body.bg-light {
     display: none;
     padding: 20px 20px 20px 80px;
     border-top: 1px solid #cfcfcf;
-    background: #fafafa;
+    background: var(--autumn-paper);
     gap: 12px;
     flex-direction: column;
     align-items: flex-start;
@@ -299,9 +299,9 @@ body.bg-light {
     display: flex;
 }
 
-/* Estilo para el botón de "Ver detalle completo" */
+/* Estilo para el botÃ³n de "Ver detalle completo" */
 .btn-primary {
-    background: #65798C;
+    background: var(--autumn-terracotta);
     color: white;
     border: none;
     border-radius: 4px;
@@ -313,11 +313,11 @@ body.bg-light {
 }
 
 .btn-primary:hover {
-    background: #495867;
+    background: var(--autumn-ink);
 }
 
 /* =========================
-   PAGINACIÓN
+   PAGINACIÃ“N
    ========================= */
 .account-pagination {
     display: flex;
@@ -335,7 +335,7 @@ body.bg-light {
     height: 36px;
     padding: 0 12px;
     text-decoration: none;
-    color: #495867;
+    color: var(--autumn-ink);
     background-color: #ffffff;
     border: 1px solid #cfcfcf;
     border-radius: 4px;
@@ -345,14 +345,14 @@ body.bg-light {
 }
 
 .account-pagination a:hover {
-    border-color: #65798C;
-    color: #65798C;
+    border-color: var(--autumn-terracotta);
+    color: var(--autumn-terracotta);
     background-color: #f4f6f5;
 }
 
 .account-pagination a.active {
-    background-color: #495867;
-    border-color: #495867;
+    background-color: var(--autumn-ink);
+    border-color: var(--autumn-ink);
     color: #ffffff;
 }
 
@@ -361,21 +361,21 @@ body.bg-light {
 }
 
 
-/* Estado deshabilitado para la paginación */
+/* Estado deshabilitado para la paginaciÃ³n */
 .account-pagination a.disabled {
-    color: #cccccc;
-    border-color: #e6e6e6;
-    background-color: #fafafa;
+    color: var(--autumn-line)ccc;
+    border-color: var(--autumn-line);
+    background-color: var(--autumn-paper);
     cursor: not-allowed;
     pointer-events: none;
-    /* Evita que el botón sea clickeable */
+    /* Evita que el botÃ³n sea clickeable */
 }
 
 
 
 
 /* =========================
-   DISEÑO RESPONSIVO
+   DISEÃ‘O RESPONSIVO
    ========================= */
 @media (max-width: 992px) {
     .cuenta-layout {
@@ -679,7 +679,7 @@ body.bg-light {
     display: flex;
 }
 
-/* Detalle del ítem */
+/* Detalle del Ã­tem */
 .order-item-detail {
     display: flex;
     gap: 24px;
@@ -698,17 +698,17 @@ body.bg-light {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    color: #333;
+    color: var(--autumn-ink);
     font-size: 14px;
 }
 
 .oi-info strong {
-    color: #495867;
+    color: var(--autumn-ink);
 }
 
 .btn-track {
     margin-top: 12px;
-    background: #495867;
+    background: var(--autumn-ink);
     color: #ffffff;
     border: none;
     border-radius: 20px;
@@ -720,7 +720,7 @@ body.bg-light {
 }
 
 .btn-track:hover {
-    background: #65798C;
+    background: var(--autumn-terracotta);
 }
 
 /* Enlaces derechos */
@@ -733,7 +733,7 @@ body.bg-light {
 
 
 
-/* Caja de Envío */
+/* Caja de EnvÃ­o */
 .shipping-info-box {
     background: #f4f6f5;
     border-radius: 6px;
@@ -748,28 +748,28 @@ body.bg-light {
     flex-direction: column;
     gap: 6px;
     font-size: 14px;
-    color: #555;
+    color: var(--autumn-ink);
 }
 
 .si-label {
     font-weight: 800;
-    color: #495867;
+    color: var(--autumn-ink);
 }
 
 .si-label i {
     cursor: pointer;
-    color: #65798C;
+    color: var(--autumn-terracotta);
     margin-left: 4px;
 }
 
 
-/* Línea de Tiempo de Seguimiento */
+/* LÃ­nea de Tiempo de Seguimiento */
 .tracking-container {
     border-top: 1px solid #e1e5e8;
     padding-top: 20px;
     margin-top: 10px;
     width: 100%;
-    /* Obliga a la línea de tiempo a usar todo el espacio */
+    /* Obliga a la lÃ­nea de tiempo a usar todo el espacio */
 }
 
 .track-header {
@@ -780,7 +780,7 @@ body.bg-light {
 }
 
 .track-header h4 {
-    color: #495867;
+    color: var(--autumn-ink);
     font-size: 18px;
 }
 
@@ -788,7 +788,7 @@ body.bg-light {
     background: none;
     border: none;
     font-size: 20px;
-    color: #333;
+    color: var(--autumn-ink);
     cursor: pointer;
 }
 
@@ -805,7 +805,7 @@ body.bg-light {
     left: 10%;
     right: 10%;
     height: 4px;
-    background: #e6e6e6;
+    background: var(--autumn-line);
     z-index: 1;
 }
 
@@ -824,25 +824,25 @@ body.bg-light {
     height: 44px;
     border-radius: 50%;
     background: #ffffff;
-    border: 2px solid #e6e6e6;
+    border: 2px solid var(--autumn-line);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 20px;
-    color: #ccc;
+    color: var(--autumn-line);
     margin-bottom: 12px;
 }
 
 .track-step.completed .track-icon {
-    border-color: #65798C;
-    color: #65798C;
+    border-color: var(--autumn-terracotta);
+    color: var(--autumn-terracotta);
 }
 
 .track-step.completed:last-child .track-icon,
 .track-step.completed.current .track-icon {
-    background: #65798C;
+    background: var(--autumn-terracotta);
     color: #ffffff;
-    border-color: #65798C;
+    border-color: var(--autumn-terracotta);
 }
 
 .track-text {
@@ -850,11 +850,11 @@ body.bg-light {
     flex-direction: column;
     gap: 4px;
     font-size: 13px;
-    color: #666;
+    color: var(--autumn-ink);
 }
 
 .track-text strong {
-    color: #333;
+    color: var(--autumn-ink);
     font-size: 14px;
 }
 
@@ -864,7 +864,7 @@ body.bg-light {
     border: 1px solid #e1e5e8;
     border-radius: 6px;
     font-size: 14px;
-    color: #495867;
+    color: var(--autumn-ink);
 }
 
 /* Responsivo */
@@ -887,7 +887,7 @@ body.bg-light {
 
 
 /* =========================
-   PÁGINA MI PERFIL
+   PÃGINA MI PERFIL
    ========================= */
 .profile-form {
     margin-top: 10px;
@@ -908,7 +908,7 @@ body.bg-light {
 
 .form-group label {
     font-size: 14px;
-    color: #666;
+    color: var(--autumn-ink);
 }
 
 .form-group input,
@@ -917,7 +917,7 @@ body.bg-light {
     border: 1px solid #e1e5e8;
     border-radius: 4px;
     font-size: 15px;
-    color: #333;
+    color: var(--autumn-ink);
     outline: none;
     background-color: #ffffff;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -925,7 +925,7 @@ body.bg-light {
 
 .form-group input:focus,
 .form-group select:focus {
-    border-color: #65798C;
+    border-color: var(--autumn-terracotta);
     box-shadow: 0 0 0 3px rgba(101, 121, 140, 0.1);
 }
 
@@ -949,7 +949,7 @@ body.bg-light {
     margin-top: 40px;
 }
 
-/* Botones de acción */
+/* Botones de acciÃ³n */
 .form-actions .btn-secondary,
 .form-actions .btn-primary {
     width: 160px;
@@ -964,7 +964,7 @@ body.bg-light {
 }
 
 .form-actions .btn-secondary {
-    background: #65798C;
+    background: var(--autumn-terracotta);
     color: white;
     border: none;
     font-weight: 700;
@@ -974,14 +974,14 @@ body.bg-light {
 }
 
 .form-actions .btn-secondary:hover {
-    background: #495867;
+    background: var(--autumn-ink);
 }
 
 
-/* Estilo para botón de guardar deshabilitado */
+/* Estilo para botÃ³n de guardar deshabilitado */
 .form-actions .btn-primary:disabled {
-    background-color: #cccccc;
-    color: #888888;
+    background-color: var(--autumn-line)ccc;
+    color: var(--autumn-ink)888;
     cursor: not-allowed;
     pointer-events: none;
 }
@@ -1012,7 +1012,7 @@ body.bg-light {
 }
 
 /* =========================
-   DISEÑO RESPONSIVO
+   DISEÃ‘O RESPONSIVO
    ========================= */
 @media (max-width: 992px) {
     .cuenta-layout {
@@ -1026,7 +1026,7 @@ body.bg-light {
     .cuenta-main {
         padding: 20px;
         width: 100%;
-        /* <-- Añade esta línea */
+        /* <-- AÃ±ade esta lÃ­nea */
     }
 
     .purchase-header {
@@ -1069,7 +1069,7 @@ body.bg-light {
 
 
 
-/*Estilos de mi contraseña */
+/*Estilos de mi contraseÃ±a */
 .msg-box {
     padding: 14px;
     border-radius: 4px;
@@ -1101,7 +1101,7 @@ body.bg-light {
     border: 1px solid #e1e5e8;
     border-radius: 4px;
     font-size: 15px;
-    color: #333;
+    color: var(--autumn-ink);
     outline: none;
     background-color: #ffffff;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -1109,7 +1109,7 @@ body.bg-light {
 }
 
 .form-pwd-wrapper input:focus {
-    border-color: #65798C;
+    border-color: var(--autumn-terracotta);
     box-shadow: 0 0 0 3px rgba(101, 121, 140, 0.1);
 }
 
@@ -1134,13 +1134,13 @@ body.bg-light {
 }
 
 .btn-primary:disabled {
-    background-color: #cccccc;
-    color: #888888;
+    background-color: var(--autumn-line)ccc;
+    color: var(--autumn-ink)888;
     cursor: not-allowed;
     pointer-events: none;
 }
 
-/* Tema otoñal de Bookly */
+/* Tema otoÃ±al de Bookly */
 :root {
     --autumn-paper: #f4eee3;
     --autumn-paper-deep: #e8dbc8;
@@ -1296,7 +1296,7 @@ body.bg-light {
     box-shadow: 0 0 0 3px rgba(166, 93, 55, .14);
 }
 
-/* Rediseño final de Mi Cuenta */
+/* RediseÃ±o final de Mi Cuenta */
 :root {
     --account-paper: #FAF8F5;
     --account-surface: #FFFFFF;
