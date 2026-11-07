@@ -1,15 +1,28 @@
 {% extends 'core/base.html' %}
 {% load humanize %}
 
+{% block title %}
+    {% if selected_category %}
+        Bookly | Libros de {{ selected_category }}
+    {% elif query %}
+        Bookly | Resultados para "{{ query }}"
+    {% else %}
+        Bookly | Buscar libros
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 <main class="content search-page">
-    <div class="content-header">
-        {% if query %}
+    <div class="content-header{% if not query %} search-header-empty{% endif %}">
+        {% if selected_category %}
+            <h1 class="title">Libros de {{ selected_category }}</h1>
+            <p class="search-status">{{ count }} resultado{{ count|pluralize }} encontrados</p>
+        {% elif query %}
             <h1 class="title">Resultados para "{{ query }}"</h1>
-            <p style="margin-left:auto; color:#65798C; font-weight:700;">{{ count }} resultado{{ count|pluralize }} encontrados</p>
+            <p class="search-status">{{ count }} resultado{{ count|pluralize }} encontrados</p>
         {% else %}
             <h1 class="title">Buscar libros</h1>
-            <p style="margin-left:auto; color:#65798C; font-weight:700;">Ingresa un término para buscar</p>
+            <p class="search-status search-status-empty">Ingresa un término para buscar</p>
         {% endif %}
     </div>
 
@@ -25,7 +38,7 @@
                 Precio:
                 <span class="price">${{ book.price|intcomma }}</span>
                 {% if book.price_old %}
-                    <span class="old-price" style="margin-left:8px; color:#888; text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
+                    <span class="old-price" style="margin-left:8px; color:var(--autumn-ochre); text-decoration:line-through;">${{ book.price_old|intcomma }}</span>
                 {% endif %}
             </p>
             {% if book.stock > 0 %}
@@ -37,7 +50,7 @@
         {% endfor %}
     </div>
     {% else %}
-        {% if query %}
+        {% if query or selected_category %}
         <section class="search-empty">
             <div class="empty-icon" aria-hidden="true"></div>
             <h2>No se encontraron resultados</h2>
