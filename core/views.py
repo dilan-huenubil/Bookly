@@ -47,6 +47,16 @@ ORDER_PAYMENT_TIMEOUT = timedelta(minutes=15)
 COUPON_DISCOUNTS = {'bookly10': 10, 'bookly15': 15}
 
 
+def pagination_window(page_obj, window_size=5):
+    """Return a sliding page-number window with at most five entries."""
+    window_size = min(window_size, 5)
+    page_count = page_obj.paginator.num_pages
+    start = max(1, page_obj.number - window_size // 2)
+    end = min(page_count, start + window_size - 1)
+    start = max(1, end - window_size + 1)
+    return range(start, end + 1)
+
+
 class FeriaBookParser(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -271,14 +281,7 @@ def index(request):
         books = books.filter(**price_filters[price_filter])
     books_paginator = Paginator(books, 15)
     books_page = books_paginator.get_page(request.GET.get('page'))
-    pagination_window = 15
-    pagination_start = max(1, books_page.number - pagination_window // 2)
-    pagination_end = min(
-        books_paginator.num_pages,
-        pagination_start + pagination_window - 1,
-    )
-    pagination_start = max(1, pagination_end - pagination_window + 1)
-    pagination_page_numbers = range(pagination_start, pagination_end + 1)
+    pagination_page_numbers = pagination_window(books_page)
     recommendations = []
     section_title = 'Los libros más vendidos'
 
@@ -1337,7 +1340,11 @@ def destacados(request):
         books = books_qs.order_by('-created_at')
     paginator = Paginator(books, 12)
     page_obj = paginator.get_page(request.GET.get('page'))
-    return render(request, 'core/destacados.html', {'page_obj': page_obj, 'books': page_obj})
+    return render(request, 'core/destacados.html', {
+        'page_obj': page_obj,
+        'books': page_obj,
+        'pagination_page_numbers': pagination_window(page_obj),
+    })
 
 
 @login_required
@@ -1477,7 +1484,10 @@ def mis_pedidos(request):
     orders = paginator.get_page(page_number)
     
     # 4. Enviar el objeto paginado a la plantilla
-    return render(request, 'core/mis_pedidos.html', { 'orders': orders })
+    return render(request, 'core/mis_pedidos.html', {
+        'orders': orders,
+        'pagination_page_numbers': pagination_window(orders),
+    })
 
 
 @login_required

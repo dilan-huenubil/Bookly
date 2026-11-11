@@ -5021,6 +5021,39 @@ body {
     box-shadow: 0 0 0 3px rgba(166, 93, 55, .14);
 }
 
+.auth-password-field {
+    position: relative;
+}
+
+.auth-password-field .auth-input {
+    padding-right: 40px;
+}
+
+.auth-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    color: var(--autumn-ink);
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    z-index: 1;
+}
+
+.auth-password-toggle:focus-visible {
+    outline: 2px solid var(--autumn-terracotta);
+    outline-offset: 2px;
+}
+
 .auth-row {
     margin-top: 12px;
     font-size: 11px;

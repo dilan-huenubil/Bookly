@@ -27,7 +27,14 @@
                         <input class="auth-input" id="loginUser" name="username" type="text" autocomplete="username" required>
 
                         <label class="auth-label" for="loginPass">Contraseña <span class="req">*</span></label>
-                        <input class="auth-input" id="loginPass" name="password" type="password" autocomplete="current-password" required>
+                        <div class="auth-password-field">
+                            <input class="auth-input" id="loginPass" name="password" type="password"
+                                autocomplete="current-password" required>
+                            <button class="auth-password-toggle" type="button" data-password-toggle
+                                aria-label="Mostrar contraseña" aria-pressed="false">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
 
                         <div class="auth-row between">
                             <label class="check">Recuérdame

@@ -140,10 +140,10 @@
         <a class="disabled" title="Anterior"><i class="bi bi-chevron-left"></i></a>
     {% endif %}
 
-    {% for num in orders.paginator.page_range %}
+    {% for num in pagination_page_numbers %}
         {% if orders.number == num %}
             <a href="#" class="active" aria-current="page" onclick="return false;">{{ num }}</a>
-        {% elif num > orders.number|add:'-3' and num < orders.number|add:'3' %}
+        {% else %}
             <a href="?page={{ num }}">{{ num }}</a>
         {% endif %}
     {% endfor %}

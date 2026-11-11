@@ -34,6 +34,23 @@
 	}
 })();
 
+// 2. Visibilidad de la contraseña en el login
+(function(){
+    var toggle = document.querySelector('[data-password-toggle]');
+    if(!toggle) return;
+    var input = document.getElementById('loginPass');
+    var icon = toggle.querySelector('i');
+    if(!input) return;
+
+    toggle.addEventListener('click', function(){
+        var isVisible = input.type === 'text';
+        input.type = isVisible ? 'password' : 'text';
+        toggle.setAttribute('aria-pressed', String(!isVisible));
+        toggle.setAttribute('aria-label', isVisible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+        if(icon) icon.className = isVisible ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+})();
+
 // 2. Header sticky
 (function(){
 	var header = document.querySelector('header');
