@@ -9,7 +9,8 @@ from django.http import JsonResponse, HttpResponse
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models import Count, Max, Q
+from django.db.models import Case, CharField, Count, Max, Q, Sum, Value, When
+from django.db.models.functions import TruncMonth
 import re
 import hmac
 import hashlib
@@ -481,6 +482,151 @@ def admin_required(view_func):
             raise PermissionDenied
         return view_func(request, *args, **kwargs)
     return wrapped
+
+
+def analytics_admin_required(view_func):
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, 'Debes iniciar sesión para acceder a Analíticas.')
+            return redirect(f'{settings.LOGIN_URL}?next={request.path}')
+
+        is_admin = request.user.is_superuser or request.user.is_staff
+        try:
+            is_admin = is_admin or request.user.profile.role == 'admin'
+        except ObjectDoesNotExist:
+            pass
+
+        if not is_admin:
+            messages.error(request, 'No tienes permisos para acceder a Analíticas.')
+            return redirect('index')
+        return view_func(request, *args, **kwargs)
+    return wrapped
+
+
+@analytics_admin_required
+def analiticas(request):
+    filtered_orders = Order.objects.all()
+    available_years = [
+        value.year
+        for value in Order.objects.dates('created_at', 'year', order='DESC')
+    ]
+    available_months = [
+        {'value': value, 'label': label}
+        for value, label in enumerate(
+            (
+                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre',
+                'Diciembre',
+            ),
+            start=1,
+        )
+    ]
+
+    selected_year = None
+    selected_month = None
+    try:
+        requested_year = int(request.GET.get('anio', ''))
+        if requested_year in available_years:
+            selected_year = requested_year
+    except (TypeError, ValueError):
+        pass
+    try:
+        requested_month = int(request.GET.get('mes', ''))
+        if 1 <= requested_month <= 12:
+            selected_month = requested_month
+    except (TypeError, ValueError):
+        pass
+
+    if selected_year is not None:
+        filtered_orders = filtered_orders.filter(created_at__year=selected_year)
+    if selected_month is not None:
+        filtered_orders = filtered_orders.filter(created_at__month=selected_month)
+
+    paid_orders = filtered_orders.filter(status='paid')
+
+    total_revenue = paid_orders.aggregate(total=Sum('amount'))['total'] or 0
+    total_orders = paid_orders.count()
+    total_units = OrderItem.objects.filter(order__in=paid_orders).aggregate(
+        total=Sum('quantity'),
+    )['total'] or 0
+
+    top_books = list(
+        Book.objects.filter(orderitem__order__in=paid_orders)
+        .annotate(
+            units_sold=Sum(
+                'orderitem__quantity',
+                filter=Q(orderitem__order__in=paid_orders),
+            ),
+        )
+        .filter(units_sold__isnull=False)
+        .order_by('-units_sold', 'title')[:10]
+        .values('title', 'units_sold')
+    )
+
+    monthly_rows = (
+        paid_orders
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(revenue=Sum('amount'))
+        .order_by('month')
+    )
+    monthly_revenue = [
+        {
+            'label': row['month'].strftime('%m/%Y'),
+            'revenue': row['revenue'],
+        }
+        for row in monthly_rows
+    ]
+
+    status_rows = (
+        filtered_orders
+        .annotate(
+            analytics_status=Case(
+                When(status__in=('canceled', 'error'), then=Value('Cancelado')),
+                When(
+                    tracking_status__in=('en_camino', 'preparando'),
+                    then=Value('En Camino'),
+                ),
+                default=Value('Pagada'),
+                output_field=CharField(),
+            ),
+        )
+        .values('analytics_status')
+        .annotate(total=Count('id'))
+    )
+    status_labels = ('Pagada', 'En Camino', 'Cancelado')
+    status_totals_by_label = {
+        row['analytics_status']: row['total']
+        for row in status_rows
+    }
+    order_status_totals = [
+        status_totals_by_label.get(label, 0)
+        for label in status_labels
+    ]
+    status_total = sum(order_status_totals)
+    order_status_percentages = [
+        round(total * 100 / status_total, 1) if status_total else 0
+        for total in order_status_totals
+    ]
+
+    critical_inventory = Book.objects.filter(stock__lte=5).order_by('stock')[:5]
+
+    return render(request, 'core/analiticas.html', {
+        'total_revenue': total_revenue,
+        'total_orders': total_orders,
+        'total_units': total_units,
+        'top_books': top_books,
+        'monthly_revenue': monthly_revenue,
+        'available_years': available_years,
+        'available_months': available_months,
+        'selected_year': selected_year,
+        'selected_month': selected_month,
+        'order_status_labels': status_labels,
+        'order_status_totals': order_status_totals,
+        'order_status_percentages': order_status_percentages,
+        'critical_inventory': critical_inventory,
+    })
 
 
 @login_required

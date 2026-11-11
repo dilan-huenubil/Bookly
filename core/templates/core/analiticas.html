@@ -1,0 +1,794 @@
+{% extends 'core/base.html' %}
+{% load static humanize %}
+
+{% block title %}Bookly | Analíticas{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+<style>
+    .analytics-page {
+        width: 100%;
+        flex: 1 0 auto;
+        min-height: 70vh;
+        padding: 42px 24px 120px;
+        background: #f8f9fa;
+        color: #2b2b2b;
+    }
+
+    .analytics-shell {
+        width: min(1240px, 100%);
+        margin: 0 auto;
+    }
+
+    .analytics-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+
+    .analytics-eyebrow {
+        display: block;
+        margin-bottom: 8px;
+        color: #a0522d;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+    }
+
+    .analytics-title {
+        margin: 0;
+        color: #2b2b2b;
+        font-size: clamp(30px, 4vw, 42px);
+        font-weight: 800;
+        letter-spacing: -.04em;
+    }
+
+    .analytics-subtitle {
+        margin: 9px 0 0;
+        color: #737373;
+        font-size: 15px;
+    }
+
+    .analytics-filters {
+        display: flex;
+        align-items: center;
+        flex-flow: row nowrap !important;
+        gap: 1rem;
+        overflow-x: auto;
+        white-space: nowrap;
+        margin-bottom: 24px;
+        padding: 10px 14px;
+        border: 1px solid #eee8e3;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, .76);
+    }
+
+    .analytics-filter-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #8b4513;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .analytics-filter-controls {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: nowrap;
+    }
+
+    .analytics-filter-field {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .analytics-filter-actions {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: .65rem;
+        margin-left: auto;
+        align-self: center;
+        flex-wrap: nowrap;
+    }
+
+    .analytics-filter-label {
+        color: #777;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .analytics-filter-select {
+        width: 145px;
+        min-height: 36px;
+        padding: 0 10px;
+        border: 1px solid #e2d6cf;
+        border-radius: 6px;
+        background: #fff;
+        color: #2b2b2b;
+        font: inherit;
+        font-size: 13px;
+    }
+
+    .analytics-filter-select:focus {
+        outline: none;
+        border-color: #a0522d;
+        box-shadow: 0 0 0 3px rgba(160, 82, 45, .13);
+    }
+
+    .analytics-filter-button,
+    .analytics-filter-clear {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 36px;
+        padding: 0 13px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .analytics-filter-button {
+        gap: 8px;
+        border: 1px solid #8b4513;
+        background: #8b4513;
+        color: #fff;
+        cursor: pointer;
+    }
+
+    .analytics-filter-button:hover {
+        background: #a0522d;
+    }
+
+    .analytics-filter-clear {
+        border: 1px solid #e2d6cf;
+        color: #8b4513;
+        text-decoration: none;
+    }
+
+    .analytics-filter-clear:hover {
+        border-color: #a0522d;
+        background: #f8f1ed;
+    }
+
+    .analytics-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .analytics-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 0 15px;
+        border: 1px solid #e2d6cf;
+        border-radius: 8px;
+        background: #fff;
+        color: #8b4513;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+
+    .analytics-action:hover {
+        border-color: #a0522d;
+        box-shadow: 0 5px 16px rgba(139, 69, 19, .12);
+        transform: translateY(-1px);
+    }
+
+    .analytics-kpis {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .analytics-kpi {
+        position: relative;
+        min-height: 145px;
+        padding: 23px 24px;
+        overflow: hidden;
+        border: 1px solid #eee8e3;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 7px 22px rgba(67, 45, 33, .07);
+    }
+
+    .analytics-kpi::after {
+        position: absolute;
+        right: -25px;
+        bottom: -34px;
+        width: 115px;
+        height: 115px;
+        border-radius: 50%;
+        background: rgba(160, 82, 45, .07);
+        content: "";
+    }
+
+    .analytics-kpi__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .analytics-kpi__label {
+        color: #777;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .analytics-kpi__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: #f7ede8;
+        color: #a0522d;
+        font-size: 19px;
+    }
+
+    .analytics-kpi__value {
+        position: relative;
+        z-index: 1;
+        display: block;
+        margin-top: 16px;
+        color: #2b2b2b;
+        font-size: clamp(25px, 3vw, 32px);
+        font-weight: 800;
+        letter-spacing: -.04em;
+    }
+
+    .analytics-kpi__hint {
+        position: relative;
+        z-index: 1;
+        display: block;
+        margin-top: 5px;
+        color: #999;
+        font-size: 12px;
+    }
+
+    .analytics-chart-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr);
+        gap: 22px;
+    }
+
+    .analytics-panel {
+        min-width: 0;
+        min-height: 390px;
+        overflow: hidden;
+        padding: 24px;
+        border: 1px solid #eee8e3;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 7px 22px rgba(67, 45, 33, .07);
+    }
+
+    .analytics-panel__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .analytics-panel__title {
+        margin: 0;
+        color: #2b2b2b;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .analytics-panel__description {
+        margin: 5px 0 0;
+        color: #999;
+        font-size: 12px;
+    }
+
+    .analytics-panel__badge {
+        flex-shrink: 0;
+        padding: 6px 9px;
+        border-radius: 6px;
+        background: #f8f1ed;
+        color: #8b4513;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .analytics-chart {
+        min-height: 310px;
+    }
+
+    .analytics-secondary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
+        margin-top: 22px;
+    }
+
+    .analytics-status-chart {
+        min-height: 310px;
+    }
+
+    .analytics-inventory-table-wrap {
+        overflow-x: auto;
+    }
+
+    .analytics-inventory-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .analytics-inventory-table th,
+    .analytics-inventory-table td {
+        padding: 13px 8px;
+        border-bottom: 1px solid #eee8e3;
+        text-align: left;
+    }
+
+    .analytics-inventory-table th {
+        color: #888;
+        font-size: 11px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    .analytics-inventory-table td {
+        color: #555;
+    }
+
+    .analytics-inventory-table td:first-child {
+        max-width: 220px;
+        color: #2b2b2b;
+        font-weight: 700;
+    }
+
+    .analytics-inventory-table tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .analytics-stock {
+        display: inline-flex;
+        min-width: 32px;
+        justify-content: center;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 800;
+    }
+
+    .analytics-stock--critical {
+        background: #f9e3e1;
+        color: #a33e36;
+    }
+
+    .analytics-stock--warning {
+        background: #fff1d2;
+        color: #a36a13;
+    }
+
+    .analytics-stock--low {
+        background: #f8f1ed;
+        color: #8b4513;
+    }
+
+    .analytics-inventory-empty {
+        margin: 34px 0;
+        color: #888;
+        font-size: 13px;
+        text-align: center;
+    }
+
+    @media (max-width: 900px) {
+        .analytics-chart-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .analytics-secondary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .analytics-panel {
+            min-height: 0;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .analytics-page {
+            padding: 30px 16px 96px;
+        }
+
+        .analytics-header {
+            align-items: flex-start;
+            flex-direction: column;
+            margin-bottom: 22px;
+        }
+
+        .analytics-actions {
+            width: 100%;
+        }
+
+        .analytics-filters {
+            align-items: center;
+        }
+
+        .analytics-filter-field {
+            flex: 0 0 auto;
+        }
+
+        .analytics-action {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .analytics-kpis {
+            grid-template-columns: 1fr;
+        }
+
+        .analytics-panel {
+            padding: 18px 12px;
+        }
+
+        .analytics-chart {
+            min-height: 280px;
+        }
+
+        .analytics-status-chart {
+            min-height: 280px;
+        }
+    }
+</style>
+
+<main class="analytics-page">
+    <div class="analytics-shell">
+        <header class="analytics-header">
+            <div>
+                <span class="analytics-eyebrow">Bookly · Panel administrativo</span>
+                <h1 class="analytics-title">Analíticas</h1>
+                <p class="analytics-subtitle">Vista ejecutiva del rendimiento de Bookly.</p>
+            </div>
+            <div class="analytics-actions">
+                <a class="analytics-action" href="{% url 'admin_orders' %}">
+                    <i class="bi bi-receipt"></i> Pedidos
+                </a>
+                <a class="analytics-action" href="{% url 'index' %}">
+                    <i class="bi bi-arrow-left"></i> Tienda
+                </a>
+            </div>
+        </header>
+
+        <form class="analytics-filters" method="GET" action="" aria-label="Filtrar analíticas por fecha">
+            <div class="analytics-filter-controls">
+                <span class="analytics-filter-title"><i class="bi bi-funnel"></i> Filtrar por:</span>
+                <label class="analytics-filter-field">
+                    <span class="analytics-filter-label">Año</span>
+                    <select class="analytics-filter-select" name="anio">
+                        <option value="">Todos los años</option>
+                        {% for year in available_years %}
+                        <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="analytics-filter-field">
+                    <span class="analytics-filter-label">Mes</span>
+                    <select class="analytics-filter-select" name="mes">
+                        <option value="">Todos los meses</option>
+                        {% for month in available_months %}
+                        <option value="{{ month.value }}" {% if selected_month == month.value %}selected{% endif %}>{{ month.label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+            <div class="analytics-filter-actions">
+                <button class="analytics-filter-button" type="submit">
+                    <i class="bi bi-funnel"></i> Aplicar filtro
+                </button>
+                <a class="analytics-filter-clear" href="{% url 'analiticas' %}">Limpiar filtro</a>
+            </div>
+        </form>
+
+        <section class="analytics-kpis" aria-label="Indicadores principales">
+            <article class="analytics-kpi">
+                <div class="analytics-kpi__top">
+                    <span class="analytics-kpi__label">Ventas acumuladas</span>
+                    <span class="analytics-kpi__icon"><i class="bi bi-currency-dollar"></i></span>
+                </div>
+                <strong class="analytics-kpi__value">${{ total_revenue|intcomma }}</strong>
+                <span class="analytics-kpi__hint">Ingresos de pedidos pagados</span>
+            </article>
+            <article class="analytics-kpi">
+                <div class="analytics-kpi__top">
+                    <span class="analytics-kpi__label">Pedidos pagados</span>
+                    <span class="analytics-kpi__icon"><i class="bi bi-bag-check"></i></span>
+                </div>
+                <strong class="analytics-kpi__value">{{ total_orders|intcomma }}</strong>
+                <span class="analytics-kpi__hint">Pedidos considerados en ventas</span>
+            </article>
+            <article class="analytics-kpi">
+                <div class="analytics-kpi__top">
+                    <span class="analytics-kpi__label">Unidades vendidas</span>
+                    <span class="analytics-kpi__icon"><i class="bi bi-book"></i></span>
+                </div>
+                <strong class="analytics-kpi__value">{{ total_units|intcomma }}</strong>
+                <span class="analytics-kpi__hint">Libros incluidos en pedidos pagados</span>
+            </article>
+        </section>
+
+        <section class="analytics-chart-grid" aria-label="Gráficos de analíticas">
+            <article class="analytics-panel">
+                <div class="analytics-panel__header">
+                    <div>
+                        <h2 class="analytics-panel__title">Ingresos por mes</h2>
+                        <p class="analytics-panel__description">Evolución de los pedidos pagados</p>
+                    </div>
+                    <span class="analytics-panel__badge">CLP</span>
+                </div>
+                <div id="monthlyRevenueChart" class="analytics-chart"></div>
+            </article>
+
+            <article class="analytics-panel">
+                <div class="analytics-panel__header">
+                    <div>
+                        <h2 class="analytics-panel__title">Libros más vendidos</h2>
+                        <p class="analytics-panel__description">Unidades vendidas por título</p>
+                    </div>
+                    <span class="analytics-panel__badge">Top 10</span>
+                </div>
+                <div id="topBooksChart" class="analytics-chart"></div>
+            </article>
+        </section>
+
+        <section class="analytics-secondary-grid" aria-label="Estados de pedidos e inventario">
+            <article class="analytics-panel">
+                <div class="analytics-panel__header">
+                    <div>
+                        <h2 class="analytics-panel__title">Distribución por Estado de Pedido</h2>
+                        <p class="analytics-panel__description">Pedidos del período seleccionado</p>
+                    </div>
+                    <span class="analytics-panel__badge">Estados</span>
+                </div>
+                <div id="orderStatusChart" class="analytics-status-chart"></div>
+            </article>
+
+            <article class="analytics-panel">
+                <div class="analytics-panel__header">
+                    <div>
+                        <h2 class="analytics-panel__title">Alerta de Inventario Crítico (Stock ≤ 5)</h2>
+                        <p class="analytics-panel__description">Libros que requieren atención</p>
+                    </div>
+                    <span class="analytics-panel__badge">Top 5</span>
+                </div>
+                <div class="analytics-inventory-table-wrap">
+                    {% if critical_inventory %}
+                    <table class="analytics-inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Libro</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in critical_inventory %}
+                            <tr>
+                                <td title="{{ book.title }}">{{ book.title }}</td>
+                                <td>${{ book.price|intcomma }}</td>
+                                <td>
+                                    <span class="analytics-stock {% if book.stock == 0 %}analytics-stock--critical{% elif book.stock <= 3 %}analytics-stock--warning{% else %}analytics-stock--low{% endif %}">
+                                        {{ book.stock }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="analytics-inventory-empty">Todo el inventario está en niveles óptimos.</p>
+                    {% endif %}
+                </div>
+            </article>
+        </section>
+
+    </div>
+</main>
+
+{{ monthly_revenue|json_script:"monthly-revenue-data" }}
+{{ top_books|json_script:"top-books-data" }}
+{{ order_status_labels|json_script:"order-status-labels-data" }}
+{{ order_status_totals|json_script:"order-status-totals-data" }}
+{{ order_status_percentages|json_script:"order-status-percentages-data" }}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    (function () {
+        const monthlyRevenue = JSON.parse(
+            document.getElementById('monthly-revenue-data').textContent
+        );
+        const topBooks = JSON.parse(
+            document.getElementById('top-books-data').textContent
+        );
+        const orderStatusLabels = JSON.parse(
+            document.getElementById('order-status-labels-data').textContent
+        );
+        const orderStatusTotals = JSON.parse(
+            document.getElementById('order-status-totals-data').textContent
+        );
+        const orderStatusPercentages = JSON.parse(
+            document.getElementById('order-status-percentages-data').textContent
+        );
+        const currency = new Intl.NumberFormat('es-CL', {
+            style: 'currency',
+            currency: 'CLP',
+            maximumFractionDigits: 0
+        });
+
+        new ApexCharts(document.querySelector('#monthlyRevenueChart'), {
+            chart: {
+                type: 'area',
+                height: 310,
+                toolbar: { show: false },
+                zoom: { enabled: false },
+                fontFamily: 'Segoe UI, sans-serif'
+            },
+            series: [{
+                name: 'Ingresos',
+                data: monthlyRevenue.map(item => item.revenue)
+            }],
+            colors: ['#A0522D'],
+            stroke: { curve: 'smooth', width: 3 },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: .35,
+                    opacityTo: .04,
+                    stops: [0, 90, 100]
+                }
+            },
+            dataLabels: { enabled: false },
+            grid: { borderColor: '#eee8e3', strokeDashArray: 4 },
+            xaxis: {
+                categories: monthlyRevenue.map(item => item.label),
+                labels: { style: { colors: '#888', fontSize: '11px' } },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            yaxis: {
+                labels: {
+                    style: { colors: '#888', fontSize: '11px' },
+                    formatter: value => currency.format(value)
+                }
+            },
+            tooltip: {
+                theme: 'light',
+                y: { formatter: value => currency.format(value) }
+            },
+            noData: { text: 'No hay ingresos registrados' }
+        }).render();
+
+        new ApexCharts(document.querySelector('#topBooksChart'), {
+            chart: {
+                type: 'bar',
+                height: 310,
+                toolbar: { show: false },
+                fontFamily: 'Segoe UI, sans-serif'
+            },
+            series: [{
+                name: 'Unidades',
+                data: topBooks.map(item => item.units_sold)
+            }],
+            colors: ['#8B4513'],
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    borderRadius: 6,
+                    barHeight: '54%',
+                    distributed: false
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: { colors: ['#fff'], fontSize: '11px' },
+                offsetX: 0
+            },
+            grid: { borderColor: '#eee8e3', strokeDashArray: 4 },
+            xaxis: {
+                categories: topBooks.map(item => item.title),
+                labels: {
+                    style: { colors: '#888', fontSize: '11px' },
+                    formatter: value => Math.round(value)
+                }
+            },
+            yaxis: {
+                labels: {
+                    maxWidth: 150,
+                    style: { colors: '#555', fontSize: '11px' }
+                }
+            },
+            tooltip: {
+                theme: 'light',
+                y: {
+                    formatter: value => `${value} unidad${value === 1 ? '' : 'es'}`
+                }
+            },
+            noData: { text: 'No hay libros vendidos' }
+        }).render();
+
+        new ApexCharts(document.querySelector('#orderStatusChart'), {
+            chart: {
+                type: 'donut',
+                height: 310,
+                toolbar: { show: false },
+                fontFamily: 'Segoe UI, sans-serif'
+            },
+            series: orderStatusTotals,
+            labels: orderStatusLabels,
+            colors: ['#6f8f63', '#c47b3a', '#7a4b45'],
+            stroke: { width: 4, colors: ['#fff'] },
+            dataLabels: {
+                enabled: true,
+                formatter: value => `${value.toFixed(1)}%`,
+                style: { fontSize: '11px', fontWeight: 700 }
+            },
+            legend: {
+                position: 'bottom',
+                fontSize: '12px',
+                labels: { colors: '#555' },
+                markers: { radius: 8 },
+                itemMargin: { horizontal: 10, vertical: 4 }
+            },
+            plotOptions: {
+                pie: {
+                    expandOnClick: true,
+                    donut: {
+                        size: '66%',
+                        labels: {
+                            show: true,
+                            name: { color: '#888' },
+                            value: {
+                                color: '#2b2b2b',
+                                fontSize: '22px',
+                                fontWeight: 800
+                            },
+                            total: {
+                                show: true,
+                                label: 'Pedidos',
+                                color: '#888',
+                                formatter: () => orderStatusTotals.reduce(
+                                    (total, value) => total + value,
+                                    0
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'light',
+                y: {
+                    formatter: (value, { seriesIndex }) =>
+                        `${value} pedido${value === 1 ? '' : 's'} `
+                        + `(${orderStatusPercentages[seriesIndex]}%)`
+                }
+            },
+            noData: { text: 'No hay pedidos registrados' }
+        }).render();
+    }());
+</script>
+{% endblock %}

@@ -58,6 +58,7 @@ urlpatterns = [
     path('addresses/delete/<int:address_id>/', delete_address, name='delete_address'),
     path('confirmacion_pedido/', confirmacion_pedido, name='confirmacion_pedido'),
     path('mis_pedidos/', mis_pedidos, name='mis_pedidos'),
+    path('analiticas/', views.analiticas, name='analiticas'),
     path('mi-perfil/', views.mi_perfil, name='mi_perfil'),
     path('mi-contrasena/', views.mi_contrasena, name='mi_contrasena'),
     path('admin/libros/', views.admin_books, name='admin_books'),
