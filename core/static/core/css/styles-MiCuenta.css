@@ -9,7 +9,7 @@
 }
 
 body.bg-light {
-    background-color: var(--autumn-paper);
+    background-color: #F7F3EE;
 }
 
 /* =========================
@@ -1152,7 +1152,7 @@ body.bg-light {
 }
 
 body.bg-light {
-    background: var(--autumn-paper);
+    background: #F7F3EE;
     color: var(--autumn-ink);
     font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
 }
@@ -1247,7 +1247,7 @@ body.bg-light {
 }
 
 body.bg-light {
-    background: var(--autumn-paper);
+    background: #F7F3EE;
     color: var(--autumn-ink);
 }
 
@@ -1309,7 +1309,7 @@ body.bg-light {
 }
 
 body.bg-light {
-    background: var(--account-paper);
+    background: #F7F3EE;
     color: var(--account-ink);
     font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
 }

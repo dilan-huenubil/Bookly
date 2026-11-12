@@ -4,7 +4,7 @@
 {% block title %}Bookly | Administración de libros{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}?v=mobile-actions-20261111">
 <main class="admin-page">
     <div class="admin-container">
         <div class="admin-heading-row">
@@ -60,6 +60,23 @@
                         </tbody>
                     </table>
                 </div>
+                {% if books.has_other_pages %}
+                <nav class="admin-pagination" aria-label="Paginación del inventario">
+                    {% if books.has_previous %}
+                    <a href="?q={{ query|urlencode }}&page={{ books.previous_page_number }}" aria-label="Página anterior">←</a>
+                    {% endif %}
+                    {% for page_number in pagination_page_numbers %}
+                    <a href="?q={{ query|urlencode }}&page={{ page_number }}"
+                        class="{% if books.number == page_number %}active{% endif %}"
+                        {% if books.number == page_number %}aria-current="page"{% endif %}>
+                        {{ page_number }}
+                    </a>
+                    {% endfor %}
+                    {% if books.has_next %}
+                    <a href="?q={{ query|urlencode }}&page={{ books.next_page_number }}" aria-label="Página siguiente">→</a>
+                    {% endif %}
+                </nav>
+                {% endif %}
             </section>
         </div>
     </div>

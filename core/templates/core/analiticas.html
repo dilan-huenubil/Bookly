@@ -11,7 +11,7 @@
         flex: 1 0 auto;
         min-height: 70vh;
         padding: 42px 24px 120px;
-        background: #f8f9fa;
+        background: var(--ed-bg);
         color: #2b2b2b;
     }
 
@@ -26,6 +26,17 @@
         justify-content: space-between;
         gap: 24px;
         margin-bottom: 30px;
+        position: static !important;
+        top: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        width: auto !important;
+        height: auto !important;
+        z-index: auto !important;
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
     }
 
     .analytics-eyebrow {
@@ -426,11 +437,51 @@
         }
 
         .analytics-filters {
-            align-items: center;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            align-items: stretch;
+            gap: 12px;
+            overflow: visible;
+            white-space: normal;
+            padding: 14px;
+        }
+
+        .analytics-filter-controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: 100%;
+            gap: 10px;
+        }
+
+        .analytics-filter-title {
+            grid-column: 1 / -1;
         }
 
         .analytics-filter-field {
-            flex: 0 0 auto;
+            display: grid;
+            align-items: center;
+            gap: 5px;
+            min-width: 0;
+        }
+
+        .analytics-filter-select {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .analytics-filter-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: 100%;
+            gap: 8px;
+            margin-left: 0;
+        }
+
+        .analytics-filter-button,
+        .analytics-filter-clear {
+            min-width: 0;
+            padding: 0 8px;
+            text-align: center;
         }
 
         .analytics-action {

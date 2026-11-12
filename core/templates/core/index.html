@@ -7,42 +7,27 @@
 {% block content %}
     <section class="home-hero" aria-label="Selección destacada de Bookly">
         <div class="home-hero__slides">
+
             <article class="home-hero__slide is-active" data-slide="0" aria-hidden="false">
                 <div class="home-hero__copy">
                     <span class="home-hero__eyebrow">Bookly / Librería online</span>
-                    <h1 id="heroTitle">Historias para volver a leer el mundo.</h1>
+                    <h1 id="heroTitle">Historias para volver<br>a leer el mundo.</h1>
                     <p>Encuentra tu próxima lectura entre libros elegidos para acompañar cada temporada.</p>
+                    <form class="home-hero__search" action="{% url 'search' %}" method="get" role="search">
+                        <label class="sr-only" for="heroSearch0">Buscar libros</label>
+                        <input id="heroSearch0" type="search" name="q" placeholder="Buscar por título, autor o categoría..." aria-label="Buscar libros">
+                        <button type="submit" aria-label="Buscar"><i class="bi bi-search" aria-hidden="true"></i></button>
+                    </form>
                     <a class="home-hero__cta" href="#catalogo">Explorar selección <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                 </div>
-                <div class="home-hero__visual"><img src="{% static 'core/images/1.png' %}" alt="Biblioteca Bookly"></div>
-            </article>
-            <article class="home-hero__slide" data-slide="1" aria-hidden="true">
-                <div class="home-hero__copy">
-                    <span class="home-hero__eyebrow">Una pausa para leer</span>
-                    <h2>Tu próxima historia empieza aquí.</h2>
-                    <p>Descubre novelas, clásicos y nuevas voces para llenar tus horas de calma.</p>
-                    <a class="home-hero__cta" href="#catalogo">Ver libros <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                <div class="home-hero__visual">
+                    <img class="is-active" data-hero-image="0" src="{% static 'core/images/1.png' %}" alt="Biblioteca Bookly">
+                    <img data-hero-image="1" src="{% static 'core/images/2.png' %}" alt="Selección de libros Bookly">
+                    <img data-hero-image="2" src="{% static 'core/images/3.png' %}" alt="Lecturas destacadas de Bookly">
+                    <img data-hero-image="3" src="{% static 'core/images/4.png' %}" alt="Libros seleccionados por Bookly">
                 </div>
-                <div class="home-hero__visual"><img src="{% static 'core/images/2.png' %}" alt="Selección de libros Bookly"></div>
             </article>
-            <article class="home-hero__slide" data-slide="2" aria-hidden="true">
-                <div class="home-hero__copy">
-                    <span class="home-hero__eyebrow">Lecturas que permanecen</span>
-                    <h2>Un libro puede cambiar tu día.</h2>
-                    <p>Regala tiempo, imaginación y una historia que se queda contigo.</p>
-                    <a class="home-hero__cta" href="#catalogo">Descubrir libros <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-                </div>
-                <div class="home-hero__visual"><img src="{% static 'core/images/3.png' %}" alt="Lecturas destacadas de Bookly"></div>
-            </article>
-            <article class="home-hero__slide" data-slide="3" aria-hidden="true">
-                <div class="home-hero__copy">
-                    <span class="home-hero__eyebrow">Para cada momento</span>
-                    <h2>Haz espacio para una nueva historia.</h2>
-                    <p>Explora nuestra selección y encuentra esa lectura que estabas buscando.</p>
-                    <a class="home-hero__cta" href="#catalogo">Explorar catálogo <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
-                </div>
-                <div class="home-hero__visual"><img src="{% static 'core/images/4.png' %}" alt="Libros seleccionados por Bookly"></div>
-            </article>
+
         </div>
         <div class="home-hero__dots" role="tablist" aria-label="Slides destacados">
             <button class="is-active" type="button" role="tab" aria-selected="true" aria-label="Ver slide 1" data-slide="0"></button>
@@ -56,33 +41,24 @@
     <section class="recommendations" aria-labelledby="recommendations-title">
         <div class="recommendations__header">
             <div>
-                <span class="welcome-kicker">Selección Bookly</span>
+                <span class="welcome-kicker">Recomendados</span>
                 <h2 id="recommendations-title">{{ section_title }}</h2>
             </div>
         </div>
-        <div class="recommendations__viewport js-recommendations-viewport">
-            <div class="recommendations__controls">
-                <button class="recommendations__button js-recommendations-prev" type="button"
-                    aria-label="Ver recomendaciones anteriores">
-                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                </button>
-                <button class="recommendations__button js-recommendations-next" type="button"
-                    aria-label="Ver siguientes recomendaciones">
-                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                </button>
-            </div>
-            <div class="recommendations__track">
-                {% for recommendation in recommendations %}
-                <article class="card recommendation-card">
-                    <a href="{% url 'libro_detalles' recommendation.sku %}" aria-label="Ver detalles de {{ recommendation.title }}">
-                        <img src="{{ recommendation.image_url|default:'https://via.placeholder.com/200x300?text=Sin+imagen' }}"
-                            alt="{{ recommendation.title }}">
-                    </a>
-                    <h3>{{ recommendation.title }}</h3>
-                    <p>Precio: <span class="price">${{ recommendation.price|intcomma }}</span></p>
-                    <a href="{% url 'libro_detalles' recommendation.sku %}" class="recommendation-card__button">VER DETALLES</a>
-                </article>
-                {% endfor %}
+        <div class="recommendations__stage">
+            <div class="recommendations__viewport js-recommendations-viewport">
+                <div class="recommendations__track">
+                    {% for recommendation in recommendations %}
+                    <article class="card recommendation-card">
+                        <a href="{% url 'libro_detalles' recommendation.sku %}" aria-label="Ver detalles de {{ recommendation.title }}">
+                            <img src="{{ recommendation.image_url|default:'https://via.placeholder.com/200x300?text=Sin+imagen' }}" alt="{{ recommendation.title }}">
+                        </a>
+                        <h3>{{ recommendation.title }}</h3>
+                        <p>Precio: <span class="price">${{ recommendation.price|intcomma }}</span></p>
+                        <a href="{% url 'libro_detalles' recommendation.sku %}" class="recommendation-card__button">VER DETALLES</a>
+                    </article>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </section>
@@ -97,8 +73,7 @@
             <div class="filters">
                 <form method="get" action="{% url 'index' %}" data-server-filter>
                     <label for="priceFilter" class="sr-only">Filtrar por precio</label>
-                    <select id="priceFilter" name="price" aria-label="Filtrar por precio"
-                        onchange="this.form.submit()">
+                    <select id="priceFilter" name="price" aria-label="Filtrar por precio" onchange="this.form.submit()">
                         <option value="all" {% if price_filter == 'all' %}selected{% endif %}>Todos los precios</option>
                         <option value="0-15000" {% if price_filter == '0-15000' %}selected{% endif %}>Hasta $15.000</option>
                         <option value="15000-30000" {% if price_filter == '15000-30000' %}selected{% endif %}>$15.000 - $30.000</option>
@@ -159,6 +134,5 @@
         </nav>
         {% endif %}
     </main>
-
 
 {% endblock %}

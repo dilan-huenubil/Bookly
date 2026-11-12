@@ -57,6 +57,36 @@ def pagination_window(page_obj, window_size=5):
     return range(start, end + 1)
 
 
+def admin_books_page(request):
+    query = request.GET.get('q', '').strip()
+    books = Book.objects.all().order_by('-is_active', '-updated_at')
+    if query:
+        books = books.filter(
+            Q(title__icontains=query) |
+            Q(author__icontains=query) |
+            Q(sku__icontains=query) |
+            Q(category__icontains=query)
+        )
+    paginator = Paginator(books, 5)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return page_obj, query, pagination_window(page_obj)
+
+
+def admin_orders_page(request):
+    query = request.GET.get('q', '').strip()
+    orders = Order.objects.select_related('user').prefetch_related('items__book').order_by('-created_at')
+    if query:
+        orders = orders.filter(
+            Q(commerce_order__icontains=query) |
+            Q(first_item_title__icontains=query) |
+            Q(email__icontains=query) |
+            Q(user__username__icontains=query)
+        )
+    paginator = Paginator(orders, 15)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return page_obj, query, pagination_window(page_obj)
+
+
 class FeriaBookParser(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -635,19 +665,12 @@ def analiticas(request):
 @login_required
 @admin_required
 def admin_books(request):
-    query = request.GET.get('q', '').strip()
-    books = Book.objects.all().order_by('-is_active', '-updated_at')
-    if query:
-        books = books.filter(
-            Q(title__icontains=query) |
-            Q(author__icontains=query) |
-            Q(sku__icontains=query) |
-            Q(category__icontains=query)
-        )
+    books, query, pagination_page_numbers = admin_books_page(request)
     return render(request, 'core/admin_books.html', {
         'books': books,
         'form': BookAdminForm(),
         'query': query,
+        'pagination_page_numbers': pagination_page_numbers,
     })
 
 
@@ -674,11 +697,13 @@ def admin_book_save(request, book_id=None):
     book = get_object_or_404(Book, pk=book_id) if book_id else None
 
     if request.method == 'GET':
+        books, query, pagination_page_numbers = admin_books_page(request)
         return render(request, 'core/admin_books.html', {
-            'books': Book.objects.all().order_by('-is_active', '-updated_at'),
+            'books': books,
             'form': BookAdminForm(instance=book),
             'editing_book': book,
-            'query': '',
+            'query': query,
+            'pagination_page_numbers': pagination_page_numbers,
         })
 
     if request.method != 'POST':
@@ -689,11 +714,13 @@ def admin_book_save(request, book_id=None):
         form.save()
         messages.success(request, 'Libro guardado correctamente.')
         return redirect('admin_books')
+    books, query, pagination_page_numbers = admin_books_page(request)
     return render(request, 'core/admin_books.html', {
-        'books': Book.objects.all().order_by('-is_active', '-updated_at'),
+        'books': books,
         'form': form,
         'editing_book': book,
-        'query': '',
+        'query': query,
+        'pagination_page_numbers': pagination_page_numbers,
     }, status=400)
 
 
@@ -729,18 +756,11 @@ def admin_book_stock(request, book_id):
 @login_required
 @admin_required
 def admin_orders(request):
-    query = request.GET.get('q', '').strip()
-    orders = Order.objects.select_related('user').prefetch_related('items__book').order_by('-created_at')
-    if query:
-        orders = orders.filter(
-            Q(commerce_order__icontains=query) |
-            Q(first_item_title__icontains=query) |
-            Q(email__icontains=query) |
-            Q(user__username__icontains=query)
-        )
+    orders, query, pagination_page_numbers = admin_orders_page(request)
     return render(request, 'core/admin_orders.html', {
         'orders': orders,
         'query': query,
+        'pagination_page_numbers': pagination_page_numbers,
         'form': OrderAdminForm(),
     })
 
@@ -750,9 +770,11 @@ def admin_orders(request):
 def admin_order_edit(request, order_id):
     order = get_object_or_404(Order.objects.select_related('user'), pk=order_id)
     if request.method == 'GET':
+        orders, query, pagination_page_numbers = admin_orders_page(request)
         return render(request, 'core/admin_orders.html', {
-            'orders': Order.objects.select_related('user').prefetch_related('items__book').order_by('-created_at'),
-            'query': '',
+            'orders': orders,
+            'query': query,
+            'pagination_page_numbers': pagination_page_numbers,
             'form': OrderAdminForm(instance=order),
             'editing_order': order,
         })
@@ -763,9 +785,11 @@ def admin_order_edit(request, order_id):
         form.save()
         messages.success(request, 'Pedido actualizado correctamente.')
         return redirect('admin_orders')
+    orders, query, pagination_page_numbers = admin_orders_page(request)
     return render(request, 'core/admin_orders.html', {
-        'orders': Order.objects.select_related('user').prefetch_related('items__book').order_by('-created_at'),
-        'query': '',
+        'orders': orders,
+        'query': query,
+        'pagination_page_numbers': pagination_page_numbers,
         'form': form,
         'editing_order': order,
     }, status=400)

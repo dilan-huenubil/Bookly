@@ -4262,7 +4262,7 @@ footer {
     right: 0;
     left: 0;
     z-index: 1;
-    display: flex;
+    display: none !important;
     justify-content: space-between;
     pointer-events: none;
     transform: translateY(-50%);
@@ -4299,6 +4299,20 @@ footer {
 .recommendations__viewport {
     position: relative;
     overflow: hidden;
+    -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 120px,
+        #000 calc(100% - 120px),
+        transparent 100%
+    );
+    mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 120px,
+        #000 calc(100% - 120px),
+        transparent 100%
+    );
 }
 
 .recommendations__track {
@@ -4957,7 +4971,7 @@ body {
     justify-content: center;
     padding: 40px 20px;
     box-sizing: border-box;
-    background: var(--autumn-paper);
+    background: var(--ed-bg, #F7F3EE);
 }
 
 .auth-container {
@@ -4975,6 +4989,83 @@ body {
     border: 1px solid var(--autumn-line);
     border-radius: 4px;
     box-shadow: 0 18px 42px rgba(63, 45, 42, .1);
+    animation: auth-layout-enter .46s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+@keyframes auth-layout-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.auth-card,
+.auth-visual {
+    animation: auth-panel-enter .5s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+.auth-visual {
+    animation-delay: .06s;
+}
+
+@keyframes auth-panel-enter {
+    from {
+        opacity: 0;
+        transform: translateX(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.auth-page--register .auth-card {
+    animation-name: auth-panel-enter-reverse;
+}
+
+@keyframes auth-panel-enter-reverse {
+    from {
+        opacity: 0;
+        transform: translateX(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-layout,
+    .auth-card,
+    .auth-visual {
+        animation: none;
+    }
+}
+
+.scroll-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+        opacity .65s cubic-bezier(.22, .61, .36, 1),
+        transform .65s cubic-bezier(.22, .61, .36, 1);
+    transition-delay: var(--reveal-delay, 0s);
+}
+
+.scroll-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .scroll-reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
 }
 
 .auth-card {
@@ -4996,15 +5087,26 @@ body {
     text-align: center;
 }
 
+.auth-message-slot {
+    min-height: 18px;
+    margin-top: 4px;
+}
+
+.auth-message-slot .msg-error,
+.auth-message-slot .msg-success {
+    margin: 0;
+}
+
 .auth-card form {
     margin-top: 20px;
 }
 
 .auth-label {
-    margin: 13px 0 5px;
+    margin: 13px 0 2px;
     color: var(--autumn-ink);
     font-size: 12px;
     font-weight: 700;
+    line-height: 1.2;
 }
 
 .auth-input {
@@ -5097,7 +5199,7 @@ body {
 .auth-visual {
     position: relative;
     min-height: 0;
-    height: 560px;
+    height: auto;
     align-self: stretch;
     overflow: hidden;
     background: var(--autumn-ink);
@@ -5147,10 +5249,24 @@ body {
 
 .auth-page--register .auth-label {
     margin-top: 7px;
+    margin-bottom: 2px;
+}
+
+.auth-page--login .auth-label {
+    margin-bottom: -4px;
+    line-height: 1;
 }
 
 .auth-page--register .auth-input {
     height: 34px;
+}
+
+.auth-page--register .auth-field {
+    min-height: 80px;
+}
+
+.auth-page--register .auth-field .msg-error {
+    margin: 0 !important;
 }
 
 .auth-page--register .fine-print {
@@ -5164,6 +5280,14 @@ body {
 
 .auth-page--register .auth-switch {
     margin-top: 12px;
+}
+
+.auth-page--login .auth-card {
+    height: 592px;
+}
+
+.auth-page--register .auth-card {
+    height: 676px;
 }
 
 @media (max-width: 760px) {
@@ -5184,10 +5308,12 @@ body {
     .auth-card {
         order: 1;
         padding: 36px 24px 40px;
+        height: auto;
     }
 
     .auth-page--register .auth-card {
         padding: 21px 20px 23px;
+        height: auto;
     }
 
     .auth-visual {

@@ -77,6 +77,23 @@
                     </tbody>
                 </table>
             </div>
+            {% if orders.has_other_pages %}
+            <nav class="admin-pagination" aria-label="Paginación de pedidos">
+                {% if orders.has_previous %}
+                <a href="?q={{ query|urlencode }}&page={{ orders.previous_page_number }}" aria-label="Página anterior">←</a>
+                {% endif %}
+                {% for page_number in pagination_page_numbers %}
+                <a href="?q={{ query|urlencode }}&page={{ page_number }}"
+                    class="{% if orders.number == page_number %}active{% endif %}"
+                    {% if orders.number == page_number %}aria-current="page"{% endif %}>
+                    {{ page_number }}
+                </a>
+                {% endfor %}
+                {% if orders.has_next %}
+                <a href="?q={{ query|urlencode }}&page={{ orders.next_page_number }}" aria-label="Página siguiente">→</a>
+                {% endif %}
+            </nav>
+            {% endif %}
         </section>
     </div>
 </main>

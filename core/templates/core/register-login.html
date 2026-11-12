@@ -11,12 +11,12 @@
                     {% if request.resolver_match.url_name == 'login' %}
                     <h2 class="auth-heading" id="loginTitle">Acceder</h2>
 
-                    {% if login_error %}
-                        <p class="msg-error">{{ login_error }}</p>
-                    {% endif %}
-
-                    <!-- ERROR PARA JS -->
-                    <p id="loginError" class="msg-error"></p>
+                    <div class="auth-message-slot">
+                        {% if login_error %}
+                            <p class="msg-error">{{ login_error }}</p>
+                        {% endif %}
+                        <p id="loginError" class="msg-error"></p>
+                    </div>
 
                     <form id="loginForm" method="POST" novalidate>
                         {% csrf_token %}
@@ -49,32 +49,39 @@
                     {% else %}
                     <h2 class="auth-heading" id="registerTitle">Registrarse</h2>
 
-                    {% if register_error %}
-                        <p class="msg-error">{{ register_error }}</p>
-                    {% endif %}
-
-                    {% if success %}
-                        <p class="msg-success">{{ success }}</p>
-                    {% endif %}
-
-                    <!-- ERROR PARA JS -->
-                    <p id="registerError" class="msg-error"></p>
+                    <div class="auth-message-slot">
+                        {% if register_error %}
+                            <p class="msg-error">{{ register_error }}</p>
+                        {% endif %}
+                        {% if success %}
+                            <p class="msg-success">{{ success }}</p>
+                        {% endif %}
+                        <p id="registerError" class="msg-error"></p>
+                    </div>
 
                     <form id="registerForm" method="POST" novalidate>
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="register">
 
-                        <label class="auth-label" for="regUser">Nombre de usuario <span class="req">*</span></label>
-                        <input class="auth-input" id="regUser" name="username" type="text" autocomplete="username" required>
+                        <div class="auth-field">
+                            <label class="auth-label" for="regUser">Nombre de usuario <span class="req">*</span></label>
+                            <input class="auth-input" id="regUser" name="username" type="text" autocomplete="username" required>
+                        </div>
 
-                        <label class="auth-label" for="regEmail">Correo electrónico <span class="req">*</span></label>
-                        <input class="auth-input" id="regEmail" name="email" type="email" autocomplete="email" required>
+                        <div class="auth-field">
+                            <label class="auth-label" for="regEmail">Correo electrónico <span class="req">*</span></label>
+                            <input class="auth-input" id="regEmail" name="email" type="email" autocomplete="email" required>
+                        </div>
 
-                        <label class="auth-label" for="regPass1">Contraseña <span class="req">*</span></label>
-                        <input class="auth-input" id="regPass1" name="password1" type="password" autocomplete="new-password" minlength="6" required>
+                        <div class="auth-field">
+                            <label class="auth-label" for="regPass1">Contraseña <span class="req">*</span></label>
+                            <input class="auth-input" id="regPass1" name="password1" type="password" autocomplete="new-password" minlength="6" required>
+                        </div>
 
-                        <label class="auth-label" for="regPass2">Confirmar Contraseña: <span class="req">*</span></label>
-                        <input class="auth-input" id="regPass2" name="password2" type="password" autocomplete="new-password" minlength="6" required>
+                        <div class="auth-field">
+                            <label class="auth-label" for="regPass2">Confirmar Contraseña: <span class="req">*</span></label>
+                            <input class="auth-input" id="regPass2" name="password2" type="password" autocomplete="new-password" minlength="6" required>
+                        </div>
 
                         <p class="fine-print">
                             Sus datos personales se utilizarán para procesar su pedido, mejorar su experiencia en esta web, gestionar el acceso a su cuenta y otros propósitos descritos en nuestra política de privacidad.
