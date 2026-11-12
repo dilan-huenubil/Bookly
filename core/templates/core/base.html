@@ -12,7 +12,7 @@
     {% url 'register' as url_register %}
     {% url 'logout' as url_logout %}
     {% url 'carrito' as url_carrito %}
-    {% url 'destacados' as url_destacados %}
+    {% url 'ofertas' as url_ofertas %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 
-<body class="{% if request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' %}auth-site{% endif %}{% if request.resolver_match.url_name == 'index' or request.resolver_match.url_name == 'destacados' or request.resolver_match.url_name == 'search' %} scroll-reveal-page{% endif %}">
+<body class="{% if request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' %}auth-site{% endif %}{% if request.resolver_match.url_name == 'index' or request.resolver_match.url_name == 'ofertas' or request.resolver_match.url_name == 'search' %} scroll-reveal-page{% endif %}">
 
     <header>
         <div class="top-bar">
@@ -40,7 +40,7 @@
                 <!-- NAVEGACIÓN CENTRAL (desktop) -->
                 <nav class="bk-nav" aria-label="Navegación principal">
                     <a href="{{ url_index }}" class="{% if request.path == url_index %}active{% endif %}">Inicio</a>
-                    <a href="{{ url_destacados }}" class="{% if request.path == url_destacados %}active{% endif %}">Ofertas</a>
+                    <a href="{{ url_ofertas }}" class="{% if request.path == url_ofertas %}active{% endif %}">Ofertas</a>
                     <div class="category-menu">
                         <button type="button" class="category-menu__toggle" aria-expanded="false" aria-haspopup="true">
                             Categorías <i class="bi bi-chevron-down" aria-hidden="true"></i>
@@ -174,7 +174,7 @@
                 </a>
                 {% endif %}
                 <a href="{{ url_index }}" class="{% if request.path == url_index %}active{% endif %}">INICIO</a>
-                <a href="{{ url_destacados }}" class="{% if request.path == url_destacados %}active{% endif %}">Ofertas</a>
+                <a href="{{ url_ofertas }}" class="{% if request.path == url_ofertas %}active{% endif %}">Ofertas</a>
                 <div class="mobile-category-menu">
                     <button type="button" class="mobile-category-menu__toggle" aria-expanded="false">
                         <span>Categorías</span>

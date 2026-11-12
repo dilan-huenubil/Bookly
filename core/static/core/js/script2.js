@@ -148,13 +148,22 @@ initDireccionesPanel();
         }
         var normalizedCode = code.toLowerCase();
         if (normalizedCode !== 'bookly10' && normalizedCode !== 'bookly15') {
-            alert('Cupón inválido. Usa "Bookly10" o "Bookly15".');
+            Swal.fire({
+                icon: "error",
+                title: "Cupón inválido",
+                text: "El cupón ingresado no es válido. Usa Bookly10 o Bookly15."
+            });
             return;
         }
         var isBookly15 = normalizedCode === 'bookly15';
         var alreadyUsed = isBookly15 ? window.coupon15AlreadyUsed : window.couponAlreadyUsed;
         if (typeof window !== 'undefined' && alreadyUsed === 'true') {
-            alert('El cupón ' + (isBookly15 ? 'Bookly15' : 'Bookly10') + ' ya fue utilizado en una compra anterior de esta cuenta.');
+            var usedCouponCode = isBookly15 ? 'Bookly15' : 'Bookly10';
+            Swal.fire({
+                icon: "error",
+                title: "Cupón ya utilizado",
+                text: "El cupón " + usedCouponCode + " ya fue utilizado en una compra anterior de esta cuenta."
+            });
             try {
                 setActiveCoupon(null);
                 refreshCouponUI();
@@ -169,7 +178,11 @@ initDireccionesPanel();
         refreshCouponUI();
         input.value = '';
         try { if (typeof renderSummary === 'function') renderSummary(); } catch (e) {}
-        alert('Cupón ' + couponCode + ' aplicado: ' + couponValue + '%.');
+        Swal.fire({
+            title: "¡Cupón aplicado!",
+            text: "El cupón " + couponCode + " fue aplicado con un descuento del " + couponValue + "%.",
+            icon: "success"
+        });
     }
 
 

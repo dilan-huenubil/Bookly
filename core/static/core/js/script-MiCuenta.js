@@ -168,3 +168,30 @@ document.addEventListener('DOMContentLoaded', () => {
         newPassword2.addEventListener('input', validateForm);
     }
 });
+
+
+// Corfirmación de eliminación de cuenta con SweetAlert2
+document.getElementById('delete-account-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var deleteAccountForm = this;
+    Swal.fire({
+        title: "¿Estás seguro de Eliminar tu cuenta?",
+        text: "Tu cuenta se conservará durante 30 días y podrás recuperarla iniciando sesión.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Sí, solicitar eliminación",
+        cancelButtonText: "Cancelar"
+    }).then(function (result) {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: "Solicitud enviada",
+                text: "Tu cuenta se eliminará en 30 días si no vuelves a iniciar sesión.",
+                icon: "success"
+            }).then(function () {
+                deleteAccountForm.submit();
+            });
+        }
+    });
+});

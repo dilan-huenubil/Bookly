@@ -63,10 +63,11 @@
             </p>
         </div>
     </div>
-    <form method="POST" action="{% url 'delete_account' %}"
-        onsubmit="return confirm('¿Quieres solicitar la eliminación de tu cuenta? Tendrás 30 días para recuperarla iniciando sesión.');">
+    <form id="delete-account-form" method="POST" action="{% url 'delete_account' %}">
         {% csrf_token %}
         <button type="submit" class="btn-danger-account">Solicitar eliminación</button>
     </form>
 </section>
+
+
 {% endblock %}
