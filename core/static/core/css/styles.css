@@ -2854,6 +2854,19 @@ footer {
     border-radius: 4px;
 }
 
+.related .related-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 42px;
+    box-sizing: border-box;
+    margin-top: auto;
+    padding: 10px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
 @media (max-width: 992px) {
     .product-hero {
         grid-template-columns: clamp(220px, 32vw, 300px) 1fr;
