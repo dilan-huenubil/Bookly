@@ -9,10 +9,14 @@
                 <a href="{% url 'index' %}" class="btn-continue" id="btnContinueShopping"><i class="bi bi-arrow-left-circle"></i> SEGUIR COMPRANDO</a>
             </div>
 
+            <div class="cart-empty-state">
+                <a href="{% url 'index' %}" class="btn-continue"><i class="bi bi-arrow-left-circle"></i> SEGUIR COMPRANDO</a>
+                <p id="cartPageEmptyMsg" style="display:none; color:var(--autumn-ink); margin:16px 0;">Tu carrito está vacío.</p>
+            </div>
+
             <div class="cart-grid">
                 <section class="cart-table" aria-labelledby="cartTableTitle">
                     <h2 id="cartTableTitle" class="sr-only">Productos en tu carrito</h2>
-                        <p id="cartPageEmptyMsg" style="display:none; color:var(--autumn-ink); margin:16px 0;">Tu carrito está vacío.</p>
                     <div class="table-wrap">
                     <table class="table" role="table" aria-describedby="summaryTitle">
                         <thead>
