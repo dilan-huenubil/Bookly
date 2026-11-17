@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'core',
+    'anymail',
     'django_extensions',
 ]
 
@@ -143,21 +144,12 @@ FLOW_SECRET = os.getenv('FLOW_SECRET', 'TU_SECRET_KEY_AQUI')
 
 SITE_BASE_URL = os.getenv('SITE_BASE_URL', 'http://localhost:8000').rstrip('/')
 
-# Gmail SMTP. Usa una contraseña de aplicación de Google, no la contraseña
-# habitual de la cuenta.
-EMAIL_BACKEND = os.getenv(
-    'EMAIL_BACKEND',
-    'django.core.mail.backends.smtp.EmailBackend',
-)
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_HOST_USER = (os.getenv('EMAIL_HOST_USER') or '').strip()
-# Google muestra la contraseña de aplicación separada por espacios; SMTP
-# necesita la clave continua.
-EMAIL_HOST_PASSWORD = (os.getenv('EMAIL_HOST_PASSWORD') or '').replace(' ', '')
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
-DEFAULT_FROM_EMAIL = (os.getenv('DEFAULT_FROM_EMAIL') or EMAIL_HOST_USER).strip()
-EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '20'))
+# Configuración de Anymail con Brevo (Sendinblue) API.
+EMAIL_BACKEND = 'anymail.backends.sendinblue.EmailBackend'
+ANYMAIL = {
+    'SENDINBLUE_API_KEY': os.getenv('BREVO_API_KEY'),
+}
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
 
 SESSION_COOKIE_SAMESITE = 'Lax'
