@@ -24,9 +24,15 @@ def _load_dotenv(path: Path):
 _load_dotenv(BASE_DIR / '.env')
 
 
-SECRET_KEY = 'django-insecure-*lb&9mm8lem06fcp7mn3hkbqv5@mcol2_qk9cm0uii5h2_g#st'
-DEBUG = True
+# ─── Entorno ───────────────────────────────────────────────────────
+# En Render configurar la variable DJANGO_ENV=production
+IS_PRODUCTION = os.environ.get('DJANGO_ENV') == 'production'
 
+# W009: Clave secreta segura (se lee del .env o variable de entorno)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+
+# W018: DEBUG apagado en producción
+DEBUG = not IS_PRODUCTION
 
 ALLOWED_HOSTS = ['bookly-6dsb.onrender.com', 'localhost', '127.0.0.1']
 
@@ -152,9 +158,20 @@ ANYMAIL = {
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
 
+# ─── Seguridad SSL / Cookies (solo producción) ────────────────────
 SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SECURE = False 
-CSRF_COOKIE_SECURE = False
+
+# W012 y W016: Cookies seguras solo con HTTPS
+SESSION_COOKIE_SECURE = IS_PRODUCTION
+CSRF_COOKIE_SECURE = IS_PRODUCTION
+
+# W008: Redirección HTTP → HTTPS
+SECURE_SSL_REDIRECT = IS_PRODUCTION
+
+# W004: HSTS (HTTP Strict Transport Security)
+SECURE_HSTS_SECONDS = 31536000 if IS_PRODUCTION else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = IS_PRODUCTION
+SECURE_HSTS_PRELOAD = IS_PRODUCTION
 
 GRAPH_MODELS = {
     'all_applications': True,
