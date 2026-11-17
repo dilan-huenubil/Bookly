@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-*lb&9mm8lem06fcp7mn3hkbqv5@mcol2_qk9cm0uii5h2_g#st
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['bookly-6dsb.onrender.com', 'localhost', '127.0.0.1']
 
 
 
