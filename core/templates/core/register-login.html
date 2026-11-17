@@ -5,6 +5,20 @@
 
 {% block content %}
     <main class="auth-page {% if request.resolver_match.url_name == 'register' %}auth-page--register{% else %}auth-page--login{% endif %}">
+        <!-- Overlay editorial de cargando para inicio de sesión -->
+        <div id="loginLoadingOverlay" class="auth-loading-overlay" aria-hidden="true" role="status" aria-live="polite">
+            <div class="auth-loading-card">
+                <div class="auth-loading-graphic">
+                    <div class="auth-loading-spinner" aria-hidden="true"></div>
+                    <div class="auth-loading-icon" aria-hidden="true">
+                        <i class="bi bi-book-half"></i>
+                    </div>
+                </div>
+                <h3 class="auth-loading-title">Iniciando sesión<span class="auth-loading-dots" aria-hidden="true"></span></h3>
+                <p class="auth-loading-desc">Verificando credenciales en Bookly...</p>
+            </div>
+        </div>
+
         <div class="auth-container">
             <div class="auth-layout">
                 <section class="auth-card" aria-labelledby="{% if request.resolver_match.url_name == 'login' %}loginTitle{% else %}registerTitle{% endif %}">

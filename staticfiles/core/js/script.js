@@ -38,8 +38,9 @@
 (function(){
 	if(!document.body.classList.contains('scroll-reveal-page')) return;
 
+	// Excluir la página de búsqueda y los contenedores de productos para que siempre sean visibles de inmediato
 	var revealElements = document.querySelectorAll(
-		'main:not(.auth-page) > *, .trust-strip, footer'
+		'main:not(.auth-page):not(.search-page) > *:not(.products), .trust-strip, footer'
 	);
 	if(!revealElements.length) return;
 
@@ -60,7 +61,7 @@
 			entry.target.classList.add('is-visible');
 			currentObserver.unobserve(entry.target);
 		});
-	}, { threshold: 0.12, rootMargin: '0px 0px -36px' });
+	}, { threshold: 0.01, rootMargin: '0px 0px 50px' });
 
 	revealElements.forEach(function(element){ observer.observe(element); });
 })();
@@ -421,7 +422,9 @@ if (loginPass) {
 }
 
 if (loginForm) {
-    loginForm.addEventListener("submit", function(e) {
+    loginForm.addEventListener("submit", async function(e) {
+        e.preventDefault();
+
         let valid = true;
         if (loginUser.value.trim() === "") {
             setFieldError(loginUser, "Debes ingresar tu usuario o correo");
@@ -431,7 +434,120 @@ if (loginForm) {
             setFieldError(loginPass, "Debes ingresar tu contraseña");
             valid = false;
         }
-        if (!valid) e.preventDefault();
+        if (!valid) return;
+
+        const submitBtn = loginForm.querySelector(".btn-auth");
+        const overlay = document.getElementById("loginLoadingOverlay");
+        const loginError = document.getElementById("loginError");
+        const messageSlot = document.querySelector(".auth-message-slot");
+
+        // Limpiar errores previos en pantalla
+        if (loginError) loginError.textContent = "";
+        if (messageSlot) {
+            messageSlot.querySelectorAll(".msg-error:not(#loginError)").forEach(el => el.remove());
+        }
+
+        // Mostrar el estado de carga inmediatamente al enviar el formulario.
+        // Así la animación aparece mientras se esperan las credenciales del servidor.
+        const originalBtnHtml = submitBtn ? submitBtn.innerHTML : "ACCEDER";
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add("is-loading");
+            submitBtn.style.opacity = "1";
+            submitBtn.innerHTML = '<span class="btn-auth-spinner" aria-hidden="true"></span><span>Iniciando sesión...</span>';
+        }
+        if (overlay) {
+            overlay.classList.add("is-active");
+            overlay.setAttribute("aria-hidden", "false");
+        }
+
+        try {
+            const formData = new FormData(loginForm);
+            const response = await fetch(loginForm.action || window.location.href, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            const htmlText = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, "text/html");
+
+            // Comprobar si hubo error en la autenticación en la respuesta del servidor
+            const errorInResponse = doc.querySelector(".auth-message-slot .msg-error");
+            const hasLoginForm = doc.getElementById("loginForm");
+
+            // El inicio de sesión es exitoso si no devuelve el formulario con mensaje de error
+            const isLoginSuccessful = (!hasLoginForm || (response.redirected && !errorInResponse)) && (!errorInResponse || !errorInResponse.textContent.trim());
+
+            if (isLoginSuccessful) {
+                // ¡CREDENCIALES VÁLIDAS!
+                // La animación ya está activa desde el clic; solo se conserva hasta redirigir.
+                if (overlay) {
+                    overlay.classList.add("is-active");
+                    overlay.setAttribute("aria-hidden", "false");
+                }
+
+                // Tiempo para que el usuario aprecie la transición visual antes de redirigir
+                setTimeout(() => {
+                    window.location.href = response.url || "/";
+                }, 750);
+            } else {
+                // ¡CREDENCIALES INVÁLIDAS!
+                // La animación NO aparece. Se restablece el botón y se muestra el error de credenciales
+                if (submitBtn) {
+                    submitBtn.classList.remove("is-loading");
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = "";
+                    submitBtn.style.cursor = "";
+                    submitBtn.innerHTML = originalBtnHtml;
+                }
+                if (overlay) {
+                    overlay.classList.remove("is-active");
+                    overlay.setAttribute("aria-hidden", "true");
+                }
+
+                const errorMsg = (errorInResponse && errorInResponse.textContent.trim())
+                    ? errorInResponse.textContent.trim()
+                    : "Usuario o contraseña incorrectos";
+
+                if (loginError) {
+                    loginError.textContent = errorMsg;
+                }
+                setFieldError(loginPass, "Verifica tu contraseña");
+            }
+        } catch (err) {
+            console.error("Error al validar credenciales:", err);
+            // Si hay fallo de conexión u otro imprevisto, restaurar botón y enviar de forma estándar
+            if (submitBtn) {
+                submitBtn.classList.remove("is-loading");
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = "";
+                submitBtn.style.cursor = "";
+                submitBtn.innerHTML = originalBtnHtml;
+            }
+            loginForm.submit();
+        }
+    });
+
+    // Restaurar estado si el usuario regresa con el botón Atrás del navegador
+    window.addEventListener("pageshow", function(event) {
+        const overlay = document.getElementById("loginLoadingOverlay");
+        const submitBtn = loginForm.querySelector(".btn-auth");
+
+        if (overlay) {
+            overlay.classList.remove("is-active");
+            overlay.setAttribute("aria-hidden", "true");
+        }
+        if (submitBtn && submitBtn.classList.contains("is-loading")) {
+            submitBtn.classList.remove("is-loading");
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = "";
+            submitBtn.style.cursor = "";
+            submitBtn.innerHTML = "ACCEDER";
+        }
     });
 }
 

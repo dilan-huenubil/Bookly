@@ -13,7 +13,7 @@
 
 {% block content %}
 <main class="content search-page">
-    <div class="content-header{% if not query %} search-header-empty{% endif %}">
+    <div class="content-header{% if not query and not selected_category %} search-header-empty{% endif %}">
         {% if selected_category %}
             <h1 class="title">Libros de {{ selected_category }}</h1>
             <p class="search-status">{{ count }} resultado{{ count|pluralize }} encontrados</p>
