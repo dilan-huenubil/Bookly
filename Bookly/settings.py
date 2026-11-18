@@ -94,7 +94,8 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT'),
         'OPTIONS': {
             'ssl': {'ssl_mode': 'REQUIRED'},
-        }
+        },
+        'CONN_MAX_AGE': 60,
     }
 }
 

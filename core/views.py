@@ -419,16 +419,17 @@ def register(request):
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
 
-        # Validaciones importantes del servidor
-        if User.objects.filter(email=email).exists():
-            return render(request, 'core/register-login.html', {
-                'register_error': 'El correo ya está registrado',
-                'login_error': ''
-            })
+        # OPTIMIZACIÓN: 1 solo viaje a la base de datos de Aiven
+        usuario_existente = User.objects.filter(Q(email=email) | Q(username=username)).first()
 
-        if User.objects.filter(username=username).exists():
+        if usuario_existente:
+            if usuario_existente.email == email:
+                error_msg = 'El correo ya está registrado'
+            else:
+                error_msg = 'El nombre de usuario ya existe'
+
             return render(request, 'core/register-login.html', {
-                'register_error': 'El nombre de usuario ya existe',
+                'register_error': error_msg,
                 'login_error': ''
             })
 
