@@ -5,6 +5,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <main class="admin-page">
     <div class="admin-container">
         <div class="admin-heading-row">
@@ -25,7 +26,7 @@
         {% endif %}
 
         <section class="admin-inventory admin-inventory-wide">
-            <form class="admin-search" method="get" role="search">
+            <form class="admin-search" method="get" action="{% url 'admin_orders' %}" role="search">
                 <label class="sr-only" for="adminOrderSearch">Buscar pedidos</label>
                 <input class="auth-input" id="adminOrderSearch" name="q" value="{{ query }}" placeholder="Buscar por orden, cliente, correo o producto">
                 <button class="btn-primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
@@ -58,7 +59,7 @@
                         <td data-label="Fecha">{{ order.created_at|date:'d/m/Y H:i' }}</td>
                         <td class="admin-row-actions" data-label="Acciones">
                             <a class="icon-action" href="{% url 'admin_order_edit' order.pk %}" title="Editar pedido" aria-label="Editar pedido"><i class="bi bi-pencil"></i></a>
-                            <form method="post" action="{% url 'admin_order_delete' order.pk %}" onsubmit="return confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.');">
+                            <form class="delete-order-form" method="post" action="{% url 'admin_order_delete' order.pk %}">
                                 {% csrf_token %}
                                 <button class="icon-action danger-action" type="submit" title="Eliminar pedido" aria-label="Eliminar pedido"><i class="bi bi-trash3"></i></button>
                             </form>
@@ -80,17 +81,17 @@
             {% if orders.has_other_pages %}
             <nav class="admin-pagination" aria-label="Paginación de pedidos">
                 {% if orders.has_previous %}
-                <a href="?q={{ query|urlencode }}&page={{ orders.previous_page_number }}" aria-label="Página anterior">←</a>
+                <a href="{% url 'admin_orders' %}?q={{ query|urlencode }}&page={{ orders.previous_page_number }}" aria-label="Página anterior">←</a>
                 {% endif %}
                 {% for page_number in pagination_page_numbers %}
-                <a href="?q={{ query|urlencode }}&page={{ page_number }}"
+                <a href="{% url 'admin_orders' %}?q={{ query|urlencode }}&page={{ page_number }}"
                     class="{% if orders.number == page_number %}active{% endif %}"
                     {% if orders.number == page_number %}aria-current="page"{% endif %}>
                     {{ page_number }}
                 </a>
                 {% endfor %}
                 {% if orders.has_next %}
-                <a href="?q={{ query|urlencode }}&page={{ orders.next_page_number }}" aria-label="Página siguiente">→</a>
+                <a href="{% url 'admin_orders' %}?q={{ query|urlencode }}&page={{ orders.next_page_number }}" aria-label="Página siguiente">→</a>
                 {% endif %}
             </nav>
             {% endif %}
@@ -98,7 +99,7 @@
     </div>
 </main>
 
-<div class="book-modal {% if editing_order or form.errors %}is-open{% endif %}" data-order-modal aria-hidden="{% if editing_order or form.errors %}false{% else %}true{% endif %}">
+<div class="book-modal {% if editing_order or form.errors %}is-open{% endif %}" data-order-modal data-list-url="{% url 'admin_orders' %}" aria-hidden="{% if editing_order or form.errors %}false{% else %}true{% endif %}">
     <div class="book-modal-backdrop" data-close-order-modal></div>
     <section class="book-modal-dialog order-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="orderModalTitle">
         <div class="book-modal-header">
@@ -129,12 +130,42 @@
 </div>
 <script>
 (function () {
+    document.querySelectorAll('.delete-order-form').forEach(function (deleteForm) {
+        deleteForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            Swal.fire({
+                title: "¿Estás seguro de eliminar esta orden de compra?",
+                text: "Esta acción no se puede deshacer.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Sí, eliminar",
+                cancelButtonText: "Cancelar"
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: "Pedido eliminado",
+                        text: "La orden de compra fue eliminada correctamente.",
+                        icon: "success",
+                        confirmButtonText: "OK"
+                    }).then(function () {
+                        deleteForm.submit();
+                    });
+                }
+            });
+        });
+    });
+
     const modal = document.querySelector('[data-order-modal]');
     if (!modal) return;
     function closeModal() {
         modal.classList.remove('is-open');
         modal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('modal-open');
+        if (window.location.pathname !== modal.dataset.listUrl) {
+            window.history.replaceState({}, '', modal.dataset.listUrl);
+        }
     }
     document.querySelectorAll('[data-close-order-modal]').forEach(function (button) {
         button.addEventListener('click', closeModal);

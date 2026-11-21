@@ -79,16 +79,34 @@
                 <div class="track-timeline">
                     <div class="track-line"></div>
 
-                    <!-- Paso 1: Preparando -->
-                    <div class="track-step {% if order.tracking_status == 'preparando' or order.tracking_status == 'en_camino' or order.tracking_status == 'entregado' %}completed{% else %}pending{% endif %}">
-                        <div class="track-icon"><i class="bi bi-shop"></i></div>
+                    <!-- Paso 1: Solicitud de compra -->
+                    <div class="track-step {% if order.tracking_status == 'solicitud_compra' or order.tracking_status == 'confirmacion_productos' or order.tracking_status == 'preparando' or order.tracking_status == 'en_camino' or order.tracking_status == 'entregado' %}completed{% else %}pending{% endif %}">
+                        <div class="track-icon"><i class="bi bi-cart-check"></i></div>
                         <div class="track-text">
-                            <strong>Preparando Pedido</strong>
+                            <strong>Solicitud de compra</strong>
                             <span>{{ order.created_at|date:"d/m/Y H:i" }}</span>
                         </div>
                     </div>
 
-                    <!-- Paso 2: En Camino -->
+                    <!-- Paso 2: Confirmación de productos -->
+                    <div class="track-step {% if order.tracking_status == 'confirmacion_productos' or order.tracking_status == 'preparando' or order.tracking_status == 'en_camino' or order.tracking_status == 'entregado' %}completed{% else %}pending{% endif %}">
+                        <div class="track-icon"><i class="bi bi-box-seam"></i></div>
+                        <div class="track-text">
+                            <strong>Confirmación de productos</strong>
+                            <span>{% if order.tracking_status == 'confirmacion_productos' %}Confirmando productos{% elif order.tracking_status == 'preparando' or order.tracking_status == 'en_camino' or order.tracking_status == 'entregado' %}Completado{% else %}Pendiente{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <!-- Paso 3: Preparando -->
+                    <div class="track-step {% if order.tracking_status == 'preparando' or order.tracking_status == 'en_camino' or order.tracking_status == 'entregado' %}completed{% else %}pending{% endif %}">
+                        <div class="track-icon"><i class="bi bi-shop"></i></div>
+                        <div class="track-text">
+                            <strong>Preparando Pedido</strong>
+                            <span>{% if order.tracking_status == 'preparando' %}Preparando{% elif order.tracking_status == 'en_camino' or order.tracking_status == 'entregado' %}Completado{% else %}Pendiente{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <!-- Paso 4: En Camino -->
                     <div class="track-step {% if order.tracking_status == 'en_camino' or order.tracking_status == 'entregado' %}completed{% else %}pending{% endif %}">
                         <div class="track-icon"><i class="bi bi-truck"></i></div>
                         <div class="track-text">
@@ -97,7 +115,7 @@
                         </div>
                     </div>
 
-                    <!-- Paso 3: Entregado -->
+                    <!-- Paso 5: Entregado -->
                     <div class="track-step {% if order.tracking_status == 'entregado' %}completed{% else %}pending{% endif %}">
                         <div class="track-icon"><i class="bi bi-check-lg"></i></div>
                         <div class="track-text">

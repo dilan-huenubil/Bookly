@@ -19,9 +19,9 @@ from django.urls import path,include
 from core import views as core_views
 
 urlpatterns = [
-    path('admin/libros/importar/', core_views.admin_book_import, name='admin_book_import'),
     path('admin/libros/', core_views.admin_books, name='admin_books'),
     path('admin/libros/nuevo/', core_views.admin_book_save, name='admin_book_create'),
+    path('admin/libros/desactivar-varios/', core_views.admin_books_bulk_deactivate, name='admin_books_bulk_deactivate'),
     path('admin/libros/<int:book_id>/editar/', core_views.admin_book_save, name='admin_book_edit'),
     path('admin/libros/<int:book_id>/estado/', core_views.admin_book_toggle, name='admin_book_toggle'),
     path('admin/libros/<int:book_id>/stock/', core_views.admin_book_stock, name='admin_book_stock'),

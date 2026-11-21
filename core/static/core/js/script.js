@@ -373,13 +373,22 @@ function setFieldError(input, message) {
     const error = document.createElement("p");
     error.className = "msg-error";
     error.innerText = message;
-    input.insertAdjacentElement("afterend", error);
+    const fieldContainer = input.parentElement;
+    if (fieldContainer && fieldContainer.classList.contains("auth-password-field")) {
+        fieldContainer.insertAdjacentElement("afterend", error);
+    } else {
+        input.insertAdjacentElement("afterend", error);
+    }
     input.classList.add("input-error");
 }
 
 // Borrar error del input
 function removeFieldError(input) {
-    const next = input.nextElementSibling;
+    const fieldContainer = input.parentElement;
+    const errorAnchor = fieldContainer && fieldContainer.classList.contains("auth-password-field")
+        ? fieldContainer
+        : input;
+    const next = errorAnchor.nextElementSibling;
     if (next && next.classList.contains("msg-error")) {
         next.remove();
     }

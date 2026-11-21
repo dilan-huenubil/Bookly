@@ -4,7 +4,7 @@
 {% block title %}Bookly | Administración de libros{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'core/css/admin.css' %}?v=mobile-actions-20261111">
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}?v=mobile-select-left-20261121">
 <main class="admin-page">
     <div class="admin-container">
         <div class="admin-heading-row">
@@ -14,6 +14,11 @@
             </div>
             <div class="admin-heading-actions">
                 <button class="btn-primary" type="button" data-open-book-modal><i class="bi bi-plus-lg"></i> Nuevo libro</button>
+                {% if status == 'inactive' %}
+                <a class="btn-outline" href="{% url 'admin_books' %}"><i class="bi bi-eye"></i> Ver todos</a>
+                {% else %}
+                <a class="btn-outline" href="{% url 'admin_books' %}?status=inactive"><i class="bi bi-eye-slash"></i> Ver desactivados</a>
+                {% endif %}
                 <a class="btn-outline" href="{% url 'admin_orders' %}"><i class="bi bi-receipt"></i> Administrar pedidos</a>
                 <a class="btn-outline" href="{% url 'index' %}"><i class="bi bi-arrow-left"></i> Volver a la tienda</a>
             </div>
@@ -29,16 +34,44 @@
             <section class="admin-inventory admin-inventory-wide">
                 <form class="admin-search" method="get" role="search">
                     <label class="sr-only" for="adminSearch">Buscar inventario</label>
+                    <input type="hidden" name="status" value="{{ status }}">
                     <input class="auth-input" id="adminSearch" name="q" value="{{ query }}" placeholder="Buscar por título, autor, SKU o categoría">
                     <button class="btn-primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
                 </form>
+                <form class="admin-bulk-form" id="adminBulkDeactivate" method="post" action="{% url 'admin_books_bulk_deactivate' %}" data-bulk-form>
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="{{ status }}">
+                    <input type="hidden" name="action" value="{% if status == 'inactive' %}activate{% else %}deactivate{% endif %}">
+                    <input type="hidden" name="q" value="{{ query }}">
+                    <div class="admin-bulk-actions">
+                        <label class="admin-select-all">
+                            <input type="checkbox" data-select-all-books>
+                            Seleccionar todos
+                        </label>
+                        <button class="btn-outline" type="submit" data-bulk-deactivate disabled>
+                            {% if status == 'inactive' %}
+                            <i class="bi bi-power"></i> Activar seleccionados
+                            {% else %}
+                            <i class="bi bi-power"></i> Desactivar seleccionados
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
                 <div class="admin-table-wrap">
                     <table class="admin-table admin-books-table">
-                        <thead><tr><th>Libro</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <thead><tr><th><span class="sr-only">Seleccionar</span></th><th>Libro</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
                         <tbody>
                         {% for book in books %}
                         <tr class="{% if not book.is_active %}is-inactive{% endif %}">
-                            <td data-label="Libro"><strong>{{ book.title }}</strong><small>{{ book.author }} · {{ book.sku }}</small></td>
+                            <td data-label="Seleccionar">
+                                {% if status == 'inactive' and not book.is_active or status != 'inactive' and book.is_active %}
+                                <input type="checkbox" name="book_ids" value="{{ book.pk }}" form="adminBulkDeactivate" aria-label="Seleccionar {{ book.title }}" data-book-checkbox>
+                                {% endif %}
+                            </td>
+                            <td data-label="Libro">
+                                <strong>{{ book.title }}</strong>
+                                <small class="admin-book-meta"><span class="admin-book-author">{{ book.author }}</span><span class="admin-book-sku">SKU: {{ book.sku }}</span></small>
+                            </td>
                             <td data-label="Precio">
                                 {% if book.price_old %}<small class="admin-old-price">${{ book.price_old }}</small>{% endif %}
                                 <strong>${{ book.price }}</strong>
@@ -52,28 +85,31 @@
                             <td class="admin-row-actions" data-label="Acciones">
                                 <a class="icon-action" href="{% url 'admin_book_edit' book.pk %}" title="Editar {{ book.title }}" aria-label="Editar {{ book.title }}"><i class="bi bi-pencil"></i></a>
                                 <form method="post" action="{% url 'admin_book_toggle' book.pk %}">
-                                    {% csrf_token %}<button class="icon-action" type="submit" title="Cambiar estado" aria-label="Cambiar estado"><i class="bi bi-power"></i></button>
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="{{ status }}">
+                                    <input type="hidden" name="q" value="{{ query }}">
+                                    <button class="icon-action" type="submit" title="Cambiar estado" aria-label="Cambiar estado"><i class="bi bi-power"></i></button>
                                 </form>
                             </td>
                         </tr>
-                        {% empty %}<tr><td colspan="5" class="admin-empty">No hay libros que coincidan con la búsqueda.</td></tr>{% endfor %}
+                        {% empty %}<tr><td colspan="6" class="admin-empty">No hay libros que coincidan con la búsqueda.</td></tr>{% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% if books.has_other_pages %}
                 <nav class="admin-pagination" aria-label="Paginación del inventario">
                     {% if books.has_previous %}
-                    <a href="?q={{ query|urlencode }}&page={{ books.previous_page_number }}" aria-label="Página anterior">←</a>
+                    <a href="?q={{ query|urlencode }}&status={{ status }}&page={{ books.previous_page_number }}" aria-label="Página anterior">←</a>
                     {% endif %}
                     {% for page_number in pagination_page_numbers %}
-                    <a href="?q={{ query|urlencode }}&page={{ page_number }}"
+                    <a href="?q={{ query|urlencode }}&status={{ status }}&page={{ page_number }}"
                         class="{% if books.number == page_number %}active{% endif %}"
                         {% if books.number == page_number %}aria-current="page"{% endif %}>
                         {{ page_number }}
                     </a>
                     {% endfor %}
                     {% if books.has_next %}
-                    <a href="?q={{ query|urlencode }}&page={{ books.next_page_number }}" aria-label="Página siguiente">→</a>
+                    <a href="?q={{ query|urlencode }}&status={{ status }}&page={{ books.next_page_number }}" aria-label="Página siguiente">→</a>
                     {% endif %}
                 </nav>
                 {% endif %}
@@ -82,7 +118,7 @@
     </div>
 </main>
 
-<div class="book-modal {% if editing_book or form.errors %}is-open{% endif %}" data-book-modal data-create-url="{% url 'admin_book_create' %}" data-import-url="{% url 'admin_book_import' %}" aria-hidden="{% if editing_book or form.errors %}false{% else %}true{% endif %}">
+<div class="book-modal {% if editing_book or form.errors %}is-open{% endif %}" data-book-modal data-create-url="{% url 'admin_book_create' %}" aria-hidden="{% if editing_book or form.errors %}false{% else %}true{% endif %}">
     <div class="book-modal-backdrop" data-close-book-modal></div>
     <section class="book-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle">
         <div class="book-modal-header">
@@ -95,16 +131,6 @@
         <form method="post" action="{% if editing_book %}{% url 'admin_book_edit' editing_book.pk %}{% else %}{% url 'admin_book_create' %}{% endif %}" data-book-form>
             {% csrf_token %}
             {{ form.non_field_errors }}
-            {% if not editing_book %}
-            <div class="book-import">
-                <label for="bookImportUrl">Importar desde Feria Chilena del Libro</label>
-                <div class="book-import-row">
-                    <input class="auth-input" id="bookImportUrl" type="url" placeholder="https://feriachilenadellibro.cl/producto/...">
-                    <button class="btn-outline" type="button" data-import-book>Completar datos</button>
-                </div>
-                <small class="stock-status" data-import-status aria-live="polite"></small>
-            </div>
-            {% endif %}
             <div class="admin-form-grid">
                 {% for field in form %}
                 <div class="admin-field {% if field.name == 'description' or field.name == 'image_url' %}admin-field-wide{% endif %}{% if editing_book and field.name == 'stock' or editing_book and field.name == 'is_active' %} book-field-edit-hidden{% endif %}">
@@ -126,10 +152,6 @@
     const modal = document.querySelector('[data-book-modal]');
     const openButton = document.querySelector('[data-open-book-modal]');
     const closeButtons = document.querySelectorAll('[data-close-book-modal]');
-    const importButton = document.querySelector('[data-import-book]');
-    const importUrl = document.getElementById('bookImportUrl');
-    const importStatus = document.querySelector('[data-import-status]');
-
     function openModal() {
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
@@ -161,58 +183,49 @@
         openModal();
     });
     closeButtons.forEach(function (button) { button.addEventListener('click', closeModal); });
-    if (importButton) importButton.addEventListener('click', function () {
-        const url = importUrl.value.trim();
-        if (!url) {
-            importStatus.textContent = 'Ingresa una URL primero.';
-            importStatus.className = 'stock-status is-error';
-            return;
-        }
-        importButton.disabled = true;
-        importStatus.textContent = 'Consultando ficha...';
-        importStatus.className = 'stock-status';
-        const body = new URLSearchParams({url: url, csrfmiddlewaretoken: csrf});
-        fetch(modal.dataset.importUrl, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: {'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrf},
-            body: body
-        })
-            .then(function (response) {
-                return response.text().then(function (text) {
-                    let data;
-                    try {
-                        data = JSON.parse(text);
-                    } catch (error) {
-                        throw new Error(
-                            response.status === 403
-                                ? 'La sesión o el token de seguridad expiró. Recarga la página e inténtalo nuevamente.'
-                                : 'El servidor devolvió una respuesta inesperada (' + response.status + ').'
-                        );
-                    }
-                    return {ok: response.ok, data: data};
-                });
-            })
-            .then(function (result) {
-                if (!result.ok) throw new Error(result.data.error || 'No se pudieron importar los datos.');
-                Object.keys(result.data).forEach(function (name) {
-                    const field = document.getElementById('id_' + name);
-                    if (field && result.data[name] !== null && result.data[name] !== '') field.value = result.data[name];
-                });
-                importStatus.textContent = 'Datos completados. Revísalos antes de guardar.';
-                importStatus.className = 'stock-status is-ok';
-            })
-            .catch(function (error) {
-                importStatus.textContent = error.message;
-                importStatus.className = 'stock-status is-error';
-            })
-            .finally(function () { importButton.disabled = false; });
-    });
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape' && modal.classList.contains('is-open')) closeModal();
     });
 
     if (modal.classList.contains('is-open')) document.body.classList.add('modal-open');
+
+    const bulkForm = document.querySelector('[data-bulk-form]');
+    if (bulkForm) {
+        const selectAll = bulkForm.querySelector('[data-select-all-books]');
+        const bookCheckboxes = document.querySelectorAll('[data-book-checkbox]');
+        const bulkButton = bulkForm.querySelector('[data-bulk-deactivate]');
+
+        function updateBulkSelection() {
+            const selectedCount = document.querySelectorAll('[data-book-checkbox]:checked').length;
+            bulkButton.disabled = selectedCount === 0;
+            if (bookCheckboxes.length) {
+                selectAll.checked = selectedCount === bookCheckboxes.length;
+                selectAll.indeterminate = selectedCount > 0 && selectedCount < bookCheckboxes.length;
+            } else {
+                selectAll.checked = false;
+                selectAll.disabled = true;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                bookCheckboxes.forEach(function (checkbox) {
+                    checkbox.checked = selectAll.checked;
+                });
+                updateBulkSelection();
+            });
+        }
+        bookCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', updateBulkSelection);
+        });
+        bulkForm.addEventListener('submit', function (event) {
+            const selectedCount = document.querySelectorAll('[data-book-checkbox]:checked').length;
+            if (!selectedCount) {
+                event.preventDefault();
+            }
+        });
+        updateBulkSelection();
+    }
 
     const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
     document.querySelectorAll('.stock-input').forEach(function (input) {

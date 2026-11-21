@@ -61,6 +61,8 @@ class Order(models.Model):
     )
 
     TRACKING_CHOICES = (
+        ('solicitud_compra', 'Solicitud de compra'),
+        ('confirmacion_productos', 'Confirmación de productos'),
         ('preparando', 'Preparando Pedido'),
         ('en_camino', 'En Camino'),
         ('entregado', 'Entregado'),
@@ -85,7 +87,7 @@ class Order(models.Model):
     status = models.CharField("Estado", max_length=16, choices=STATUS_CHOICES, default='created')
     confirmation_reached = models.BooleanField("Llegó a confirmación", default=False)
     stock_updated = models.BooleanField("Stock actualizado", default=False)
-    tracking_status = models.CharField("Estado de seguimiento", max_length=20, choices=TRACKING_CHOICES, default='preparando')
+    tracking_status = models.CharField("Estado de seguimiento", max_length=30, choices=TRACKING_CHOICES, default='solicitud_compra')
     estimated_delivery_date = models.DateField("Fecha estimada de entrega", blank=True, null=True)
     created_at = models.DateTimeField("Creado el", auto_now_add=True)
     updated_at = models.DateTimeField("Actualizado el", auto_now=True)

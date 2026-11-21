@@ -50,18 +50,19 @@
             </div>
 
             <nav class="cuenta-nav">
-                <!-- Compras -->
-                <a href="{% url 'mis_pedidos' %}"
-                    class="{% if request.resolver_match.url_name == 'mis_pedidos' %}active{% endif %}">
-                    <i class="bi bi-box-seam"></i> Mis compras realizadas
-                </a>
-
 
                 <!-- Mi Perfil -->
                 <a href="{% url 'mi_perfil' %}"
                     class="{% if request.resolver_match.url_name == 'mi_perfil' %}active{% endif %}">
                     <i class="bi bi-person"></i> Mi perfil
                 </a>
+
+                <!-- Compras -->
+                <a href="{% url 'mis_pedidos' %}"
+                    class="{% if request.resolver_match.url_name == 'mis_pedidos' %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i> Mis compras realizadas
+                </a>
+
 
                 <!-- Mi Contraseña (asumiendo que crearás una url llamada 'mi_contrasena' después) -->
                 <a href="{% url 'mi_contrasena' %}"

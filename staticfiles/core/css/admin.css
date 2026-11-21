@@ -1,4 +1,4 @@
-﻿.admin-page {
+.admin-page {
     padding: 34px 20px 70px;
     background: var(--ed-bg);
     min-height: 70vh;
@@ -30,6 +30,11 @@
 .admin-actions { margin-top: 18px; flex-wrap: wrap; }
 .admin-messages { margin-bottom: 18px; padding: 12px 16px; border-left: 4px solid var(--autumn-terracotta); background: #fff; color: var(--autumn-ink); }
 .admin-search { margin-bottom: 14px; }
+.admin-bulk-form { margin-bottom: 14px; }
+.admin-bulk-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.admin-select-all { display: inline-flex; align-items: center; gap: 8px; color: var(--autumn-ink); font-weight: 700; }
+.admin-select-all input, .admin-books-table input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--autumn-terracotta); }
+.admin-bulk-actions .btn-outline:disabled { opacity: .45; cursor: not-allowed; }
 .admin-search .auth-input { width: 100%; min-width: 0; }
 .admin-search .btn-primary { min-width: 100px; white-space: nowrap; }
 .admin-table-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--autumn-line); box-shadow: 0 4px 12px rgba(0, 0, 0, .05); }
@@ -185,6 +190,13 @@
     .admin-heading-actions .btn-primary, .admin-heading-actions .btn-outline { flex: 1; }
     .admin-search { align-items: center; flex-direction: row; }
     .admin-search .btn-primary { width: auto; flex-shrink: 0; }
+    .admin-bulk-actions {
+        align-items: center;
+    }
+    .admin-bulk-actions .btn-outline {
+        margin-left: auto;
+        white-space: nowrap;
+    }
     .book-modal { padding: 12px; }
     .book-modal-dialog { max-height: calc(100vh - 24px); padding: 20px; }
 }
@@ -379,33 +391,62 @@ body,
 
 .admin-books-table th:nth-child(1),
 .admin-books-table td:nth-child(1) {
-    width: 46%;
+    width: 44px;
+    padding-left: 8px;
+    padding-right: 8px;
+    text-align: center;
 }
 
 .admin-books-table th:nth-child(2),
 .admin-books-table td:nth-child(2) {
-    width: 13%;
+    width: 38%;
 }
 
 .admin-books-table th:nth-child(3),
 .admin-books-table td:nth-child(3) {
-    width: 12%;
+    width: 13%;
 }
 
 .admin-books-table th:nth-child(4),
 .admin-books-table td:nth-child(4) {
-    width: 13%;
+    width: 12%;
 }
 
 .admin-books-table th:nth-child(5),
 .admin-books-table td:nth-child(5) {
-    width: 16%;
+    width: 12%;
 }
 
-.admin-books-table td:first-child strong,
-.admin-books-table td:first-child small {
+.admin-books-table th:nth-child(6),
+.admin-books-table td:nth-child(6) {
+    width: 170px;
+}
+
+.admin-books-table td:nth-child(2) strong,
+.admin-books-table td:nth-child(2) small {
     overflow-wrap: anywhere;
     word-break: break-word;
+}
+
+.admin-books-table td:nth-child(2) strong,
+.admin-books-table td:nth-child(2) .admin-book-meta {
+    display: block;
+}
+
+.admin-books-table td:nth-child(2) .admin-book-meta {
+    margin-top: 5px;
+    white-space: nowrap;
+}
+
+.admin-books-table td:nth-child(2) .admin-book-author,
+.admin-books-table td:nth-child(2) .admin-book-sku {
+    display: inline;
+}
+
+.admin-books-table td:nth-child(2) .admin-book-sku {
+    margin-left: 16px;
+    color: #71645a;
+    font-size: 12px;
 }
 
 @media (max-width: 900px) {
@@ -424,6 +465,10 @@ body,
         overflow: visible;
     }
 
+    .admin-bulk-actions {
+        flex-wrap: wrap;
+    }
+
     .admin-table {
         display: block;
         width: 100%;
@@ -439,7 +484,9 @@ body,
     }
 
     .admin-table tbody tr:not(.admin-order-details) {
-        display: block;
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         margin-bottom: 12px;
         border: 1px solid var(--autumn-line);
         border-radius: 8px;
@@ -449,8 +496,8 @@ body,
 
     .admin-table tbody tr:not(.admin-order-details) td {
         display: grid;
-        grid-template-columns: 88px minmax(0, 1fr);
-        gap: 10px;
+        grid-template-columns: 1fr;
+        gap: 6px;
         width: 100%;
         min-width: 0;
         padding: 10px 12px;
@@ -465,6 +512,48 @@ body,
         font-weight: 800;
         letter-spacing: .04em;
         text-transform: uppercase;
+    }
+
+    .admin-books-table tbody tr:not(.admin-order-details) td:nth-child(1) {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 2;
+        display: block;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        text-align: left;
+    }
+
+    .admin-books-table tbody tr:not(.admin-order-details) td:nth-child(1)::before {
+        display: none;
+    }
+
+    .admin-books-table tbody tr:not(.admin-order-details) td:nth-child(2) {
+        grid-column: 1 / -1;
+        min-height: 82px;
+        padding: 14px 12px 12px 48px;
+    }
+
+    .admin-books-table tbody tr:not(.admin-order-details) td:nth-child(2)::before {
+        display: none;
+    }
+
+    .admin-books-table tbody tr:not(.admin-order-details) td:nth-child(3),
+    .admin-books-table tbody tr:not(.admin-order-details) td:nth-child(4),
+    .admin-books-table tbody tr:not(.admin-order-details) td:nth-child(5) {
+        border-top: 1px solid var(--autumn-line);
+        border-right: 1px solid var(--autumn-line);
+    }
+
+    .admin-books-table tbody tr:not(.admin-order-details) td:nth-child(5) {
+        border-right: 0;
+    }
+
+    .admin-books-table tbody tr:not(.admin-order-details) td:nth-child(6) {
+        grid-column: 1 / -1;
+        border-top: 1px solid var(--autumn-line);
     }
 
     .admin-table td.admin-row-actions {
@@ -505,6 +594,27 @@ body,
     .admin-books-table .stock-input {
         width: min(100%, 94px);
         min-width: 0;
+    }
+
+    .admin-books-table td[data-label="Libro"] strong {
+        font-size: 16px;
+        line-height: 1.35;
+    }
+
+    .admin-books-table td[data-label="Libro"] small {
+        margin-top: 6px;
+        line-height: 1.45;
+    }
+
+    .admin-books-table td[data-label="Precio"],
+    .admin-books-table td[data-label="Stock"],
+    .admin-books-table td[data-label="Estado"] {
+        min-height: 78px;
+    }
+
+    .admin-books-table td[data-label="Acciones"] {
+        min-height: 54px;
+        justify-content: flex-start;
     }
 
     .admin-table tbody tr.admin-order-details {

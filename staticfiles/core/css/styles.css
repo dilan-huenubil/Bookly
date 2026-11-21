@@ -5312,6 +5312,165 @@ body {
     height: 676px;
 }
 
+/* Confirmación del envío de recuperación de contraseña */
+.password-reset-done-page {
+    flex: 1 0 auto;
+    min-height: calc(100vh - 72px);
+    padding: 62px 20px 72px;
+    background: #fff;
+}
+
+.password-reset-done {
+    width: min(100%, 680px);
+    margin: 0 auto;
+    color: var(--ed-ink);
+    font-family: var(--ed-sans);
+}
+
+.password-reset-done__intro {
+    text-align: center;
+}
+
+.password-reset-done__intro h1 {
+    margin: 0;
+    font-family: var(--ed-serif);
+    font-size: clamp(2.4rem, 5vw, 3.35rem);
+    font-weight: 400;
+}
+
+.password-reset-done__intro p {
+    margin: 12px 0 0;
+    font-size: 15px;
+}
+
+.password-reset-done__steps {
+    margin-top: 40px;
+}
+
+.password-reset-done__steps h2 {
+    margin: 0 0 18px;
+    font-family: var(--ed-serif);
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.password-reset-done__steps ol {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.password-reset-done__steps li {
+    display: grid;
+    grid-template-columns: 29px 1fr;
+    gap: 8px;
+    align-items: start;
+}
+
+.password-reset-done__step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 29px;
+    height: 29px;
+    border-radius: 50%;
+    background: var(--ed-brown-lt);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.password-reset-done__steps h3 {
+    margin: 1px 0 6px;
+    font-family: var(--ed-sans);
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.password-reset-done__steps p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+.password-reset-done__notice {
+    margin: 48px auto 0;
+    max-width: 425px;
+    padding: 10px 18px;
+    border: 2px solid #b68b4c;
+    border-radius: 8px;
+    background: #fff1d2;
+    color: var(--ed-ink);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.password-reset-done__actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 17px;
+}
+
+.password-reset-done__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 205px;
+    min-height: 35px;
+    padding: 7px 18px;
+    border-radius: 999px;
+    background: var(--ed-ink);
+    box-shadow: 0 3px 6px rgba(28, 21, 18, .2);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.password-reset-done__button:hover {
+    background: var(--ed-brown);
+    color: #fff;
+}
+
+@media (max-width: 700px) {
+    .password-reset-done-page {
+        padding: 42px 20px 56px;
+    }
+
+    .password-reset-done__steps ol {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        max-width: 360px;
+        margin: 0 auto;
+    }
+
+    .password-reset-done__notice {
+        margin-top: 34px;
+    }
+}
+
+@media (max-width: 480px) {
+    .password-reset-done__intro p {
+        font-size: 14px;
+    }
+
+    .password-reset-done__actions {
+        flex-direction: column;
+        align-items: stretch;
+        max-width: 280px;
+        margin-right: auto;
+        margin-left: auto;
+    }
+}
+
 @media (max-width: 760px) {
     .auth-page {
         min-height: auto;

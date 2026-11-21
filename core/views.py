@@ -18,9 +18,7 @@ import requests
 import time
 import uuid
 import json
-from html.parser import HTMLParser
-from html import unescape
-from urllib.parse import urlparse
+from urllib.parse import urlencode
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import update_session_auth_hash, views as auth_views
 from django.contrib.auth.forms import PasswordChangeForm
@@ -59,7 +57,14 @@ def pagination_window(page_obj, window_size=5):
 
 def admin_books_page(request):
     query = request.GET.get('q', '').strip()
+    status = request.GET.get('status', 'all').strip().lower()
+    if status not in {'all', 'active', 'inactive'}:
+        status = 'all'
     books = Book.objects.all().order_by('-is_active', '-updated_at')
+    if status == 'active':
+        books = books.filter(is_active=True)
+    elif status == 'inactive':
+        books = books.filter(is_active=False)
     if query:
         books = books.filter(
             Q(title__icontains=query) |
@@ -69,7 +74,7 @@ def admin_books_page(request):
         )
     paginator = Paginator(books, 5)
     page_obj = paginator.get_page(request.GET.get('page'))
-    return page_obj, query, pagination_window(page_obj)
+    return page_obj, query, status, pagination_window(page_obj)
 
 
 def admin_orders_page(request):
@@ -85,171 +90,6 @@ def admin_orders_page(request):
     paginator = Paginator(orders, 15)
     page_obj = paginator.get_page(request.GET.get('page'))
     return page_obj, query, pagination_window(page_obj)
-
-
-class FeriaBookParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.meta = {}
-        self.text_parts = []
-        self.image_url = ''
-        self.heading = ''
-        self.in_heading = False
-        self.in_json_ld = False
-        self.json_ld = ''
-
-    def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
-        if tag == 'meta' and attrs.get('property', '').startswith('og:'):
-            self.meta[attrs['property']] = attrs.get('content', '').strip()
-        if tag == 'img' and not self.image_url and attrs.get('class', '').find('wp-post-image') >= 0:
-            self.image_url = attrs.get('src', '')
-        if tag == 'script' and attrs.get('type') == 'application/ld+json':
-            self.in_json_ld = True
-        if tag == 'h1':
-            self.in_heading = True
-
-    def handle_endtag(self, tag):
-        if tag == 'script':
-            self.in_json_ld = False
-        if tag == 'h1':
-            self.in_heading = False
-
-    def handle_data(self, data):
-        if self.in_heading and not self.heading:
-            self.heading = ' '.join(data.split())
-        if self.in_json_ld:
-            self.json_ld += data
-        else:
-            text = ' '.join(data.split())
-            if text:
-                self.text_parts.append(text)
-
-
-def _feria_number(value):
-    match = re.search(r'[\d.]+', value or '')
-    return int(match.group(0).replace('.', '')) if match else None
-
-
-def _feria_book_data(url):
-    parsed = urlparse(url)
-    if parsed.scheme not in ('http', 'https') or parsed.netloc.lower() != 'feriachilenadellibro.cl':
-        raise ValueError('La URL debe pertenecer a feriachilenadellibro.cl.')
-
-    response = requests.get(
-        url,
-        headers={'User-Agent': 'Bookly inventory importer'},
-        timeout=10,
-    )
-    response.raise_for_status()
-    response.encoding = 'utf-8'
-    parser = FeriaBookParser()
-    parser.feed(response.text)
-    text = ' '.join(parser.text_parts)
-    title = parser.heading or parser.meta.get('og:title', '')
-    if not title:
-        title_match = re.search(r'(?<!Autor: )(?<!/ )([A-ZÁÉÍÓÚÑ][^|]{2,100}) Autor:', text)
-        title = title_match.group(1).strip() if title_match else ''
-
-    def field(label, next_label):
-        match = re.search(
-            rf'{re.escape(label)}:\s*(.*?)(?=\s+{re.escape(next_label)}:)',
-            text,
-            re.IGNORECASE,
-        )
-        return match.group(1).strip() if match else ''
-
-    sku_match = re.search(r'(?:SKU|ISBN):\s*([0-9X-]{10,17})', text, re.IGNORECASE)
-    if not sku_match:
-        sku_match = re.search(r'/producto/([0-9X-]+)-', url, re.IGNORECASE)
-    price_match = re.search(r'Precio Internet:\s*\$?\s*([\d.]+)', text, re.IGNORECASE)
-    description_match = re.search(
-        r'id=["\']tab-description["\'][^>]*>(.*?)(?=</div>\s*<div[^>]+id=["\']tab-additional_information["\'])',
-        response.text,
-        re.IGNORECASE | re.DOTALL,
-    )
-    description = ''
-    if description_match:
-        description = re.sub(r'<[^>]+>', ' ', description_match.group(1))
-        description = re.sub(r'\s+', ' ', unescape(description)).strip()
-        if title and description.casefold().startswith(title.casefold()):
-            description = description[len(title):].lstrip(' .:-')
-        description = re.split(r'\s+Adquiera\s+', description, maxsplit=1, flags=re.IGNORECASE)[0].strip()
-    if not description:
-        description = parser.meta.get('og:description', '')
-    data = {
-        'title': title,
-        'author': field('Autor', 'Editorial'),
-        'editorial': field('Editorial', 'Encuadernación'),
-        'binding': field('Encuadernación', 'Precio Internet'),
-        'sku': sku_match.group(1).replace('-', '').upper() if sku_match else '',
-        'price': int(price_match.group(1).replace('.', '')) if price_match else None,
-        'description': description,
-        'image_url': parser.meta.get('og:image', '') or parser.image_url,
-    }
-    def attribute_value(attribute):
-        match = re.search(
-            rf'product-attributes-item--{attribute}[^>]*>.*?'
-            r'woocommerce-product-attributes-item__value[^>]*>(.*?)</td>',
-            response.text,
-            re.IGNORECASE | re.DOTALL,
-        )
-        if not match:
-            return ''
-        value = re.sub(r'<[^>]+>', ' ', unescape(match.group(1)))
-        return re.sub(r'\s+', ' ', value).strip()
-
-    weight = attribute_value('weight')
-    dimensions = attribute_value('dimensions')
-    language = attribute_value('attribute_pa_idioma')
-    pages = attribute_value('attribute_pa_paginas')
-    year = attribute_value('attribute_pa_ano-edicion')
-    if weight:
-        data['weight_kg'] = weight.replace(' kg', '').replace(',', '.').strip()
-    if dimensions:
-        data['dimensions'] = dimensions.replace('×', 'x').strip()
-    if language:
-        data['language'] = language
-    if pages:
-        data['pages'] = pages
-    if year:
-        data['year'] = year
-    category_html = re.search(
-        r'<span[^>]+class=["\'][^"\']*posted_in[^"\']*["\'][^>]*>(.*?)</span>',
-        response.text,
-        re.IGNORECASE | re.DOTALL,
-    )
-    if category_html:
-        category_links = re.findall(
-            r'<a[^>]*>(.*?)</a>',
-            category_html.group(1),
-            re.IGNORECASE | re.DOTALL,
-        )
-        categories = [
-            re.sub(r'\s+', ' ', unescape(re.sub(r'<[^>]+>', '', value))).strip()
-            for value in category_links
-        ]
-        if categories:
-            data['category'] = categories[-1]
-
-    tags_html = re.search(
-        r'<span[^>]+class=["\'][^"\']*tagged_as[^"\']*["\'][^>]*>(.*?)</span>',
-        response.text,
-        re.IGNORECASE | re.DOTALL,
-    )
-    if tags_html:
-        tag_links = re.findall(
-            r'<a[^>]*>(.*?)</a>',
-            tags_html.group(1),
-            re.IGNORECASE | re.DOTALL,
-        )
-        tags = [
-            re.sub(r'\s+', ' ', unescape(re.sub(r'<[^>]+>', '', value))).strip()
-            for value in tag_links
-        ]
-        if tags:
-            data['tags'] = ', '.join(tags)
-    return data
 
 
 def send_password_changed_email(user):
@@ -666,30 +506,14 @@ def analiticas(request):
 @login_required
 @admin_required
 def admin_books(request):
-    books, query, pagination_page_numbers = admin_books_page(request)
+    books, query, status, pagination_page_numbers = admin_books_page(request)
     return render(request, 'core/admin_books.html', {
         'books': books,
         'form': BookAdminForm(),
         'query': query,
+        'status': status,
         'pagination_page_numbers': pagination_page_numbers,
     })
-
-
-@login_required
-@admin_required
-def admin_book_import(request):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Método no permitido.'}, status=405)
-    url = request.POST.get('url', '').strip()
-    if not url:
-        return JsonResponse({'error': 'Ingresa la URL de una ficha de producto.'}, status=400)
-    try:
-        data = _feria_book_data(url)
-    except (ValueError, requests.RequestException) as error:
-        return JsonResponse({'error': str(error)}, status=400)
-    if not data.get('title') or not data.get('sku'):
-        return JsonResponse({'error': 'No se pudo identificar el título o ISBN del libro.'}, status=422)
-    return JsonResponse(data)
 
 
 @login_required
@@ -698,12 +522,13 @@ def admin_book_save(request, book_id=None):
     book = get_object_or_404(Book, pk=book_id) if book_id else None
 
     if request.method == 'GET':
-        books, query, pagination_page_numbers = admin_books_page(request)
+        books, query, status, pagination_page_numbers = admin_books_page(request)
         return render(request, 'core/admin_books.html', {
             'books': books,
             'form': BookAdminForm(instance=book),
             'editing_book': book,
             'query': query,
+            'status': status,
             'pagination_page_numbers': pagination_page_numbers,
         })
 
@@ -715,12 +540,13 @@ def admin_book_save(request, book_id=None):
         form.save()
         messages.success(request, 'Libro guardado correctamente.')
         return redirect('admin_books')
-    books, query, pagination_page_numbers = admin_books_page(request)
+    books, query, status, pagination_page_numbers = admin_books_page(request)
     return render(request, 'core/admin_books.html', {
         'books': books,
         'form': form,
         'editing_book': book,
         'query': query,
+        'status': status,
         'pagination_page_numbers': pagination_page_numbers,
     }, status=400)
 
@@ -734,7 +560,50 @@ def admin_book_toggle(request, book_id):
     book.is_active = not book.is_active
     book.save(update_fields=['is_active', 'updated_at'])
     messages.success(request, 'Estado del libro actualizado.')
-    return redirect('admin_books')
+    status = request.POST.get('status', 'all')
+    query = request.POST.get('q', '').strip()
+    redirect_url = '/admin/libros/?status=' + status
+    if query:
+        redirect_url += '&q=' + query
+    return redirect(redirect_url)
+
+
+@login_required
+@admin_required
+def admin_books_bulk_deactivate(request):
+    if request.method != 'POST':
+        return redirect('admin_books')
+
+    book_ids = request.POST.getlist('book_ids')
+    status = request.POST.get('status', 'all')
+    action = request.POST.get('action')
+    if action not in {'activate', 'deactivate'}:
+        action = 'activate' if status == 'inactive' else 'deactivate'
+
+    updated = 0
+    if book_ids:
+        if action == 'activate':
+            updated = Book.objects.filter(pk__in=book_ids, is_active=False).update(is_active=True)
+        else:
+            updated = Book.objects.filter(pk__in=book_ids, is_active=True).update(is_active=False)
+
+    if updated:
+        if action == 'activate':
+            messages.success(request, f'{updated} libro(s) activado(s) correctamente.')
+        else:
+            messages.success(request, f'{updated} libro(s) desactivado(s) correctamente.')
+    elif action == 'activate':
+        messages.warning(request, 'No seleccionaste libros inactivos para activar.')
+    else:
+        messages.warning(request, 'No seleccionaste libros activos para desactivar.')
+
+    params = {
+        'status': status,
+    }
+    query = request.POST.get('q', '').strip()
+    if query:
+        params['q'] = query
+    return redirect('/admin/libros/?' + urlencode(params))
 
 
 @login_required
@@ -1191,6 +1060,7 @@ def pago_create(request):
         currency='CLP',
         email=buyer_email,
         status='created',
+        tracking_status='solicitud_compra',
         coupon_code=applied_coupon_code,
         first_item_title=first_title,
         shipping_name=(shipping.name if shipping else None),
@@ -1267,10 +1137,67 @@ def flow_return(request):
     token = request.GET.get('token') or request.POST.get('token')
     if not token:
         return redirect('pago')
-    print('[Flow] RETURN hit:', request.build_absolute_uri())
-    print('[Flow] RETURN method:', request.method)
-    print('[Flow] RETURN params GET:', dict(request.GET))
-    return redirect(f"/confirmacion_pedido/?token={token}")
+
+    api_key = settings.FLOW_API_KEY
+    secret = settings.FLOW_SECRET
+    base_url = settings.FLOW_BASE_URL
+    params = {'apiKey': api_key, 'token': token}
+    params['s'] = _flow_sign(params, secret)
+
+    try:
+        resp = requests.get(f"{base_url}/payment/getStatus", params=params, timeout=10)
+        data = resp.json()
+    except Exception:
+        return redirect('pago')
+
+    if resp.status_code != 200 or not isinstance(data, dict):
+        return redirect('pago')
+
+    try:
+        order = Order.objects.select_related('user').get(flow_token=token)
+    except Order.DoesNotExist:
+        return redirect('pago')
+
+    flow_status = data.get('status')
+    if flow_status != 2:
+        return redirect('pago')
+
+    with transaction.atomic():
+        order = Order.objects.select_for_update().select_related('user').get(pk=order.pk)
+        if order.status != 'paid':
+            order.status = 'paid'
+            order.tracking_status = 'solicitud_compra'
+        order.flow_order = str(data.get('flowOrder', order.flow_order))
+        order.confirmation_reached = True
+
+        if not order.stock_updated:
+            for item in order.items.select_related('book').all():
+                book = Book.objects.select_for_update().get(pk=item.book_id)
+                book.stock = max(0, book.stock - item.quantity)
+                book.save(update_fields=['stock', 'updated_at'])
+            order.stock_updated = True
+
+        order.save(update_fields=[
+            'status',
+            'tracking_status',
+            'flow_order',
+            'confirmation_reached',
+            'stock_updated',
+            'updated_at',
+        ])
+
+    if order.coupon_code and order.user:
+        CouponRedemption.objects.get_or_create(
+            user=order.user,
+            code=order.coupon_code,
+        )
+
+    request.session['ultima_orden_id'] = order.id
+
+    if not request.user.is_authenticated and order.user:
+        login(request, order.user, backend='core.auth_backends.UsernameOrEmailBackend')
+
+    return redirect('confirmacion_pedido')
 
 
 def flow_callback(request):
@@ -1305,10 +1232,12 @@ def flow_callback(request):
 
     try:
         order = Order.objects.get(flow_token=token)
-        if order.status != 'paid' or mapped == 'paid':
+        if order.status != 'paid':
             order.status = mapped
+            if mapped == 'paid':
+                order.tracking_status = 'solicitud_compra'
         order.flow_order = str(data.get('flowOrder', order.flow_order))
-        order.save(update_fields=['status', 'flow_order'])
+        order.save(update_fields=['status', 'tracking_status', 'flow_order'])
 
 
         if order.status == 'paid' and getattr(order, 'coupon_code', None):
@@ -1390,43 +1319,21 @@ def delete_address(request, address_id: int):
     addr.delete()
     return redirect('checkout')
 
+@login_required
 def confirmacion_pedido(request):
-    token = request.GET.get('token')
-    order = None
+    order_id = request.session.get('ultima_orden_id')
+    if not order_id:
+        raise PermissionDenied('No hay una orden confirmada disponible.')
 
+    try:
+        order = Order.objects.select_related('user').get(
+            pk=order_id,
+            user=request.user,
+        )
+    except Order.DoesNotExist:
+        raise PermissionDenied('No tienes permiso para ver esta orden.')
 
-    if token:
-        try:
-            with transaction.atomic():
-                order = Order.objects.select_for_update().get(flow_token=token)
-                if not order.confirmation_reached:
-                    order.confirmation_reached = True
-                if order.status == 'created':
-                    order.status = 'paid'
-                if not order.stock_updated:
-                    for item in order.items.all():
-                        book = Book.objects.select_for_update().get(pk=item.book_id)
-                        book.stock = max(0, book.stock - item.quantity)
-                        book.save(update_fields=['stock', 'updated_at'])
-                    order.stock_updated = True
-                order.save(update_fields=[
-                    'status',
-                    'confirmation_reached',
-                    'stock_updated',
-                    'updated_at',
-                ])
-
-            if not request.user.is_authenticated:
-                if order.user:
-                    login(request, order.user, backend='django.contrib.auth.backends.ModelBackend')
-                    print(f"[Auto-Login] Sesión recuperada exitosamente para: {order.user.username}")
-        except Order.DoesNotExist:
-            order = None
-
-    if not request.user.is_authenticated and not order:
-        return redirect('index')
-
-    if order and getattr(order, 'coupon_code', None) and order.user:
+    if getattr(order, 'coupon_code', None):
         try:
             CouponRedemption.objects.get_or_create(
                 user=order.user,
