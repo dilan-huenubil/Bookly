@@ -248,6 +248,28 @@ class CheckoutAuthenticationTests(TestCase):
         self.assertContains(response, 'id="loginForm"', html=False)
         self.assertNotContains(response, 'id="registerForm"', html=False)
 
+    def test_successful_registration_redirects_to_login_with_message(self):
+        response = self.client.post('/register/', {
+            'form_type': 'register',
+            'username': 'nuevo_usuario',
+            'email': 'nuevo@example.com',
+            'password1': 'ValidPassword1!',
+            'password2': 'ValidPassword1!',
+        })
+
+        self.assertRedirects(
+            response,
+            '/login/',
+            fetch_redirect_response=False,
+        )
+
+        login_response = self.client.get('/login/')
+        self.assertContains(
+            login_response,
+            'Usuario creado correctamente. Ahora puedes iniciar sesión.',
+            html=False,
+        )
+
 
 class AccountDeletionTests(TestCase):
     def setUp(self):
@@ -298,6 +320,28 @@ class AccountDeletionTests(TestCase):
         call_command('cleanup_deleted_accounts')
 
         self.assertFalse(User.objects.filter(pk=self.user.pk).exists())
+
+
+class FlowBuyerDataTests(TestCase):
+    def test_optional_buyer_data_uses_authenticated_user(self):
+        from .views import _flow_optional_buyer_data
+
+        user = User.objects.create_user(
+            username='comprador',
+            email='comprador@example.com',
+            password='ValidPassword1!',
+            first_name='Raul',
+            last_name='Gonzales',
+        )
+        user.profile.rut = '2222222-2'
+        user.profile.save()
+
+        optional = _flow_optional_buyer_data(user)
+
+        self.assertEqual(optional, {
+            'nombre': 'Raul Gonzales',
+            'rut': '2222222-2',
+        })
 
 
 class OrderConfirmationTests(TestCase):

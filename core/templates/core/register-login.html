@@ -29,6 +29,9 @@
                         {% if login_error %}
                             <p class="msg-error">{{ login_error }}</p>
                         {% endif %}
+                        {% for message in messages %}
+                            <p class="{% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">{{ message }}</p>
+                        {% endfor %}
                         <p id="loginError" class="msg-error"></p>
                     </div>
 
@@ -66,9 +69,6 @@
                     <div class="auth-message-slot">
                         {% if register_error %}
                             <p class="msg-error">{{ register_error }}</p>
-                        {% endif %}
-                        {% if success %}
-                            <p class="msg-success">{{ success }}</p>
                         {% endif %}
                         <p id="registerError" class="msg-error"></p>
                     </div>

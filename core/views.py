@@ -296,12 +296,8 @@ def register(request):
             password=password1,
             email=email
         )
-
-        return render(request, 'core/register-login.html', {
-            'success': 'Usuario creado correctamente. Ahora puedes iniciar sesión.',
-            'register_error': '',
-            'login_error': ''
-        })
+        messages.success(request, 'Usuario creado correctamente. Ahora puedes iniciar sesión.')
+        return redirect('login')
 
     # LOGIN
     elif form_type == "login":
@@ -902,6 +898,25 @@ def _flow_sign(params: dict, secret: str) -> str:
     return hmac.new(secret.encode('utf-8'), data.encode('utf-8'), hashlib.sha256).hexdigest()
 
 
+def _flow_optional_buyer_data(user):
+    optional = {}
+
+    buyer_name = (user.get_full_name() or '').strip()
+    if not buyer_name:
+        buyer_name = (user.username or '').strip()
+    if buyer_name:
+        optional['Nombre Comprador'] = buyer_name
+
+    try:
+        buyer_rut = (user.profile.rut or '').strip()
+    except ObjectDoesNotExist:
+        buyer_rut = ''
+    if buyer_rut:
+        optional['RUT Comprador'] = buyer_rut
+
+    return optional
+
+
 def _parse_cart_payload(request):
     raw_cart = request.GET.get('cart') or request.POST.get('cart')
 
@@ -1092,6 +1107,13 @@ def pago_create(request):
         'urlConfirmation': callback_url,
         'commerceOrder': commerce_order,
     }
+    optional_buyer_data = _flow_optional_buyer_data(request.user)
+    if optional_buyer_data:
+        params['optional'] = json.dumps(
+            optional_buyer_data,
+            ensure_ascii=False,
+            separators=(',', ':'),
+        )
 
     s = _flow_sign(params, secret)
     payload = dict(params)
