@@ -98,7 +98,7 @@
                     <a href="{% url 'libro_detalles' related.sku %}"><img src="{{ related.image_url|default:'https://via.placeholder.com/200x300?text=Sin+imagen' }}" alt="{{ related.title }}"></a>
                     <h3>{{ related.title }}</h3>
                     <p>Precio: <span>${{ related.price|intcomma }}</span></p>
-                    <a href="{% url 'libro_detalles' related.sku %}" class="btn-primary" style="display:inline-block; padding:8px 12px; margin-top:6px;">Ver</a>
+                    <a href="{% url 'libro_detalles' related.sku %}" class="btn-primary related-action">Ver</a>
                 </div>
                 {% empty %}
                 <p>No hay relacionados.</p>

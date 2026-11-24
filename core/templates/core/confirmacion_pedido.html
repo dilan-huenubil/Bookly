@@ -3,65 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>¡Pago Exitoso! - Bookly</title>
+    <title>Pedido Confirmado - Bookly</title>
     {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'core/images/favicon.ico' %}">
     <link rel="stylesheet" href="{% static 'core/css/styles2.css' %}">
 </head>
-<body class="confirmation-page">
+<body>
 
-    <div class="confirmation-card">
-        <div class="success-icon">✓</div>
-
-        <h1>¡Gracias por tu compra en Bookly!</h1>
-        <p class="subtitle">Tu pedido ha sido procesado exitosamente.</p>
-
-        <div class="order-details">
-            <div class="detail-row">
-                <span>Orden:</span>
-                <strong>{{ commerce_order|default:'#—' }}</strong>
-            </div>
-            <div class="detail-row">
-                <span>Fecha:</span>
-                <span id="fecha-actual"></span>
-            </div>
-            <div class="detail-row">
-                <span>Comprador:</span>
-                <span>{{ buyer_name|default:'-' }}</span>
-            </div>
-            
-            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
-            
-            <ul class="book-list" id="confirmCartList">
-                <li>Cargando productos de tu pedido...</li>
-            </ul>
-
-            <div class="detail-row" id="discount-row" style="display:none;">
-                <span>Descuento:</span>
-                <span id="discount-amount"></span>
-            </div>
-
-            <div class="detail-row" id="shipping-row" style="display:none;">
-                <span>Envío:</span>
-                <span id="shipping-amount"></span>
-            </div>
-
-            <div class="detail-row total">
-                <span>Total Pagado:</span>
-                <span>${{ amount }}</span>
-            </div>
-
-            <p class="subtitle" style="margin-top: 8px; text-align: center; font-size: 0.9rem; color: #555;">
-                Se enviará un comprobante de tu compra a tu correo electrónico.
-            </p>
-        </div>
-
-        <div class="btn-group">
-            <a href="#" class="btn btn-secondary" onclick="window.print()">Descargar</a>
-            <a href="/" class="btn btn-primary" id="btn-go-home">Inicio</a>
-        </div>
+    <!-- Top Bar -->
+    <div class="confirm-topbar">
+        <span class="confirm-topbar__title">Pedido Confirmado</span>
+        <span class="confirm-topbar__logo"><a href="/">( / )</a></span>
+        <span class="confirm-topbar__secure">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Compra 100% Segura
+        </span>
     </div>
 
-    <script src="{% static 'core/js/script2.js' %}"></script>
+    <!-- Main Content -->
+    <div class="confirm-container">
+
+        <!-- Success Icon -->
+        <div class="success-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+
+        <h1 class="confirm-heading">¡Gracias por tu compra en Bookly!</h1>
+        <p class="confirm-subtitle">Recibimos tu orden y tu pedido ha sido procesado exitosamente.</p>
+
+        <!-- Steps -->
+        <h2 class="steps-title">Próximos pasos de tu pedido:</h2>
+        <div class="steps-row">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-text">Te enviaremos un correo confirmando tu compra y otro con tu pago virtual.</div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-text">Nos comunicaremos contigo cuando tus pedidos con despacho a domicilio estén en camino a tu dirección.</div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-text">Recibirás un correo cuando entreguemos tu pedido.</div>
+            </div>
+        </div>
+
+        <!-- Order Data Card -->
+        <div class="order-card">
+            <div class="order-card__header">Datos de la compra</div>
+            <div class="order-card__body">
+                <div class="order-card__left">
+                    <div class="order-info-row">
+                        <span class="label">Orden:</span>
+                        <span class="value">{{ commerce_order|default:'#—' }}</span>
+                    </div>
+                    <div class="order-info-row">
+                        <span class="label">Fecha:</span>
+                        <span class="value" id="fecha-actual"></span>
+                    </div>
+                    <div class="order-info-row">
+                        <span class="label">Comprador:</span>
+                        <span class="value">{{ buyer_name|default:'-' }}</span>
+                    </div>
+                    <div style="margin-top: 14px;">
+                        <div class="order-articles-title">Artículos:</div>
+                        <ul id="confirmCartList" data-server-items="{% if order_items_summary %}1{% else %}0{% endif %}" style="list-style: none; padding: 0; margin: 0;">
+                            {% if order_items_summary %}
+                                {% for item in order_items_summary %}
+                                <li class="order-article-item">
+                                    {{ item.title|upper }}{% if item.quantity > 1 %} (x{{ item.quantity }}){% endif %} | ${{ item.line_total }}
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                            <li class="order-article-item">Cargando productos de tu pedido...</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="order-card__right">
+                    <div class="order-total-label">Total Pagado:</div>
+                    <div class="order-total-amount">${{ amount }}</div>
+
+                    <div id="discount-row" style="display:none; margin-top: 6px;">
+                        <span style="font-size: 13px; color: #7A6E65;">Descuento: </span>
+                        <span id="discount-amount" style="font-size: 13px; font-weight: 600; color: var(--autumn-terracotta);"></span>
+                    </div>
+
+                    <div id="shipping-row" style="display:none; margin-top: 4px;">
+                        <span style="font-size: 13px; color: #7A6E65;">Envío: </span>
+                        <span id="shipping-amount" style="font-size: 13px; font-weight: 600;"></span>
+                    </div>
+
+                    <p class="order-email-note">
+                        Se enviará un comprobante de tu compra<br>
+                        a tu correo electrónico
+                        {% if order and order.email %}
+                            <a href="mailto:{{ order.email }}" class="order-email-link">{{ order.email }}</a>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Info Box -->
+        <div class="info-box">
+            Recuerda que puedes seguir el estado de tus compras hechas<br>
+            en Bookly en la sección <a href="{% url 'mis_pedidos' %}">Mis Pedidos</a>.
+        </div>
+
+        <!-- Buttons -->
+        <div class="btn-row">
+            <a href="#" class="btn-confirm btn-confirm--secondary" onclick="window.print(); return false;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Descargar Comprobante
+            </a>
+            <a href="/" class="btn-confirm btn-confirm--primary" id="btn-go-home">
+                Ir al inicio →
+            </a>
+        </div>
+
+    </div>
+
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         var listEl = document.getElementById('confirmCartList');
@@ -88,65 +159,60 @@
             catch (e) { return String(n || 0); }
         }
 
-
         var activeCoupon = null;
         try {
             activeCoupon = JSON.parse(localStorage.getItem('booklyCoupon') || 'null');
         } catch (e) {
             activeCoupon = null;
         }
-        var hasBookly10 = activeCoupon && activeCoupon.code && activeCoupon.code.toLowerCase() === 'bookly10';
+        var couponRate = activeCoupon && activeCoupon.code && activeCoupon.code.toLowerCase() === 'bookly15' ? 0.15 : 0.10;
+        var hasCoupon = activeCoupon && activeCoupon.code && (activeCoupon.code.toLowerCase() === 'bookly10' || activeCoupon.code.toLowerCase() === 'bookly15');
 
-        var raw = localStorage.getItem('booklyCart') || localStorage.getItem('bookly_cart') || '[]';
-        var items;
-        try { items = JSON.parse(raw || '[]'); } catch (e) { items = []; }
+        var hasServerItems = listEl.getAttribute('data-server-items') === '1';
+        if (!hasServerItems) {
+            var raw = localStorage.getItem('booklyCart') || localStorage.getItem('bookly_cart') || '[]';
+            var items;
+            try { items = JSON.parse(raw || '[]'); } catch (e) { items = []; }
 
-        listEl.innerHTML = '';
-        if (!Array.isArray(items) || !items.length) {
-            var li = document.createElement('li');
-            li.textContent = 'No se encontraron productos en tu carrito.';
-            listEl.appendChild(li);
-            return;
-        }
-
-        var discountTotal = 0;
-
-        items.forEach(function (it) {
-            var qty = parseInt(it.qty || 1, 10) || 1;
-            var price = parseInt(it.price || 0, 10) || 0;
-            var line = qty * price;
-            var li = document.createElement('li');
-            var name = (it.title || it.nombre || it.name || 'Producto');
-            var nameSpan = document.createElement('span');
-            nameSpan.textContent = name + (qty > 1 ? ' (x' + qty + ')' : '');
-            var priceStrong = document.createElement('strong');
-            priceStrong.textContent = '$' + fmtCL(line);
-            li.appendChild(nameSpan);
-            li.appendChild(priceStrong);
-            listEl.appendChild(li);
-
-
-            if (hasBookly10 && price > 0) {
-                discountTotal += Math.round(price * 0.10);
+            listEl.innerHTML = '';
+            if (!Array.isArray(items) || !items.length) {
+                var li = document.createElement('li');
+                li.className = 'order-article-item';
+                li.textContent = 'No se encontraron productos en tu carrito.';
+                listEl.appendChild(li);
+                return;
             }
-        });
 
+            var discountTotal = 0;
 
-        var discountRow = document.getElementById('discount-row');
-        var discountAmountEl = document.getElementById('discount-amount');
-        if (discountRow && discountAmountEl && discountTotal > 0) {
-            discountAmountEl.textContent = '-$' + fmtCL(discountTotal);
-            discountRow.style.display = 'flex';
-        }
+            items.forEach(function (it) {
+                var qty = parseInt(it.qty || 1, 10) || 1;
+                var price = parseInt(it.price || 0, 10) || 0;
+                var line = qty * price;
+                var li = document.createElement('li');
+                li.className = 'order-article-item';
+                var name = (it.title || it.nombre || it.name || 'Producto').toUpperCase();
+                li.textContent = name + (qty > 1 ? ' (x' + qty + ')' : '') + ' | $' + fmtCL(line);
+                listEl.appendChild(li);
 
+                if (hasCoupon && price > 0) discountTotal += Math.round(price * couponRate);
+            });
 
-        var shipRow = document.getElementById('shipping-row');
-        var shipAmountEl = document.getElementById('shipping-amount');
-        if (shipRow && shipAmountEl) {
-            var ship = parseInt(localStorage.getItem('booklyShipping') || '0', 10) || 0;
-            if (ship > 0) {
-                shipAmountEl.textContent = '$' + fmtCL(ship);
-                shipRow.style.display = 'flex';
+            var discountRow = document.getElementById('discount-row');
+            var discountAmountEl = document.getElementById('discount-amount');
+            if (discountRow && discountAmountEl && discountTotal > 0) {
+                discountAmountEl.textContent = '-$' + fmtCL(discountTotal);
+                discountRow.style.display = 'block';
+            }
+
+            var shipRow = document.getElementById('shipping-row');
+            var shipAmountEl = document.getElementById('shipping-amount');
+            if (shipRow && shipAmountEl) {
+                var ship = parseInt(localStorage.getItem('booklyShipping') || '0', 10) || 0;
+                if (ship > 0) {
+                    shipAmountEl.textContent = '$' + fmtCL(ship);
+                    shipRow.style.display = 'block';
+                }
             }
         }
 
@@ -158,8 +224,7 @@
                     localStorage.removeItem('bookly_cart');
                     localStorage.removeItem('booklyShipping');
                     localStorage.removeItem('booklyCoupon');
-                } catch (err) {
-                }
+                } catch (err) {}
             });
         }
     });

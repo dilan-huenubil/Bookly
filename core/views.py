@@ -6,9 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.utils import timezone
-from django.db.models import Q
+from datetime import timedelta
+from django.db.models import Case, CharField, Count, Max, Q, Sum, Value, When
+from django.db.models.functions import TruncMonth
 import re
 import hmac
 import hashlib
@@ -16,17 +18,216 @@ import requests
 import time
 import uuid
 import json
+from urllib.parse import urlencode
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import update_session_auth_hash, views as auth_views
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from functools import wraps
 
-from .models import Order, Address, Book, CouponRedemption
+from .models import (
+    Order,
+    OrderItem,
+    Address,
+    Book,
+    CouponRedemption,
+    Profile,
+)
+from .forms import BookAdminForm, OrderAdminForm
+from django.core.paginator import Paginator
 
 # Create your views here.
 
+ORDER_PAYMENT_TIMEOUT = timedelta(minutes=15)
+COUPON_DISCOUNTS = {'bookly10': 10, 'bookly15': 15}
+
+
+def pagination_window(page_obj, window_size=5):
+    """Return a sliding page-number window with at most five entries."""
+    window_size = min(window_size, 5)
+    page_count = page_obj.paginator.num_pages
+    start = max(1, page_obj.number - window_size // 2)
+    end = min(page_count, start + window_size - 1)
+    start = max(1, end - window_size + 1)
+    return range(start, end + 1)
+
+
+def admin_books_page(request):
+    query = request.GET.get('q', '').strip()
+    status = request.GET.get('status', 'all').strip().lower()
+    if status not in {'all', 'active', 'inactive'}:
+        status = 'all'
+    books = Book.objects.all().order_by('-is_active', '-updated_at')
+    if status == 'active':
+        books = books.filter(is_active=True)
+    elif status == 'inactive':
+        books = books.filter(is_active=False)
+    if query:
+        books = books.filter(
+            Q(title__icontains=query) |
+            Q(author__icontains=query) |
+            Q(sku__icontains=query) |
+            Q(category__icontains=query)
+        )
+    paginator = Paginator(books, 5)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return page_obj, query, status, pagination_window(page_obj)
+
+
+def admin_orders_page(request):
+    query = request.GET.get('q', '').strip()
+    orders = Order.objects.select_related('user').prefetch_related('items__book').order_by('-created_at')
+    if query:
+        orders = orders.filter(
+            Q(commerce_order__icontains=query) |
+            Q(first_item_title__icontains=query) |
+            Q(email__icontains=query) |
+            Q(user__username__icontains=query)
+        )
+    paginator = Paginator(orders, 15)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return page_obj, query, pagination_window(page_obj)
+
+
+def send_password_changed_email(user):
+    context = {'user': user}
+    text_body = render_to_string(
+        'core/password_changed_email.txt',
+        context,
+    )
+    html_body = render_to_string(
+        'core/password_changed_email.html',
+        context,
+    )
+    email = EmailMultiAlternatives(
+        subject='Tu contraseña de Bookly fue actualizada',
+        body=text_body,
+        to=[user.email],
+    )
+    email.attach_alternative(html_body, 'text/html')
+    email.send(fail_silently=False)
+
+
+class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        send_password_changed_email(self.user)
+        return response
+
+
+def coupon_was_used(user, code):
+    return (
+        CouponRedemption.objects.filter(user=user, code__iexact=code).exists() or
+        Order.objects.filter(user=user, coupon_code__iexact=code).exists()
+    )
+
+
+def cancel_expired_orders(user=None):
+    expiration_time = timezone.now() - ORDER_PAYMENT_TIMEOUT
+    expired_orders = Order.objects.filter(
+        status='created',
+        confirmation_reached=False,
+        created_at__lt=expiration_time,
+    )
+    if user is not None:
+        expired_orders = expired_orders.filter(user=user)
+    return expired_orders.update(status='canceled', updated_at=timezone.now())
+
 def index(request):
-    books = Book.objects.order_by('-created_at')
-    return render(request, 'core/index.html', { 'books': books })
+    books = Book.objects.filter(is_active=True).order_by('-created_at')
+    price_filter = request.GET.get('price', 'all')
+    price_filters = {
+        '0-15000': {'price__lte': 15000},
+        '15000-30000': {'price__gt': 15000, 'price__lte': 30000},
+        '30000-60000': {'price__gt': 30000, 'price__lte': 60000},
+        '60000-plus': {'price__gt': 60000},
+    }
+    if price_filter not in price_filters and price_filter != 'all':
+        price_filter = 'all'
+    if price_filter in price_filters:
+        books = books.filter(**price_filters[price_filter])
+    books_paginator = Paginator(books, 15)
+    books_page = books_paginator.get_page(request.GET.get('page'))
+    pagination_page_numbers = pagination_window(books_page)
+    recommendations = []
+    section_title = 'Los libros más vendidos'
+
+    if request.user.is_authenticated:
+        purchased_book_ids = OrderItem.objects.filter(
+            order__user=request.user,
+            order__status='paid',
+        ).values_list('book_id', flat=True)
+
+        if purchased_book_ids.exists():
+            section_title = 'Basado en tus compras recientes'
+            purchased_categories = Book.objects.filter(
+                pk__in=purchased_book_ids,
+            ).values_list('category', flat=True).distinct()
+
+            recommendations = list(
+                Book.objects.filter(
+                    recommendations_to__book_id__in=purchased_book_ids,
+                    category__in=purchased_categories,
+                    is_active=True,
+                    stock__gt=0,
+                )
+                .exclude(pk__in=purchased_book_ids)
+                .annotate(recommendation_score=Max('recommendations_to__score'))
+                .distinct()
+                .order_by('-recommendation_score', '-created_at')[:6]
+            )
+
+            if len(recommendations) < 6:
+                excluded_book_ids = list(purchased_book_ids) + [
+                    book.pk for book in recommendations
+                ]
+                recommendations.extend(
+                    Book.objects.filter(
+                        category__in=purchased_categories,
+                        is_active=True,
+                        stock__gt=0,
+                    )
+                    .exclude(pk__in=excluded_book_ids)
+                    .annotate(
+                        total_vendidos=Count(
+                            'orderitem',
+                            filter=Q(orderitem__order__status='paid'),
+                        )
+                    )
+                    .order_by('-total_vendidos', '-created_at')[
+                        :6 - len(recommendations)
+                    ]
+                )
+
+    if not recommendations:
+        section_title = 'Los libros más vendidos'
+        recommendations = list(
+            Book.objects.filter(
+                is_active=True,
+                stock__gt=0,
+            )
+            .annotate(
+                total_vendidos=Count(
+                    'orderitem',
+                    filter=Q(orderitem__order__status='paid'),
+                )
+            )
+            .order_by('-total_vendidos', '-created_at')[:6]
+        )
+
+    return render(request, 'core/index.html', {
+        'books': books_page,
+        'recommendations': recommendations,
+        'section_title': section_title,
+        'price_filter': price_filter,
+        'pagination_page_numbers': pagination_page_numbers,
+    })
 
 def libro_detalles(request, sku: str):
-    book = get_object_or_404(Book, sku=sku)
+    book = get_object_or_404(Book, sku=sku, is_active=True)
     tags_list = []
     if book.tags:
         tags_list = [t.strip() for t in book.tags.split(',') if t.strip()]
@@ -58,16 +259,17 @@ def register(request):
         password1 = request.POST.get('password1')
         password2 = request.POST.get('password2')
 
-        # Validaciones importantes del servidor
-        if User.objects.filter(email=email).exists():
-            return render(request, 'core/register-login.html', {
-                'register_error': 'El correo ya está registrado',
-                'login_error': ''
-            })
+        # OPTIMIZACIÓN: 1 solo viaje a la base de datos de Aiven
+        usuario_existente = User.objects.filter(Q(email=email) | Q(username=username)).first()
 
-        if User.objects.filter(username=username).exists():
+        if usuario_existente:
+            if usuario_existente.email == email:
+                error_msg = 'El correo ya está registrado'
+            else:
+                error_msg = 'El nombre de usuario ya existe'
+
             return render(request, 'core/register-login.html', {
-                'register_error': 'El nombre de usuario ya existe',
+                'register_error': error_msg,
                 'login_error': ''
             })
 
@@ -94,12 +296,8 @@ def register(request):
             password=password1,
             email=email
         )
-
-        return render(request, 'core/register-login.html', {
-            'success': 'Usuario creado correctamente. Ahora puedes iniciar sesión.',
-            'register_error': '',
-            'login_error': ''
-        })
+        messages.success(request, 'Usuario creado correctamente. Ahora puedes iniciar sesión.')
+        return redirect('login')
 
     # LOGIN
     elif form_type == "login":
@@ -117,6 +315,11 @@ def register(request):
             })
 
         login(request, user)
+        profile = getattr(user, 'profile', None)
+        if profile and profile.deletion_requested_at is not None:
+            profile.deletion_requested_at = None
+            profile.save(update_fields=['deletion_requested_at'])
+            messages.success(request, 'Tu cuenta fue recuperada correctamente.')
 
         if next_url and url_has_allowed_host_and_scheme(
             url=next_url,
@@ -135,8 +338,359 @@ def contacto(request):
     return render(request, 'core/contacto.html')
 
 
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(f'{settings.LOGIN_URL}?next={request.path}')
+        is_admin = request.user.is_superuser or request.user.is_staff
+        try:
+            is_admin = is_admin or request.user.profile.role == 'admin'
+        except ObjectDoesNotExist:
+            pass
+        if not is_admin:
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapped
+
+
+def analytics_admin_required(view_func):
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.error(request, 'Debes iniciar sesión para acceder a Analíticas.')
+            return redirect(f'{settings.LOGIN_URL}?next={request.path}')
+
+        is_admin = request.user.is_superuser or request.user.is_staff
+        try:
+            is_admin = is_admin or request.user.profile.role == 'admin'
+        except ObjectDoesNotExist:
+            pass
+
+        if not is_admin:
+            messages.error(request, 'No tienes permisos para acceder a Analíticas.')
+            return redirect('index')
+        return view_func(request, *args, **kwargs)
+    return wrapped
+
+
+@analytics_admin_required
+def analiticas(request):
+    filtered_orders = Order.objects.all()
+    available_years = [
+        value.year
+        for value in Order.objects.dates('created_at', 'year', order='DESC')
+    ]
+    available_months = [
+        {'value': value, 'label': label}
+        for value, label in enumerate(
+            (
+                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre',
+                'Diciembre',
+            ),
+            start=1,
+        )
+    ]
+
+    selected_year = None
+    selected_month = None
+    try:
+        requested_year = int(request.GET.get('anio', ''))
+        if requested_year in available_years:
+            selected_year = requested_year
+    except (TypeError, ValueError):
+        pass
+    try:
+        requested_month = int(request.GET.get('mes', ''))
+        if 1 <= requested_month <= 12:
+            selected_month = requested_month
+    except (TypeError, ValueError):
+        pass
+
+    if selected_year is not None:
+        filtered_orders = filtered_orders.filter(created_at__year=selected_year)
+    if selected_month is not None:
+        filtered_orders = filtered_orders.filter(created_at__month=selected_month)
+
+    paid_orders = filtered_orders.filter(status='paid')
+
+    total_revenue = paid_orders.aggregate(total=Sum('amount'))['total'] or 0
+    total_orders = paid_orders.count()
+    total_units = OrderItem.objects.filter(order__in=paid_orders).aggregate(
+        total=Sum('quantity'),
+    )['total'] or 0
+
+    top_books = list(
+        Book.objects.filter(orderitem__order__in=paid_orders)
+        .annotate(
+            units_sold=Sum(
+                'orderitem__quantity',
+                filter=Q(orderitem__order__in=paid_orders),
+            ),
+        )
+        .filter(units_sold__isnull=False)
+        .order_by('-units_sold', 'title')[:10]
+        .values('title', 'units_sold')
+    )
+
+    monthly_rows = (
+        paid_orders
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(revenue=Sum('amount'))
+        .order_by('month')
+    )
+    monthly_revenue = [
+        {
+            'label': row['month'].strftime('%m/%Y'),
+            'revenue': row['revenue'],
+        }
+        for row in monthly_rows
+    ]
+
+    status_rows = (
+        filtered_orders
+        .annotate(
+            analytics_status=Case(
+                When(status__in=('canceled', 'error'), then=Value('Cancelado')),
+                When(
+                    tracking_status__in=('en_camino', 'preparando'),
+                    then=Value('En Camino'),
+                ),
+                default=Value('Pagada'),
+                output_field=CharField(),
+            ),
+        )
+        .values('analytics_status')
+        .annotate(total=Count('id'))
+    )
+    status_labels = ('Pagada', 'En Camino', 'Cancelado')
+    status_totals_by_label = {
+        row['analytics_status']: row['total']
+        for row in status_rows
+    }
+    order_status_totals = [
+        status_totals_by_label.get(label, 0)
+        for label in status_labels
+    ]
+    status_total = sum(order_status_totals)
+    order_status_percentages = [
+        round(total * 100 / status_total, 1) if status_total else 0
+        for total in order_status_totals
+    ]
+
+    critical_inventory = Book.objects.filter(stock__lte=5).order_by('stock')[:5]
+
+    return render(request, 'core/analiticas.html', {
+        'total_revenue': total_revenue,
+        'total_orders': total_orders,
+        'total_units': total_units,
+        'top_books': top_books,
+        'monthly_revenue': monthly_revenue,
+        'available_years': available_years,
+        'available_months': available_months,
+        'selected_year': selected_year,
+        'selected_month': selected_month,
+        'order_status_labels': status_labels,
+        'order_status_totals': order_status_totals,
+        'order_status_percentages': order_status_percentages,
+        'critical_inventory': critical_inventory,
+    })
+
+
+@login_required
+@admin_required
+def admin_books(request):
+    books, query, status, pagination_page_numbers = admin_books_page(request)
+    return render(request, 'core/admin_books.html', {
+        'books': books,
+        'form': BookAdminForm(),
+        'query': query,
+        'status': status,
+        'pagination_page_numbers': pagination_page_numbers,
+    })
+
+
+@login_required
+@admin_required
+def admin_book_save(request, book_id=None):
+    book = get_object_or_404(Book, pk=book_id) if book_id else None
+
+    if request.method == 'GET':
+        books, query, status, pagination_page_numbers = admin_books_page(request)
+        return render(request, 'core/admin_books.html', {
+            'books': books,
+            'form': BookAdminForm(instance=book),
+            'editing_book': book,
+            'query': query,
+            'status': status,
+            'pagination_page_numbers': pagination_page_numbers,
+        })
+
+    if request.method != 'POST':
+        return redirect('admin_books')
+
+    form = BookAdminForm(request.POST, instance=book)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Libro guardado correctamente.')
+        return redirect('admin_books')
+    books, query, status, pagination_page_numbers = admin_books_page(request)
+    return render(request, 'core/admin_books.html', {
+        'books': books,
+        'form': form,
+        'editing_book': book,
+        'query': query,
+        'status': status,
+        'pagination_page_numbers': pagination_page_numbers,
+    }, status=400)
+
+
+@login_required
+@admin_required
+def admin_book_toggle(request, book_id):
+    if request.method != 'POST':
+        return redirect('admin_books')
+    book = get_object_or_404(Book, pk=book_id)
+    book.is_active = not book.is_active
+    book.save(update_fields=['is_active', 'updated_at'])
+    messages.success(request, 'Estado del libro actualizado.')
+    status = request.POST.get('status', 'all')
+    query = request.POST.get('q', '').strip()
+    redirect_url = '/admin/libros/?status=' + status
+    if query:
+        redirect_url += '&q=' + query
+    return redirect(redirect_url)
+
+
+@login_required
+@admin_required
+def admin_books_bulk_deactivate(request):
+    if request.method != 'POST':
+        return redirect('admin_books')
+
+    book_ids = request.POST.getlist('book_ids')
+    status = request.POST.get('status', 'all')
+    action = request.POST.get('action')
+    if action not in {'activate', 'deactivate'}:
+        action = 'activate' if status == 'inactive' else 'deactivate'
+
+    updated = 0
+    if book_ids:
+        if action == 'activate':
+            updated = Book.objects.filter(pk__in=book_ids, is_active=False).update(is_active=True)
+        else:
+            updated = Book.objects.filter(pk__in=book_ids, is_active=True).update(is_active=False)
+
+    if updated:
+        if action == 'activate':
+            messages.success(request, f'{updated} libro(s) activado(s) correctamente.')
+        else:
+            messages.success(request, f'{updated} libro(s) desactivado(s) correctamente.')
+    elif action == 'activate':
+        messages.warning(request, 'No seleccionaste libros inactivos para activar.')
+    else:
+        messages.warning(request, 'No seleccionaste libros activos para desactivar.')
+
+    params = {
+        'status': status,
+    }
+    query = request.POST.get('q', '').strip()
+    if query:
+        params['q'] = query
+    return redirect('/admin/libros/?' + urlencode(params))
+
+
+@login_required
+@admin_required
+def admin_book_stock(request, book_id):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido.'}, status=405)
+    book = get_object_or_404(Book, pk=book_id)
+    try:
+        stock = int(request.POST.get('stock', ''))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'El stock debe ser un número entero.'}, status=400)
+    if stock < 0:
+        return JsonResponse({'error': 'El stock no puede ser negativo.'}, status=400)
+    book.stock = stock
+    book.save(update_fields=['stock', 'updated_at'])
+    return JsonResponse({'stock': book.stock})
+
+
+@login_required
+@admin_required
+def admin_orders(request):
+    orders, query, pagination_page_numbers = admin_orders_page(request)
+    return render(request, 'core/admin_orders.html', {
+        'orders': orders,
+        'query': query,
+        'pagination_page_numbers': pagination_page_numbers,
+        'form': OrderAdminForm(),
+    })
+
+
+@login_required
+@admin_required
+def admin_order_edit(request, order_id):
+    order = get_object_or_404(Order.objects.select_related('user'), pk=order_id)
+    if request.method == 'GET':
+        orders, query, pagination_page_numbers = admin_orders_page(request)
+        return render(request, 'core/admin_orders.html', {
+            'orders': orders,
+            'query': query,
+            'pagination_page_numbers': pagination_page_numbers,
+            'form': OrderAdminForm(instance=order),
+            'editing_order': order,
+        })
+    if request.method != 'POST':
+        return redirect('admin_orders')
+    form = OrderAdminForm(request.POST, instance=order)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Pedido actualizado correctamente.')
+        return redirect('admin_orders')
+    orders, query, pagination_page_numbers = admin_orders_page(request)
+    return render(request, 'core/admin_orders.html', {
+        'orders': orders,
+        'query': query,
+        'pagination_page_numbers': pagination_page_numbers,
+        'form': form,
+        'editing_order': order,
+    }, status=400)
+
+
+@login_required
+@admin_required
+def admin_order_delete(request, order_id):
+    if request.method != 'POST':
+        return redirect('admin_orders')
+    order = get_object_or_404(Order, pk=order_id)
+    order.delete()
+    messages.success(request, 'Pedido eliminado correctamente.')
+    return redirect('admin_orders')
+
+
 def logout_view(request):
     logout(request)
+    return redirect('index')
+
+
+@login_required
+def delete_account(request):
+    if request.method != 'POST':
+        return redirect('mi_perfil')
+
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    profile.deletion_requested_at = timezone.now()
+    profile.save(update_fields=['deletion_requested_at'])
+    logout(request)
+    messages.success(
+        request,
+        'Tu cuenta se eliminará definitivamente en 30 días. '
+        'Inicia sesión antes de esa fecha para recuperarla.',
+    )
     return redirect('index')
 
 
@@ -146,6 +700,7 @@ def checkout(request):
 
     if request.method == 'POST':
         action = request.POST.get('action', 'save_address')
+
         if action == 'save_address':
             addr_id = request.POST.get('address_id')
             name = (request.POST.get('name') or '').strip()
@@ -183,14 +738,16 @@ def checkout(request):
                 addr.save(update_fields=['is_default'])
 
             return redirect('checkout')
+
         elif action == 'save_user':
             first_name = (request.POST.get('first_name') or '').strip()
             last_name = (request.POST.get('last_name') or '').strip()
             phone = (request.POST.get('phone') or '').strip()
             email = (request.POST.get('email') or '').strip()
             rut = (request.POST.get('rut') or '').strip()
+            doc_type = (request.POST.get('doc_type') or 'RUT').strip() 
 
-
+            # 1. Guardar datos nativos del User
             if first_name:
                 user.first_name = first_name
             if last_name:
@@ -199,11 +756,21 @@ def checkout(request):
                 user.email = email
             user.save()
 
+            # 2. Guardar datos extendidos en Profile (Creándolo si no existe)
+            try:
+                perfil = user.profile
+            except ObjectDoesNotExist:
+                perfil = Profile.objects.create(user=user)
 
             if rut:
-                request.session['checkout_rut'] = rut
+                perfil.rut = rut
+            if phone:
+                perfil.phone = phone
+            if doc_type:
+                perfil.doc_type = doc_type
+            perfil.save()
 
-
+            # 3. Mantener sincronizado el teléfono en la dirección de envío por defecto
             if phone:
                 default_addr = Address.objects.filter(user=user, address_type='shipping', is_default=True).first()
                 if default_addr:
@@ -212,16 +779,22 @@ def checkout(request):
 
             return redirect('checkout')
 
-
-    coupon_already_used = (
-        CouponRedemption.objects.filter(user=user, code__iexact='Bookly10').exists() or
-        Order.objects.filter(user=user, coupon_code__iexact='Bookly10').exists()
-    )
-
+    coupon_already_used = coupon_was_used(user, 'Bookly10')
+    coupon15_already_used = coupon_was_used(user, 'Bookly15')
 
     addresses = Address.objects.filter(user=user, address_type='shipping').order_by('-is_default', '-updated_at')
-    default_address = addresses.filter(is_default=True).first() or addresses.first()
+    db_default_address = addresses.filter(is_default=True).first() or addresses.first()
 
+    selected_addr_id = request.session.get('checkout_address_id')
+    selected_address = None
+    if selected_addr_id:
+        selected_address = addresses.filter(id=selected_addr_id).first()
+    if not selected_address:
+        selected_address = db_default_address
+        if selected_addr_id:
+            request.session.pop('checkout_address_id', None)
+
+    default_address = selected_address
 
     default_street = ''
     default_number = ''
@@ -233,8 +806,19 @@ def checkout(request):
             default_street = default_address.line1
 
     has_addresses = addresses.exists()
-    user_phone = (default_address.phone if default_address else '')
 
+    # Extraer teléfono y RUT directamente desde el perfil (Consultándolo de forma segura)
+    user_phone = ''
+    user_rut = ''
+    try:
+        user_phone = user.profile.phone or ''
+        user_rut = user.profile.rut or ''
+    except ObjectDoesNotExist:
+        pass
+
+    # Respaldo: si el perfil no tiene teléfono, buscar en la dirección por defecto
+    if not user_phone and default_address:
+        user_phone = default_address.phone or ''
 
     has_user_data = bool(
         (user.first_name or '').strip() and
@@ -247,22 +831,31 @@ def checkout(request):
         'user': user,
         'addresses': addresses,
         'default_address': default_address,
+        'db_default_address': db_default_address,
         'has_addresses': has_addresses,
         'user_phone': user_phone,
-        'user_rut': request.session.get('checkout_rut', ''),
+        'user_rut': user_rut, 
         'default_street': default_street,
         'default_number': default_number,
         'show_shipping': False,
         'has_user_data': has_user_data,
         'can_continue': has_user_data and has_addresses,
         'coupon_already_used': coupon_already_used,
+        'coupon15_already_used': coupon15_already_used,
     }
     return render(request, 'core/checkout.html', context)
 
 @login_required
 def entrega(request):
     addresses = Address.objects.filter(user=request.user, address_type='shipping')
-    default_address = addresses.filter(is_default=True).first() or addresses.first()
+    selected_addr_id = request.session.get('checkout_address_id')
+    selected_address = None
+    if selected_addr_id:
+        selected_address = addresses.filter(id=selected_addr_id).first()
+    if not selected_address:
+        selected_address = addresses.filter(is_default=True).first() or addresses.first()
+
+    default_address = selected_address
     has_addresses = addresses.exists()
     user_phone = (default_address.phone if default_address else '')
     has_user_data = bool(
@@ -274,22 +867,21 @@ def entrega(request):
     if not (has_addresses and has_user_data):
         return redirect('checkout')
 
-    coupon_already_used = (
-        CouponRedemption.objects.filter(user=request.user, code__iexact='Bookly10').exists() or
-        Order.objects.filter(user=request.user, coupon_code__iexact='Bookly10').exists()
-    )
+    coupon_already_used = coupon_was_used(request.user, 'Bookly10')
+    coupon15_already_used = coupon_was_used(request.user, 'Bookly15')
 
     sku = request.GET.get('sku')
     book = None
     if sku:
         try:
-            book = Book.objects.get(sku=sku)
+            book = Book.objects.get(sku=sku, is_active=True)
         except Book.DoesNotExist:
             book = None
     context = {
         'book': book,
         'show_shipping': True,
         'coupon_already_used': coupon_already_used,
+        'coupon15_already_used': coupon15_already_used,
     }
     return render(request, 'core/entrega.html', context)
 
@@ -300,19 +892,18 @@ def pago(request):
     book = None
     if sku:
         try:
-            book = Book.objects.get(sku=sku)
+            book = Book.objects.get(sku=sku, is_active=True)
         except Book.DoesNotExist:
             book = None
 
-    coupon_already_used = (
-        CouponRedemption.objects.filter(user=request.user, code__iexact='Bookly10').exists() or
-        Order.objects.filter(user=request.user, coupon_code__iexact='Bookly10').exists()
-    )
+    coupon_already_used = coupon_was_used(request.user, 'Bookly10')
+    coupon15_already_used = coupon_was_used(request.user, 'Bookly15')
 
     return render(request, 'core/pago.html', {
         'book': book,
         'show_shipping': True,
         'coupon_already_used': coupon_already_used,
+        'coupon15_already_used': coupon15_already_used,
     })
 
 
@@ -326,31 +917,74 @@ def _flow_sign(params: dict, secret: str) -> str:
     return hmac.new(secret.encode('utf-8'), data.encode('utf-8'), hashlib.sha256).hexdigest()
 
 
+def _flow_optional_buyer_data(user):
+    optional = {}
+
+    buyer_name = (user.get_full_name() or '').strip()
+    if not buyer_name:
+        buyer_name = (user.username or '').strip()
+    if buyer_name:
+        optional['Nombre Comprador'] = buyer_name
+
+    try:
+        buyer_rut = (user.profile.rut or '').strip()
+    except ObjectDoesNotExist:
+        buyer_rut = ''
+    if buyer_rut:
+        optional['RUT Comprador'] = buyer_rut
+
+    return optional
+
+
+def _parse_cart_payload(request):
+    raw_cart = request.GET.get('cart') or request.POST.get('cart')
+
+    if not raw_cart and request.content_type and 'application/json' in request.content_type:
+        try:
+            body = json.loads(request.body.decode('utf-8') or '{}')
+        except Exception:
+            body = {}
+        if isinstance(body, dict):
+            raw_cart = body.get('cart') or body.get('carrito')
+
+    if not raw_cart:
+        return []
+
+    if isinstance(raw_cart, list):
+        return raw_cart
+
+    if isinstance(raw_cart, dict):
+        return raw_cart.get('cart') or raw_cart.get('carrito') or []
+
+    try:
+        parsed = json.loads(raw_cart)
+    except Exception:
+        return []
+
+    if isinstance(parsed, dict):
+        return parsed.get('cart') or parsed.get('carrito') or []
+
+    return parsed if isinstance(parsed, list) else []
+
+
 @login_required
 def pago_create(request):
-
-    raw_amount = request.GET.get('amount') or request.POST.get('amount')
-    try:
-        amount = int(str(raw_amount)) if raw_amount is not None else 1000
-    except (TypeError, ValueError):
-        amount = 1000
-    if amount <= 0:
-        amount = 1000
-
+    cancel_expired_orders(request.user)
     raw_coupon = (request.GET.get('coupon') or request.POST.get('coupon') or '').strip()
     applied_coupon_code = None
-    if raw_coupon and raw_coupon.lower() == 'bookly10':
-        already_used = (
-            CouponRedemption.objects.filter(user=request.user, code__iexact='Bookly10').exists()
-            or Order.objects.filter(user=request.user, coupon_code__iexact='Bookly10').exists()
-        )
+    discount_percent = 0
+    coupon_key = raw_coupon.lower()
+    if coupon_key in COUPON_DISCOUNTS:
+        coupon_code = 'Bookly' + coupon_key[-2:]
+        already_used = coupon_was_used(request.user, coupon_code)
         if already_used:
             return render(request, 'core/pago.html', {
                 'book': None,
                 'show_shipping': True,
-                'flow_error': 'El cupón Bookly10 ya fue utilizado en esta cuenta. Elimínalo para continuar sin descuento.',
+                'flow_error': f'El cupón {coupon_code} ya fue utilizado en esta cuenta. Elimínalo para continuar sin descuento.',
             }, status=400)
-        applied_coupon_code = 'Bookly10'
+        applied_coupon_code = coupon_code
+        discount_percent = COUPON_DISCOUNTS[coupon_key]
 
     api_key = settings.FLOW_API_KEY
     secret = settings.FLOW_SECRET
@@ -370,7 +1004,12 @@ def pago_create(request):
         return JsonResponse({'error': 'Email de usuario inválido o faltante. Actualiza tu correo en el perfil.'}, status=400)
 
 
-    shipping = Address.objects.filter(user=request.user, address_type='shipping', is_default=True).first()
+    selected_checkout_addr_id = request.session.get('checkout_address_id')
+    shipping = None
+    if selected_checkout_addr_id:
+        shipping = Address.objects.filter(user=request.user, address_type='shipping', id=selected_checkout_addr_id).first()
+    if not shipping:
+        shipping = Address.objects.filter(user=request.user, address_type='shipping', is_default=True).first() or Address.objects.filter(user=request.user, address_type='shipping').first()
 
 
     while True:
@@ -379,23 +1018,79 @@ def pago_create(request):
             break
 
 
-    first_title = None
+    cart_items = _parse_cart_payload(request)
+    order_items = []
     try:
-        titles_param = request.GET.get('titles') or request.POST.get('titles')
-        if titles_param:
-            import json
-            titles_list = json.loads(titles_param)
-            if isinstance(titles_list, list) and titles_list:
-                t = str(titles_list[0]).strip()
-                if t and t.lower() != 'producto':
-                    first_title = t if len(titles_list) == 1 else f"{t} y {len(titles_list)-1} más"
-        
-        if not first_title:
-            t_single = request.GET.get('title') or request.POST.get('title')
-            if t_single and str(t_single).strip().lower() != 'producto':
-                first_title = str(t_single).strip()
+        for raw_item in cart_items:
+            if not isinstance(raw_item, dict):
+                continue
+
+            raw_sku = str(raw_item.get('sku') or raw_item.get('id') or '').strip()
+            raw_title = str(raw_item.get('title') or raw_item.get('nombre') or raw_item.get('name') or '').strip()
+
+            try:
+                quantity = int(raw_item.get('qty') or raw_item.get('quantity') or 1)
+            except (TypeError, ValueError):
+                quantity = 1
+            if quantity < 1:
+                quantity = 1
+
+            book = None
+            if raw_sku:
+                book = Book.objects.filter(sku__iexact=raw_sku, is_active=True).first()
+            if book is None and raw_title:
+                book = Book.objects.filter(title__iexact=raw_title, is_active=True).first()
+
+            if not book:
+                continue
+
+            order_items.append({
+                'book': book,
+                'quantity': quantity,
+            })
     except Exception:
         pass
+
+    if cart_items and not order_items:
+        return JsonResponse({'error': 'No se pudieron identificar los libros del carrito.'}, status=400)
+
+    if not order_items:
+        return JsonResponse({'error': 'El carrito está vacío.'}, status=400)
+
+    raw_shipping = request.GET.get('shipping') or request.POST.get('shipping')
+    try:
+        shipping_amount = int(str(raw_shipping)) if raw_shipping is not None else 3990
+    except (TypeError, ValueError):
+        shipping_amount = 3990
+    if shipping_amount not in (3990, 5990):
+        shipping_amount = 3990
+
+    subtotal = sum(item['book'].price * item['quantity'] for item in order_items)
+    discount_amount = round(subtotal * discount_percent / 100) if applied_coupon_code else 0
+    amount = subtotal - discount_amount + shipping_amount
+
+    first_title = None
+    if order_items:
+        first_title = order_items[0]['book'].title
+        if len(order_items) > 1:
+            first_title = f"{first_title} y {len(order_items) - 1} más"
+
+    if not first_title:
+        try:
+            titles_param = request.GET.get('titles') or request.POST.get('titles')
+            if titles_param:
+                titles_list = json.loads(titles_param)
+                if isinstance(titles_list, list) and titles_list:
+                    t = str(titles_list[0]).strip()
+                    if t and t.lower() != 'producto':
+                        first_title = t if len(titles_list) == 1 else f"{t} y {len(titles_list)-1} más"
+
+            if not first_title:
+                t_single = request.GET.get('title') or request.POST.get('title')
+                if t_single and str(t_single).strip().lower() != 'producto':
+                    first_title = str(t_single).strip()
+        except Exception:
+            pass
 
     order = Order.objects.create(
         user=request.user,
@@ -403,7 +1098,8 @@ def pago_create(request):
         amount=amount,
         currency='CLP',
         email=buyer_email,
-        status='pending',
+        status='created',
+        tracking_status='solicitud_compra',
         coupon_code=applied_coupon_code,
         first_item_title=first_title,
         shipping_name=(shipping.name if shipping else None),
@@ -415,10 +1111,21 @@ def pago_create(request):
         shipping_postal_code=(shipping.postal_code if shipping else None),
     )
 
+    for item_data in order_items:
+        OrderItem.objects.create(
+            order=order,
+            book=item_data['book'],
+            quantity=item_data['quantity'],
+            price_at_purchase=item_data['book'].price,
+        )
+
+    # Limpiar dirección temporal de sesión para próximas compras
+    request.session.pop('checkout_address_id', None)
+
 
     params = {
         'apiKey': api_key,
-        'subject': 'Compra Bookly',
+        'subject': f"Compra: {first_title}" if first_title else 'Compra Bookly',
         'currency': 'CLP',
         'amount': amount,
         'email': buyer_email,
@@ -427,6 +1134,13 @@ def pago_create(request):
         'urlConfirmation': callback_url,
         'commerceOrder': commerce_order,
     }
+    optional_buyer_data = _flow_optional_buyer_data(request.user)
+    if optional_buyer_data:
+        params['optional'] = json.dumps(
+            optional_buyer_data,
+            ensure_ascii=False,
+            separators=(',', ':'),
+        )
 
     s = _flow_sign(params, secret)
     payload = dict(params)
@@ -472,10 +1186,67 @@ def flow_return(request):
     token = request.GET.get('token') or request.POST.get('token')
     if not token:
         return redirect('pago')
-    print('[Flow] RETURN hit:', request.build_absolute_uri())
-    print('[Flow] RETURN method:', request.method)
-    print('[Flow] RETURN params GET:', dict(request.GET))
-    return redirect(f"/confirmacion_pedido/?token={token}")
+
+    api_key = settings.FLOW_API_KEY
+    secret = settings.FLOW_SECRET
+    base_url = settings.FLOW_BASE_URL
+    params = {'apiKey': api_key, 'token': token}
+    params['s'] = _flow_sign(params, secret)
+
+    try:
+        resp = requests.get(f"{base_url}/payment/getStatus", params=params, timeout=10)
+        data = resp.json()
+    except Exception:
+        return redirect('pago')
+
+    if resp.status_code != 200 or not isinstance(data, dict):
+        return redirect('pago')
+
+    try:
+        order = Order.objects.select_related('user').get(flow_token=token)
+    except Order.DoesNotExist:
+        return redirect('pago')
+
+    flow_status = data.get('status')
+    if flow_status != 2:
+        return redirect('pago')
+
+    with transaction.atomic():
+        order = Order.objects.select_for_update().select_related('user').get(pk=order.pk)
+        if order.status != 'paid':
+            order.status = 'paid'
+            order.tracking_status = 'solicitud_compra'
+        order.flow_order = str(data.get('flowOrder', order.flow_order))
+        order.confirmation_reached = True
+
+        if not order.stock_updated:
+            for item in order.items.select_related('book').all():
+                book = Book.objects.select_for_update().get(pk=item.book_id)
+                book.stock = max(0, book.stock - item.quantity)
+                book.save(update_fields=['stock', 'updated_at'])
+            order.stock_updated = True
+
+        order.save(update_fields=[
+            'status',
+            'tracking_status',
+            'flow_order',
+            'confirmation_reached',
+            'stock_updated',
+            'updated_at',
+        ])
+
+    if order.coupon_code and order.user:
+        CouponRedemption.objects.get_or_create(
+            user=order.user,
+            code=order.coupon_code,
+        )
+
+    request.session['ultima_orden_id'] = order.id
+
+    if not request.user.is_authenticated and order.user:
+        login(request, order.user, backend='core.auth_backends.UsernameOrEmailBackend')
+
+    return redirect('confirmacion_pedido')
 
 
 def flow_callback(request):
@@ -510,12 +1281,15 @@ def flow_callback(request):
 
     try:
         order = Order.objects.get(flow_token=token)
-        order.status = mapped
+        if order.status != 'paid':
+            order.status = mapped
+            if mapped == 'paid':
+                order.tracking_status = 'solicitud_compra'
         order.flow_order = str(data.get('flowOrder', order.flow_order))
-        order.save(update_fields=['status', 'flow_order'])
+        order.save(update_fields=['status', 'tracking_status', 'flow_order'])
 
 
-        if mapped == 'paid' and getattr(order, 'coupon_code', None):
+        if order.status == 'paid' and getattr(order, 'coupon_code', None):
             try:
                 CouponRedemption.objects.get_or_create(
                     user=order.user,
@@ -560,14 +1334,27 @@ def flow_debug(request):
         'signature': signature,
     })
 
-def destacados(request):
-    books_qs = Book.objects.all()
+def ofertas(request):
+    books_qs = Book.objects.filter(is_active=True)
     discounted = books_qs.filter(discount_percent__gt=0).order_by('-discount_percent', '-created_at')
     if discounted.exists():
-        books = discounted[:12]
+        books = discounted
     else:
-        books = books_qs.order_by('-created_at')[:12]
-    return render(request, 'core/destacados.html', { 'books': books })
+        books = books_qs.order_by('-created_at')
+    paginator = Paginator(books, 12)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'core/ofertas.html', {
+        'page_obj': page_obj,
+        'books': page_obj,
+        'pagination_page_numbers': pagination_window(page_obj),
+    })
+
+
+@login_required
+def select_checkout_address(request, address_id: int):
+    addr = get_object_or_404(Address, id=address_id, user=request.user, address_type='shipping')
+    request.session['checkout_address_id'] = addr.id
+    return redirect('checkout')
 
 
 @login_required
@@ -577,37 +1364,44 @@ def set_default_address(request, address_id: int):
     if not addr.is_default:
         addr.is_default = True
         addr.save(update_fields=['is_default'])
+    request.session.pop('checkout_address_id', None)
+    next_url = request.POST.get('next') or request.GET.get('next')
+    if next_url == 'mi_perfil' or next_url == '/mi-perfil/':
+        return redirect('mi_perfil')
     return redirect('checkout')
 
 
 @login_required
 def delete_address(request, address_id: int):
+    next_url = request.POST.get('next') or request.GET.get('next')
+    target = 'mi_perfil' if (next_url == 'mi_perfil' or next_url == '/mi-perfil/') else 'checkout'
     if request.method != 'POST':
-        return redirect('checkout')
+        return redirect(target)
     addr = get_object_or_404(Address, id=address_id, user=request.user, address_type='shipping')
+    was_default = addr.is_default
     addr.delete()
-    return redirect('checkout')
+    if was_default:
+        remaining = Address.objects.filter(user=request.user, address_type='shipping').order_by('-updated_at').first()
+        if remaining:
+            remaining.is_default = True
+            remaining.save(update_fields=['is_default'])
+    return redirect(target)
 
+@login_required
 def confirmacion_pedido(request):
-    token = request.GET.get('token')
-    order = None
+    order_id = request.session.get('ultima_orden_id')
+    if not order_id:
+        raise PermissionDenied('No hay una orden confirmada disponible.')
 
+    try:
+        order = Order.objects.select_related('user').get(
+            pk=order_id,
+            user=request.user,
+        )
+    except Order.DoesNotExist:
+        raise PermissionDenied('No tienes permiso para ver esta orden.')
 
-    if token:
-        try:
-            order = Order.objects.get(flow_token=token)
-
-            if not request.user.is_authenticated:
-                if order.user:
-                    login(request, order.user, backend='django.contrib.auth.backends.ModelBackend')
-                    print(f"[Auto-Login] Sesión recuperada exitosamente para: {order.user.username}")
-        except Order.DoesNotExist:
-            order = None
-
-    if not request.user.is_authenticated and not order:
-        return redirect('index')
-
-    if order and getattr(order, 'coupon_code', None) and order.user:
+    if getattr(order, 'coupon_code', None):
         try:
             CouponRedemption.objects.get_or_create(
                 user=order.user,
@@ -617,16 +1411,27 @@ def confirmacion_pedido(request):
             pass
 
     buyer_name = None
+    order_items_summary = []
     if order:
         try:
             full_name = (order.user.get_full_name() or '').strip()
         except Exception:
             full_name = ''
         buyer_name = getattr(order, 'shipping_name', None) or full_name or getattr(order.user, 'username', None)
+        order_items_summary = [
+            {
+                'title': item.book.title,
+                'quantity': item.quantity,
+                'unit_price': item.price_at_purchase,
+                'line_total': item.quantity * item.price_at_purchase,
+            }
+            for item in order.items.select_related('book').all()
+        ]
 
     context = {
         'order': order,
         'buyer_name': buyer_name,
+        'order_items_summary': order_items_summary,
         'status': getattr(order, 'status', None),
         'amount': getattr(order, 'amount', None),
         'currency': getattr(order, 'currency', None),
@@ -644,23 +1449,186 @@ def confirmacion_pedido(request):
 
 def search(request):
     query = request.GET.get('q', '').strip()
-    results = []
+    selected_category = request.GET.get('category', '').strip()
+    results = Book.objects.filter(is_active=True)
     
     if query:
-        results = Book.objects.filter(
+        results = results.filter(
             Q(title__icontains=query) |
             Q(author__icontains=query) |
             Q(category__icontains=query)
-        ).order_by('-created_at')
+        )
+    if selected_category:
+        results = results.filter(category__iexact=selected_category)
+    results = results.order_by('-created_at') if query or selected_category else Book.objects.none()
     
     context = {
         'query': query,
+        'selected_category': selected_category,
         'results': results,
         'count': results.count() if results else 0,
     }
     return render(request, 'core/search.html', context)
 
 
+def mis_pedidos(request):
+    cancel_expired_orders(request.user)
+    # 1. Obtener la lista completa
+    order_list = Order.objects.filter(user=request.user).order_by('-created_at')
+    
+    # 2. Configurar el paginador (10 items por página)
+    paginator = Paginator(order_list, 10)
+    
+    # 3. Capturar el número de página actual desde la URL (ej: ?page=2)
+    page_number = request.GET.get('page')
+    orders = paginator.get_page(page_number)
+    
+    # 4. Enviar el objeto paginado a la plantilla
+    return render(request, 'core/mis_pedidos.html', {
+        'orders': orders,
+        'pagination_page_numbers': pagination_window(orders),
+    })
+
+
+@login_required
+def mi_perfil(request):
+    user = request.user
+
+    if request.method == 'POST':
+        # 1. Obtener los datos del formulario
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        email = request.POST.get('email', '').strip()
+        rut = request.POST.get('rut', '').strip()
+        doc_type = request.POST.get('doc_type', 'RUT').strip()
+
+        # 2. Guardar los datos en el modelo User nativo
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+        if email:
+            user.email = email
+        user.save()
+
+        # 3. Guardar los datos extendidos en Profile (creándolo si hace falta)
+        try:
+            perfil = user.profile
+        except ObjectDoesNotExist:
+            perfil = Profile.objects.create(user=user)
+
+        perfil.rut = rut
+        perfil.phone = phone
+        perfil.doc_type = doc_type
+        perfil.save()
+
+        # 4. Guardar o actualizar la dirección de despacho (solo si el editor de dirección estuvo activo)
+        address_active = request.POST.get('address_active', '').strip()
+        street = request.POST.get('street', '').strip()
+        number = request.POST.get('number', '').strip()
+        line2 = request.POST.get('line2', '').strip()
+        region = request.POST.get('region', '').strip()
+        comuna = request.POST.get('comuna', '').strip()
+        postal_code = request.POST.get('postal_code', '').strip()
+        addr_id = request.POST.get('address_id', '').strip()
+        make_default = request.POST.get('is_default') == 'on'
+
+        # Solo procesar dirección si el editor estuvo abierto y activo
+        if address_active == '1':
+            # Requisito obligatorio: calle, número, código postal, región y comuna deben estar completos
+            if not (street and number and postal_code and region and comuna):
+                # No guarda dirección incompleta si falta alguno de los 5 campos obligatorios
+                messages.error(request, 'Por favor completa todos los campos obligatorios de la dirección.')
+                return redirect('mi_perfil')
+
+            line1 = f"{street} {number}".strip()
+            addr = None
+            if addr_id:
+                try:
+                    addr = Address.objects.get(id=addr_id, user=user, address_type='shipping')
+                except Address.DoesNotExist:
+                    addr = None
+
+            if not addr:
+                # Regla de negocio: Máximo 2 direcciones por usuario
+                current_count = Address.objects.filter(user=user, address_type='shipping').count()
+                if current_count >= 2:
+                    # Límite de 2 direcciones alcanzado, no permite crear una 3ra dirección
+                    return redirect('mi_perfil')
+                addr = Address(user=user, address_type='shipping')
+
+            addr.name = user.get_full_name() or user.username
+            addr.phone = phone or perfil.phone or ''
+            addr.line1 = line1
+            addr.line2 = line2
+            addr.region = region
+            addr.comuna = comuna
+            addr.postal_code = postal_code
+            addr.save()
+
+            # Manejar si es dirección predeterminada
+            has_other_default = Address.objects.filter(user=user, address_type='shipping', is_default=True).exclude(id=addr.id).exists()
+            if make_default or not has_other_default:
+                Address.objects.filter(user=user, address_type='shipping', is_default=True).exclude(id=addr.id).update(is_default=False)
+                addr.is_default = True
+                addr.save(update_fields=['is_default'])
+
+            messages.success(request, 'direccion_guardada')
+        else:
+            messages.success(request, 'datos_guardados')
+
+        # Redirige a la misma página para recargar los datos actualizados
+        return redirect('mi_perfil')
+
+    # GET: Cargar direcciones guardadas
+    addresses = Address.objects.filter(user=user, address_type='shipping').order_by('-is_default', '-updated_at')
+    default_address = addresses.filter(is_default=True).first() or addresses.first()
+
+    default_street = ''
+    default_number = ''
+    if default_address and default_address.line1:
+        parts = default_address.line1.rsplit(' ', 1)
+        if len(parts) == 2 and parts[1].replace('-', '').isalnum():
+            default_street, default_number = parts[0], parts[1]
+        else:
+            default_street = default_address.line1
+            default_number = ''
+
+    return render(request, 'core/mi_perfil.html', {
+        'addresses': addresses,
+        'default_address': default_address,
+        'default_street': default_street,
+        'default_number': default_number,
+    })
 
 
 
+
+@login_required
+def mi_contrasena(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        
+        # Capturamos la nueva contraseña del formulario para validarla
+        new_password = request.POST.get('new_password1', '')
+
+        # Validaciones personalizadas idénticas al registro
+        if (
+            len(new_password) < 8 or
+            not re.search(r"[A-Z]", new_password) or
+            not re.search(r"[\W\_]", new_password)
+        ):
+            messages.error(request, 'La nueva contraseña debe tener mínimo 8 caracteres, una mayúscula y un símbolo.')
+        elif form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            send_password_changed_email(user)
+            messages.success(request, 'Tu contraseña ha sido actualizada correctamente.')
+            return redirect('mi_contrasena')
+        else:
+            messages.error(request, 'Por favor, corrige los errores indicados abajo.')
+    else:
+        form = PasswordChangeForm(request.user)
+
+    return render(request, 'core/mi_contrasena.html', {'form': form})

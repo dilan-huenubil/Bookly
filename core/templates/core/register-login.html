@@ -1,21 +1,39 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block title %}Bookly | Acceder o Registrarse{% endblock %}
 
 {% block content %}
-    <main class="auth-page">
+    <main class="auth-page {% if request.resolver_match.url_name == 'register' %}auth-page--register{% else %}auth-page--login{% endif %}">
+        <!-- Overlay editorial de cargando para inicio de sesión -->
+        <div id="loginLoadingOverlay" class="auth-loading-overlay" aria-hidden="true" role="status" aria-live="polite">
+            <div class="auth-loading-card">
+                <div class="auth-loading-graphic">
+                    <div class="auth-loading-spinner" aria-hidden="true"></div>
+                    <div class="auth-loading-icon" aria-hidden="true">
+                        <i class="bi bi-book-half"></i>
+                    </div>
+                </div>
+                <h3 class="auth-loading-title">Iniciando sesión<span class="auth-loading-dots" aria-hidden="true"></span></h3>
+                <p class="auth-loading-desc">Verificando credenciales en Bookly...</p>
+            </div>
+        </div>
+
         <div class="auth-container">
-            <div class="auth-grid">
-                <!-- Login -->
-                <section class="auth-card" aria-labelledby="loginTitle">
+            <div class="auth-layout">
+                <section class="auth-card" aria-labelledby="{% if request.resolver_match.url_name == 'login' %}loginTitle{% else %}registerTitle{% endif %}">
+                    {% if request.resolver_match.url_name == 'login' %}
                     <h2 class="auth-heading" id="loginTitle">Acceder</h2>
 
-                    {% if login_error %}
-                        <p class="msg-error">{{ login_error }}</p>
-                    {% endif %}
-
-                    <!-- ERROR PARA JS -->
-                    <p id="loginError" class="msg-error"></p>
+                    <div class="auth-message-slot">
+                        {% if login_error %}
+                            <p class="msg-error">{{ login_error }}</p>
+                        {% endif %}
+                        {% for message in messages %}
+                            <p class="{% if message.tags == 'error' %}msg-error{% else %}msg-success{% endif %}">{{ message }}</p>
+                        {% endfor %}
+                        <p id="loginError" class="msg-error"></p>
+                    </div>
 
                     <form id="loginForm" method="POST" novalidate>
                         {% csrf_token %}
@@ -26,61 +44,77 @@
                         <input class="auth-input" id="loginUser" name="username" type="text" autocomplete="username" required>
 
                         <label class="auth-label" for="loginPass">Contraseña <span class="req">*</span></label>
-                        <input class="auth-input" id="loginPass" name="password" type="password" autocomplete="current-password" required>
+                        <div class="auth-password-field">
+                            <input class="auth-input" id="loginPass" name="password" type="password"
+                                autocomplete="current-password" required>
+                            <button class="auth-password-toggle" type="button" data-password-toggle
+                                aria-label="Mostrar contraseña" aria-pressed="false">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
 
                         <div class="auth-row between">
                             <label class="check">Recuérdame
                                 <input type="checkbox" id="rememberMe">
                             </label>
-                            <a class="auth-link" href="#">¿Olvidaste la contraseña?</a>
+                            <a class="auth-link" href="{% url 'password_reset' %}">¿Olvidaste la contraseña?</a>
                         </div>
 
                         <button class="btn-auth" type="submit">ACCEDER</button>
                     </form>
-                </section>
-
-                <!-- Register -->
-                <section class="auth-card" aria-labelledby="registerTitle">
+                    <p class="auth-switch">¿No tienes una cuenta? <a href="{% url 'register' %}">Regístrate</a></p>
+                    {% else %}
                     <h2 class="auth-heading" id="registerTitle">Registrarse</h2>
 
-                    {% if register_error %}
-                        <p class="msg-error">{{ register_error }}</p>
-                    {% endif %}
-
-                    {% if success %}
-                        <p class="msg-success">{{ success }}</p>
-                    {% endif %}
-
-                    <!-- ERROR PARA JS -->
-                    <p id="registerError" class="msg-error"></p>
+                    <div class="auth-message-slot">
+                        {% if register_error %}
+                            <p class="msg-error">{{ register_error }}</p>
+                        {% endif %}
+                        <p id="registerError" class="msg-error"></p>
+                    </div>
 
                     <form id="registerForm" method="POST" novalidate>
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="register">
 
-                        <label class="auth-label" for="regUser">Nombre de usuario <span class="req">*</span></label>
-                        <input class="auth-input" id="regUser" name="username" type="text" autocomplete="username" required>
+                        <div class="auth-field">
+                            <label class="auth-label" for="regUser">Nombre de usuario <span class="req">*</span></label>
+                            <input class="auth-input" id="regUser" name="username" type="text" autocomplete="username" required>
+                        </div>
 
-                        <label class="auth-label" for="regEmail">Correo electrónico <span class="req">*</span></label>
-                        <input class="auth-input" id="regEmail" name="email" type="email" autocomplete="email" required>
+                        <div class="auth-field">
+                            <label class="auth-label" for="regEmail">Correo electrónico <span class="req">*</span></label>
+                            <input class="auth-input" id="regEmail" name="email" type="email" autocomplete="email" required>
+                        </div>
 
-                        <label class="auth-label" for="regPass1">Contraseña <span class="req">*</span></label>
-                        <input class="auth-input" id="regPass1" name="password1" type="password" autocomplete="new-password" minlength="6" required>
+                        <div class="auth-field">
+                            <label class="auth-label" for="regPass1">Contraseña <span class="req">*</span></label>
+                            <input class="auth-input" id="regPass1" name="password1" type="password" autocomplete="new-password" minlength="6" required>
+                        </div>
 
-                        <label class="auth-label" for="regPass2">Confirmar Contraseña: <span class="req">*</span></label>
-                        <input class="auth-input" id="regPass2" name="password2" type="password" autocomplete="new-password" minlength="6" required>
+                        <div class="auth-field">
+                            <label class="auth-label" for="regPass2">Confirmar Contraseña: <span class="req">*</span></label>
+                            <input class="auth-input" id="regPass2" name="password2" type="password" autocomplete="new-password" minlength="6" required>
+                        </div>
 
                         <p class="fine-print">
-                            Sus datos personales se utilizarán para procesar su pedido, mejorar su experiencia en esta web, gestionar el acceso a su cuenta y otros propósitos descritos en nuestra <a href="#" class="auth-link">política de privacidad</a>.
+                            Sus datos personales se utilizarán para procesar su pedido, mejorar su experiencia en esta web, gestionar el acceso a su cuenta y otros propósitos descritos en nuestra política de privacidad.
                         </p>
 
                         <button class="btn-auth" type="submit">REGISTRARSE</button>
                     </form>
+                    <p class="auth-switch">¿Ya tienes una cuenta? <a href="{% url 'login' %}">Inicia sesión</a></p>
+                    {% endif %}
                 </section>
+                <aside class="auth-visual" aria-hidden="true">
+                    <img src="https://pub-c32c670bdcb64116b1c51462d05ef57a.r2.dev/4.png" alt="">
+                    <div class="auth-visual__caption">
+                        <span>Bookly</span>
+                    </div>
+                </aside>
             </div>
         </div>
     </main>
 {% endblock %}
-
 
 

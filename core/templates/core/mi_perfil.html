@@ -1,0 +1,272 @@
+{% extends 'core/base_cuenta.html' %}
+
+{% block title %}Mi Perfil - Bookly{% endblock %}
+
+{% block cuenta_content %}
+<div class="content-header-account">
+    <h2>Datos personales</h2>
+</div>
+
+<form class="profile-form" method="POST" action="">
+    {% csrf_token %}
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="id_first_name">Nombre</label>
+            <input type="text" id="id_first_name" name="first_name" value="{{ user.first_name }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_last_name">Apellido</label>
+            <input type="text" id="id_last_name" name="last_name" value="{{ user.last_name }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_phone">Teléfono</label>
+            <!-- Nota: asumiendo que tienes un modelo Profile con este campo -->
+            <input type="text" id="id_phone" name="phone" value="{{ user.profile.phone|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+            <label for="id_email">Email</label>
+            <input type="email" id="id_email" name="email" value="{{ user.email }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="id_rut">RUT</label>
+            <input type="text" id="id_rut" name="rut" value="{{ user.profile.rut|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+            <label for="id_doc_type">Tipo</label>
+            <select id="id_doc_type" name="doc_type">
+                <option value="RUT" {% if user.profile.doc_type != 'PASAPORTE' %}selected{% endif %}>RUT</option>
+                <option value="PASAPORTE" {% if user.profile.doc_type == 'PASAPORTE' %}selected{% endif %}>Pasaporte</option>
+            </select>
+        </div>
+
+        <!-- SECCIÓN DE DIRECCIÓN DE DESPACHO -->
+        <div class="form-section-divider">
+            <div class="form-section-title-wrap">
+                <div class="form-section-title-left">
+                    <h3 class="form-section-title">
+                        <i class="bi bi-geo-alt"></i> Dirección de despacho
+                    </h3>
+                </div>
+                {% if addresses.count < 2 %}
+                <button type="button" class="btn-link-action" id="btnNuevaDireccion">
+                    <i class="bi bi-plus-circle"></i> + Agregar nueva dirección
+                </button>
+                {% else %}
+                <span class="badge-max-addresses"><i class="bi bi-check-circle"></i> Máximo 2 direcciones</span>
+                {% endif %}
+            </div>
+            <p class="form-section-desc">
+                Guarda tus direcciones de despacho para agilizar tus compras.
+            </p>
+        </div>
+
+        <div class="profile-addresses-manager">
+            {% if addresses and addresses.count > 0 %}
+                {% if addresses.count > 1 %}
+                <p class="profile-addresses-hint">
+                    <i class="bi bi-check2-circle"></i> Haz clic en <strong>"Marcar como principal"</strong> para elegir cuál dirección usar por defecto en tus compras.
+                </p>
+                {% endif %}
+
+                <div class="profile-addresses-chips">
+                    {% for addr in addresses %}
+                    <div class="profile-address-chip {% if addr.is_default %}is-default is-active{% endif %}"
+                         id="chip-{{ addr.id }}"
+                         data-id="{{ addr.id }}"
+                         data-street="{% if addr.line1 %}{{ addr.line1 }}{% endif %}"
+                         data-line2="{{ addr.line2|default:'' }}"
+                         data-region="{{ addr.region|default:'' }}"
+                         data-comuna="{{ addr.comuna|default:'' }}"
+                         data-postal="{{ addr.postal_code|default:'' }}"
+                         data-is-default="{% if addr.is_default %}true{% else %}false{% endif %}">
+                        
+                        <div class="profile-address-chip-header">
+                            <label class="address-principal-radio" title="{% if addr.is_default %}Dirección principal actual{% else %}Seleccionar como dirección principal{% endif %}">
+                                <input type="radio" 
+                                       name="main_address_radio" 
+                                       value="{{ addr.id }}" 
+                                       {% if addr.is_default %}checked{% endif %}
+                                       class="js-select-main-addr" 
+                                       data-url="{% url 'set_default_address' addr.id %}?next=mi_perfil">
+                                <span class="radio-custom-indicator"></span>
+                                <span class="radio-label-text">
+                                    {% if addr.is_default %}
+                                        <strong class="text-principal"><i class="bi bi-check-circle-fill"></i> Dirección principal</strong>
+                                    {% else %}
+                                        Marcar como principal
+                                    {% endif %}
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="profile-address-chip-body">
+                            <div class="profile-address-chip-title">
+                                <strong>{{ addr.line1 }}</strong>
+                            </div>
+                            <div class="profile-address-chip-sub">
+                                {{ addr.comuna }}, {{ addr.region }}{% if addr.line2 %} • {{ addr.line2 }}{% endif %}
+                                {% if addr.postal_code %} • CP: {{ addr.postal_code }}{% endif %}
+                            </div>
+                        </div>
+
+                        <div class="profile-address-chip-actions">
+                            <button type="button" class="btn-chip-action js-select-address" data-target="chip-{{ addr.id }}" title="Editar esta dirección">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
+                            <button type="button" class="btn-chip-action btn-chip-delete js-delete-addr" data-url="{% url 'delete_address' addr.id %}?next=mi_perfil" title="Eliminar dirección">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-addresses-notice" id="noAddressesNotice">
+                    <p><i class="bi bi-geo"></i> Aún no tienes ninguna dirección registrada.</p>
+                    <button type="button" class="btn-primary-outline" id="btnAgregarPrimeraDireccion">
+                        <i class="bi bi-plus-lg"></i> Añadir dirección de despacho
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- CONTENEDOR DESPLEGABLE: CASILLAS DE DIRECCIÓN (Solo visible al editar o agregar nueva) -->
+        <div id="addressEditorContainer" class="address-editor-box" style="display: none; grid-column: 1 / -1;">
+            <div class="address-editor-header">
+                <h4 id="addressEditorTitle"><i class="bi bi-pencil-square"></i> Editar dirección</h4>
+                <button type="button" class="btn-close-address" id="btnCancelarDireccion">
+                    <i class="bi bi-x-lg"></i> Cerrar casillas
+                </button>
+            </div>
+
+            <input type="hidden" id="id_address_id" name="address_id" value="">
+            <input type="hidden" id="id_address_active" name="address_active" value="0">
+
+            <div class="form-grid address-grid">
+                <div class="form-group">
+                    <label for="id_street">Calle <span class="label-required">*</span></label>
+                    <input type="text" id="id_street" name="street" placeholder="Ej: Av. Providencia" value="">
+                    <span class="field-error-msg" id="err_street" style="display:none;">Ingresa la calle</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_number">Número <span class="label-required">*</span></label>
+                    <input type="text" id="id_number" name="number" placeholder="Ej: 1234" value="">
+                    <span class="field-error-msg" id="err_number" style="display:none;">Ingresa el número</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="id_line2">Depto / Casa / Bloque <span class="label-hint">(opcional)</span></label>
+                    <input type="text" id="id_line2" name="line2" placeholder="Ej: Depto 502" value="">
+                </div>
+
+                <div class="form-group">
+                    <label for="id_postal_code">Código postal <span class="label-required">*</span></label>
+                    <input type="text" id="id_postal_code" name="postal_code" placeholder="Ej: 7500000" value="">
+                    <span class="field-error-msg" id="err_postal_code" style="display:none;">Ingresa el código postal</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="regionSelect">Región <span class="label-required">*</span></label>
+                    <select id="regionSelect" name="region" data-initial-region="">
+                        <option value="">Seleccionar región</option>
+                    </select>
+                    <span class="field-error-msg" id="err_region" style="display:none;">Selecciona la región</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="comunaSelect">Comuna <span class="label-required">*</span></label>
+                    <select id="comunaSelect" name="comuna" data-initial-comuna="">
+                        <option value="">Seleccionar comuna</option>
+                    </select>
+                    <span class="field-error-msg" id="err_comuna" style="display:none;">Selecciona la comuna</span>
+                </div>
+
+                <div class="form-group checkbox-group-account" style="grid-column: 1 / -1;">
+                    <label class="checkbox-label-account" for="id_is_default">
+                        <input type="checkbox" id="id_is_default" name="is_default" value="on">
+                        <span>Guardar como dirección principal de despacho</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-actions">
+        <!-- El botón cancelar puede redirigir al índice o a mis compras -->
+        <a href="{% url 'index' %}" class="btn-secondary" style="text-align: center;">CANCELAR</a>
+        <button type="submit" class="btn-primary">GUARDAR</button>
+    </div>
+</form>
+
+<!-- Formulario para acciones de direcciones (hacer principal / eliminar) sin anidar formularios -->
+<form id="addressActionForm" method="POST" action="" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="mi_perfil">
+</form>
+
+<section class="account-deletion" aria-labelledby="delete-account-title">
+    <div class="account-deletion-copy">
+        <span class="account-deletion-icon" aria-hidden="true"><i class="bi bi-exclamation-triangle"></i></span>
+        <div>
+            <h3 id="delete-account-title">Eliminar cuenta</h3>
+            <p>
+                Tu cuenta se conservará durante 30 días. Si inicias sesión antes
+                de ese plazo, la eliminación se cancelará automáticamente.
+            </p>
+        </div>
+    </div>
+    <form id="delete-account-form" method="POST" action="{% url 'delete_account' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn-danger-account">Solicitar eliminación</button>
+    </form>
+</section>
+
+{% if messages %}
+<script>
+(function() {
+    {% for msg in messages %}
+    {% if msg.message == 'datos_guardados' %}
+    Swal.fire({
+        icon: 'success',
+        iconColor: '#A65D37',
+        title: '¡Cambios guardados!',
+        text: 'Tus datos personales fueron actualizados correctamente.',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#A65D37',
+        timer: 4000,
+        timerProgressBar: true,
+        showClass: { popup: 'animate__animated animate__fadeInDown' },
+    });
+    {% elif msg.message == 'direccion_guardada' %}
+    Swal.fire({
+        icon: 'success',
+        iconColor: '#A65D37',
+        title: '¡Dirección guardada!',
+        text: 'Tu dirección de despacho fue actualizada correctamente.',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#A65D37',
+        timer: 4000,
+        timerProgressBar: true,
+    });
+    {% elif msg.tags == 'error' %}
+    Swal.fire({
+        icon: 'warning',
+        iconColor: '#c0392b',
+        title: 'Faltan datos',
+        text: '{{ msg.message }}',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#A65D37',
+    });
+    {% endif %}
+    {% endfor %}
+})();
+</script>
+{% endif %}
+
+{% endblock %}

@@ -1,6 +1,5 @@
-venv/
-.venv/
+venv/.venv/
 
 .env.example
 .env
-
+venv/
