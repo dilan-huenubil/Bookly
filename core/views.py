@@ -783,7 +783,18 @@ def checkout(request):
     coupon15_already_used = coupon_was_used(user, 'Bookly15')
 
     addresses = Address.objects.filter(user=user, address_type='shipping').order_by('-is_default', '-updated_at')
-    default_address = addresses.filter(is_default=True).first() or addresses.first()
+    db_default_address = addresses.filter(is_default=True).first() or addresses.first()
+
+    selected_addr_id = request.session.get('checkout_address_id')
+    selected_address = None
+    if selected_addr_id:
+        selected_address = addresses.filter(id=selected_addr_id).first()
+    if not selected_address:
+        selected_address = db_default_address
+        if selected_addr_id:
+            request.session.pop('checkout_address_id', None)
+
+    default_address = selected_address
 
     default_street = ''
     default_number = ''
@@ -820,6 +831,7 @@ def checkout(request):
         'user': user,
         'addresses': addresses,
         'default_address': default_address,
+        'db_default_address': db_default_address,
         'has_addresses': has_addresses,
         'user_phone': user_phone,
         'user_rut': user_rut, 
@@ -836,7 +848,14 @@ def checkout(request):
 @login_required
 def entrega(request):
     addresses = Address.objects.filter(user=request.user, address_type='shipping')
-    default_address = addresses.filter(is_default=True).first() or addresses.first()
+    selected_addr_id = request.session.get('checkout_address_id')
+    selected_address = None
+    if selected_addr_id:
+        selected_address = addresses.filter(id=selected_addr_id).first()
+    if not selected_address:
+        selected_address = addresses.filter(is_default=True).first() or addresses.first()
+
+    default_address = selected_address
     has_addresses = addresses.exists()
     user_phone = (default_address.phone if default_address else '')
     has_user_data = bool(
@@ -985,7 +1004,12 @@ def pago_create(request):
         return JsonResponse({'error': 'Email de usuario inválido o faltante. Actualiza tu correo en el perfil.'}, status=400)
 
 
-    shipping = Address.objects.filter(user=request.user, address_type='shipping', is_default=True).first()
+    selected_checkout_addr_id = request.session.get('checkout_address_id')
+    shipping = None
+    if selected_checkout_addr_id:
+        shipping = Address.objects.filter(user=request.user, address_type='shipping', id=selected_checkout_addr_id).first()
+    if not shipping:
+        shipping = Address.objects.filter(user=request.user, address_type='shipping', is_default=True).first() or Address.objects.filter(user=request.user, address_type='shipping').first()
 
 
     while True:
@@ -1094,6 +1118,9 @@ def pago_create(request):
             quantity=item_data['quantity'],
             price_at_purchase=item_data['book'].price,
         )
+
+    # Limpiar dirección temporal de sesión para próximas compras
+    request.session.pop('checkout_address_id', None)
 
 
     params = {
@@ -1324,22 +1351,41 @@ def ofertas(request):
 
 
 @login_required
+def select_checkout_address(request, address_id: int):
+    addr = get_object_or_404(Address, id=address_id, user=request.user, address_type='shipping')
+    request.session['checkout_address_id'] = addr.id
+    return redirect('checkout')
+
+
+@login_required
 def set_default_address(request, address_id: int):
     addr = get_object_or_404(Address, id=address_id, user=request.user, address_type='shipping')
     Address.objects.filter(user=request.user, address_type='shipping', is_default=True).exclude(id=addr.id).update(is_default=False)
     if not addr.is_default:
         addr.is_default = True
         addr.save(update_fields=['is_default'])
+    request.session.pop('checkout_address_id', None)
+    next_url = request.POST.get('next') or request.GET.get('next')
+    if next_url == 'mi_perfil' or next_url == '/mi-perfil/':
+        return redirect('mi_perfil')
     return redirect('checkout')
 
 
 @login_required
 def delete_address(request, address_id: int):
+    next_url = request.POST.get('next') or request.GET.get('next')
+    target = 'mi_perfil' if (next_url == 'mi_perfil' or next_url == '/mi-perfil/') else 'checkout'
     if request.method != 'POST':
-        return redirect('checkout')
+        return redirect(target)
     addr = get_object_or_404(Address, id=address_id, user=request.user, address_type='shipping')
+    was_default = addr.is_default
     addr.delete()
-    return redirect('checkout')
+    if was_default:
+        remaining = Address.objects.filter(user=request.user, address_type='shipping').order_by('-updated_at').first()
+        if remaining:
+            remaining.is_default = True
+            remaining.save(update_fields=['is_default'])
+    return redirect(target)
 
 @login_required
 def confirmacion_pedido(request):
@@ -1477,10 +1523,84 @@ def mi_perfil(request):
         perfil.doc_type = doc_type
         perfil.save()
 
+        # 4. Guardar o actualizar la dirección de despacho (solo si el editor de dirección estuvo activo)
+        address_active = request.POST.get('address_active', '').strip()
+        street = request.POST.get('street', '').strip()
+        number = request.POST.get('number', '').strip()
+        line2 = request.POST.get('line2', '').strip()
+        region = request.POST.get('region', '').strip()
+        comuna = request.POST.get('comuna', '').strip()
+        postal_code = request.POST.get('postal_code', '').strip()
+        addr_id = request.POST.get('address_id', '').strip()
+        make_default = request.POST.get('is_default') == 'on'
+
+        # Solo procesar dirección si el editor estuvo abierto y activo
+        if address_active == '1':
+            # Requisito obligatorio: calle, número, código postal, región y comuna deben estar completos
+            if not (street and number and postal_code and region and comuna):
+                # No guarda dirección incompleta si falta alguno de los 5 campos obligatorios
+                messages.error(request, 'Por favor completa todos los campos obligatorios de la dirección.')
+                return redirect('mi_perfil')
+
+            line1 = f"{street} {number}".strip()
+            addr = None
+            if addr_id:
+                try:
+                    addr = Address.objects.get(id=addr_id, user=user, address_type='shipping')
+                except Address.DoesNotExist:
+                    addr = None
+
+            if not addr:
+                # Regla de negocio: Máximo 2 direcciones por usuario
+                current_count = Address.objects.filter(user=user, address_type='shipping').count()
+                if current_count >= 2:
+                    # Límite de 2 direcciones alcanzado, no permite crear una 3ra dirección
+                    return redirect('mi_perfil')
+                addr = Address(user=user, address_type='shipping')
+
+            addr.name = user.get_full_name() or user.username
+            addr.phone = phone or perfil.phone or ''
+            addr.line1 = line1
+            addr.line2 = line2
+            addr.region = region
+            addr.comuna = comuna
+            addr.postal_code = postal_code
+            addr.save()
+
+            # Manejar si es dirección predeterminada
+            has_other_default = Address.objects.filter(user=user, address_type='shipping', is_default=True).exclude(id=addr.id).exists()
+            if make_default or not has_other_default:
+                Address.objects.filter(user=user, address_type='shipping', is_default=True).exclude(id=addr.id).update(is_default=False)
+                addr.is_default = True
+                addr.save(update_fields=['is_default'])
+
+            messages.success(request, 'direccion_guardada')
+        else:
+            messages.success(request, 'datos_guardados')
+
         # Redirige a la misma página para recargar los datos actualizados
         return redirect('mi_perfil')
 
-    return render(request, 'core/mi_perfil.html')
+    # GET: Cargar direcciones guardadas
+    addresses = Address.objects.filter(user=user, address_type='shipping').order_by('-is_default', '-updated_at')
+    default_address = addresses.filter(is_default=True).first() or addresses.first()
+
+    default_street = ''
+    default_number = ''
+    if default_address and default_address.line1:
+        parts = default_address.line1.rsplit(' ', 1)
+        if len(parts) == 2 and parts[1].replace('-', '').isalnum():
+            default_street, default_number = parts[0], parts[1]
+        else:
+            default_street = default_address.line1
+            default_number = ''
+
+    return render(request, 'core/mi_perfil.html', {
+        'addresses': addresses,
+        'default_address': default_address,
+        'default_street': default_street,
+        'default_number': default_number,
+    })
 
 
 

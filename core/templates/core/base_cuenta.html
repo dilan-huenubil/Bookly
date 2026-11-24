@@ -28,7 +28,7 @@
                     <i class="bi bi-house-door"></i>
                     <span>Volver a la tienda</span>
                 </a>
-                <a href="{% url 'logout' %}" class="cuenta-logout-link">Cerrar sesión <i class="bi bi-box-arrow-right"></i></a>
+                <a href="{% url 'logout' %}" class="cuenta-logout-link js-logout-confirm" data-logout-url="{% url 'logout' %}">Cerrar sesión <i class="bi bi-box-arrow-right"></i></a>
             </div>
         </div>
     </header>
@@ -87,7 +87,40 @@
 
     </div>
 
+    <script src="{% static 'core/js/regiones.js' %}"></script>
     <script src="{% static 'core/js/script-MiCuenta.js' %}"></script>
+
+    <script>
+    document.querySelectorAll('.js-logout-confirm').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var logoutUrl = this.dataset.logoutUrl || this.href;
+            Swal.fire({
+                title: '¿Cerrar sesión?',
+                text: 'Se cerrará tu sesión actual.',
+                icon: 'question',
+                iconColor: '#A65D37',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, cerrar sesión',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#A65D37',
+                cancelButtonColor: '#888',
+                reverseButtons: true,
+                customClass: {
+                    popup: 'swal-bookly-popup',
+                    title: 'swal-bookly-title',
+                    confirmButton: 'swal-bookly-confirm',
+                    cancelButton: 'swal-bookly-cancel',
+                }
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    window.location.href = logoutUrl;
+                }
+            });
+        });
+    });
+    </script>
+
 </body>
 
 </html>

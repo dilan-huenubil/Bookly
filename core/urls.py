@@ -55,6 +55,7 @@ urlpatterns = [
     path('flow/callback/', flow_callback, name='flow_callback'),
     path('flow/debug/', flow_debug, name='flow_debug'),
     path('addresses/set-default/<int:address_id>/', set_default_address, name='set_default_address'),
+    path('addresses/select-checkout/<int:address_id>/', select_checkout_address, name='select_checkout_address'),
     path('addresses/delete/<int:address_id>/', delete_address, name='delete_address'),
     path('confirmacion_pedido/', confirmacion_pedido, name='confirmacion_pedido'),
     path('mis_pedidos/', mis_pedidos, name='mis_pedidos'),
