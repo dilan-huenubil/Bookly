@@ -16,24 +16,30 @@ function initDireccionesPanel() {
         return;
     }
 
+    const initialText = toggleBtn.querySelector('span') ? toggleBtn.querySelector('span').textContent.trim() : 'Cambiar dirección de entrega';
+
     toggleBtn.addEventListener('click', function () {
         const isVisible = panel.classList.toggle('is-visible');
         panel.hidden = !isVisible;
-        this.textContent = isVisible ? 'Ocultar direcciones' : 'Mis direcciones';
+        const textSpan = this.querySelector('span');
+        if (textSpan) {
+            textSpan.textContent = isVisible ? 'Ocultar direcciones' : initialText;
+        } else {
+            this.textContent = isVisible ? 'Ocultar direcciones' : initialText;
+        }
         this.setAttribute('aria-expanded', isVisible);
     });
 
-    panel.addEventListener('click', function (event) {
-        const selectBtn = event.target.closest('.btn-usar-direccion');
-        if (!selectBtn) {
-            return;
-        }
-
-        panel.querySelectorAll('.direccion-item').forEach((card) => card.classList.remove('direccion-item-activa'));
-        const item = selectBtn.closest('.direccion-item');
-        if (item) {
-            item.classList.add('direccion-item-activa');
-        }
+    panel.querySelectorAll('.direccion-item:not(.direccion-item-activa)').forEach((card) => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', function (e) {
+            if (!e.target.closest('button, form')) {
+                const form = this.querySelector('form');
+                if (form) {
+                    form.submit();
+                }
+            }
+        });
     });
 }
 

@@ -1,4 +1,4 @@
-﻿/* =========================
+/* =========================
    RESET Y BASE
    ========================= */
 * {
@@ -1644,5 +1644,548 @@ body.bg-light {
     .account-deletion form,
     .btn-danger-account {
         width: 100%;
+    }
+}
+
+/* ==========================================
+   SECCIÓN DE DIRECCIÓN EN MI PERFIL
+   ========================================== */
+.form-section-divider {
+    grid-column: 1 / -1;
+    margin-top: 14px;
+    padding-top: 24px;
+    border-top: 1px solid var(--account-line);
+}
+
+.form-section-title-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.form-section-title-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.form-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--account-ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.form-section-title i {
+    color: var(--account-cta);
+    font-size: 18px;
+}
+
+.form-section-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 2px 8px;
+    background: var(--account-soft);
+    color: var(--account-cta);
+    border-radius: 999px;
+    border: 1px solid var(--account-line);
+}
+
+.form-section-desc {
+    font-size: 13.5px;
+    color: #7A6E65;
+    margin: 4px 0 16px;
+    line-height: 1.5;
+}
+
+.label-hint {
+    color: #9E9188;
+    font-weight: 400;
+    font-size: 12px;
+    margin-left: 4px;
+}
+
+.profile-addresses-manager {
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+}
+
+.profile-addresses-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--account-ink);
+}
+
+.btn-link-action {
+    background: none;
+    border: none;
+    color: var(--account-cta);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background-color .2s ease, color .2s ease;
+}
+
+.btn-link-action:hover {
+    background-color: var(--account-soft);
+    color: var(--account-hover);
+}
+
+.profile-addresses-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.profile-address-chip {
+    background: #FFFFFF;
+    border: 1px solid var(--account-line);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+.profile-address-chip:hover {
+    border-color: var(--account-detail);
+}
+
+.profile-address-chip.is-active {
+    border-color: var(--account-cta);
+    background-color: var(--account-paper);
+    box-shadow: 0 0 0 2px rgba(166, 93, 55, .15);
+}
+
+.profile-address-chip-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-address-chip-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--account-ink);
+    margin-bottom: 3px;
+    word-break: break-word;
+}
+
+.chip-badge-default {
+    background: var(--account-cta);
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    flex-shrink: 0;
+}
+
+.profile-address-chip-sub {
+    font-size: 12.5px;
+    color: #7A6E65;
+    word-break: break-word;
+}
+
+.profile-address-chip-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.btn-chip-action {
+    background: #FFFFFF;
+    border: 1px solid var(--account-line);
+    color: var(--account-ink);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all .2s ease;
+}
+
+.btn-chip-action:hover {
+    background: var(--account-soft);
+    border-color: var(--account-detail);
+    color: var(--account-cta);
+}
+
+.btn-chip-delete:hover {
+    background: #FDEDEC;
+    border-color: #F5B7B1;
+    color: #C0392B;
+}
+
+.checkbox-group-account {
+    margin-top: 4px;
+    padding: 10px 0;
+}
+
+.checkbox-label-account {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--account-ink);
+    user-select: none;
+}
+
+.checkbox-label-account input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--account-cta);
+    cursor: pointer;
+}
+
+/* Indicadores de campo obligatorio y errores */
+.label-required {
+    color: #B94A3A;
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+.form-group input.is-invalid,
+.form-group select.is-invalid {
+    border-color: #B94A3A !important;
+    background-color: #FFF9F8 !important;
+    box-shadow: 0 0 0 3px rgba(185, 74, 58, 0.16) !important;
+}
+
+.field-error-msg {
+    font-size: 12px;
+    color: #B94A3A;
+    margin-top: 4px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* Selección de dirección principal en tarjetas */
+.profile-addresses-hint {
+    font-size: 13px;
+    color: #7A6E65;
+    margin: -4px 0 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.5;
+}
+
+.profile-addresses-hint i {
+    color: var(--account-cta);
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.profile-address-chip {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+}
+
+.profile-address-chip.is-default {
+    border-color: var(--account-cta) !important;
+    background-color: #FAF8F5 !important;
+    box-shadow: 0 2px 8px rgba(166, 93, 55, 0.1) !important;
+}
+
+.profile-address-chip-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--account-line);
+}
+
+.address-principal-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    color: var(--account-ink);
+    width: 100%;
+    margin: 0;
+}
+
+.address-principal-radio input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--account-cta);
+    cursor: pointer;
+    margin: 0;
+}
+
+.text-principal {
+    color: var(--account-cta);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.text-principal i {
+    color: var(--account-cta);
+    font-size: 14px;
+}
+
+.profile-address-chip-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px dashed var(--account-line);
+    margin-top: 4px;
+}
+
+/* Casillas desplegables de edición / nueva dirección */
+.address-editor-box {
+    background: var(--account-surface);
+    border: 1px solid var(--account-line);
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin-top: 16px;
+    box-shadow: 0 4px 16px rgba(46, 34, 35, 0.05);
+    animation: fadeInEditor 0.25s ease-out;
+}
+
+@keyframes fadeInEditor {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.address-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--account-line);
+}
+
+.address-editor-header h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--account-ink);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.address-editor-header h4 i {
+    color: var(--account-cta);
+}
+
+.btn-close-address {
+    background: none;
+    border: 1px solid var(--account-line);
+    color: #7A6E65;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-close-address:hover {
+    background: #FDEDEC;
+    border-color: #F5B7B1;
+    color: #C0392B;
+}
+
+.no-addresses-notice {
+    background: var(--account-paper);
+    border: 1px dashed var(--account-line);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    color: #7A6E65;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.no-addresses-notice p {
+    margin: 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-primary-outline {
+    background: transparent;
+    border: 1.5px solid var(--account-cta);
+    color: var(--account-cta);
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-primary-outline:hover {
+    background: var(--account-cta);
+    color: #FFFFFF;
+}
+
+.badge-max-addresses {
+    font-size: 12px;
+    font-weight: 600;
+    color: #7A6E65;
+    background: var(--account-soft);
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--account-line);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-max-addresses i {
+    color: var(--account-cta);
+}
+
+/* ============================================================
+   RESPONSIVO MÓVIL — Sección de Direcciones
+   ============================================================ */
+@media (max-width: 600px) {
+
+    /* Encabezado de la sección: título + badge en fila, botón agregar debajo */
+    .form-section-title-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .form-section-title-left {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* El hint "Haz clic en..." alineado al tope para texto largo */
+    .profile-addresses-hint {
+        align-items: flex-start;
+        font-size: 12.5px;
+        gap: 7px;
+    }
+
+    /* Tarjetas siempre en columna vertical */
+    .profile-addresses-chips {
+        grid-template-columns: 1fr;
+    }
+
+    /* Texto de la tarjeta: evitar desbordamiento */
+    .profile-address-chip-sub {
+        font-size: 12px;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        line-height: 1.5;
+    }
+
+    .profile-address-chip-title {
+        font-size: 13.5px;
+    }
+
+    /* Botones Editar/Eliminar: ancho completo en móvil */
+    .profile-address-chip-actions {
+        justify-content: stretch;
+        gap: 8px;
+    }
+
+    .profile-address-chip-actions .btn-chip-action {
+        flex: 1;
+        justify-content: center;
+        font-size: 12.5px;
+        padding: 7px 10px;
+    }
+
+    /* Label del radio: no partir en columnas raras */
+    .address-principal-radio {
+        font-size: 12.5px;
+        gap: 7px;
+    }
+
+    .radio-label-text {
+        word-break: break-word;
+    }
+
+    /* Editor de dirección (formulario desplegable) */
+    .address-editor-box {
+        padding: 16px 14px;
+    }
+
+    .address-editor-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .address-editor-header h4 {
+        font-size: 14.5px;
+    }
+
+    .btn-close-address {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    /* Formulario en 1 columna */
+    .address-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Botón "Agregar nueva dirección" / "Máximo 2 direcciones" */
+    .btn-link-action,
+    .badge-max-addresses {
+        font-size: 12px;
     }
 }
